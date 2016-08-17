@@ -1,0 +1,79 @@
+Spécifications fonctionnelles ‘high level’ du Back-end de SET
+
+
+Structure du backend:
+    - écrire un MOTEUR = programme en back-end qui expose une API qui permet de jouer à des parties de SET (potentiellement plusieurs en parallèle). L’API est uniquement aysnchrone.
+      A regarder : programmer ce back-end en node.js ?
+    - écrire dans swagger la signature de l’API que le MOTEUR expose vers les fronts qui voudraient jouer au SET.
+    - écrire un FRONT qui saura utiliser ce back-end et proposer à plusieurs joueurs de s’identifier et de jouer à SET ensemble.
+    - écrire un deuxième back-end qui est un joueur automatique, qui se loggue sur le MOTEUR  de la même façon qu’un joueur humain via un FRONT.
+
+Data model interne du MOTEUR:
+  - JOUEUR (ID de joueur):
+    * un joueur doit s’identifier sur le MOTEUR via le FRONT.
+    * chaque JOUEUR a une ID unique et persistente (authentification à voir : facebook connect ? Google connect ?…) et un nom affichable.
+    * chaque joueur gagne des points quand il identifie le premier un SET sur le TABLEAU : ses points sont enregistrés niveau du moteur pour toutes les parties terminée.
+  - CARTE:
+    * Il existe 81 cartes, avec un identifiant unique « wxyz », avec w, x y et z dans {1, 2, 3}.
+    * Un jeu de cartes contient les 81 cartes.
+  - SET:
+    * Un SET est un ensemble de 3 cartes pour lesquelles les 4 valeurs w, x, y et z sont soit identiques, soit deux-à-deux différentes.
+    * Exemple : un ensemble de 3 cartes (w1x1y1z1), (w2x2y2z2) et (w3x3y3z3) forment un SET ssi:
+        (w1 = w2 = w3) ou (w1 <> w2 et w2 <> w3 et w3 <> w1)
+      et
+        (x1 = x2 = x3) ou (x1 <> x2 et x2 <> x3 et x3 <> x1)
+      et
+        (y1 = y2 = y3) ou (y1 <> y2 et y2 <> y3 et y3 <> y1) 
+      et
+        (z1 = z2 = z3) ou (z1 <> z2 et z2 <> z3 et z3 <> z1)
+  - PIOCHE:
+    * La pioche est constituée initialement des 81 cartes mélangées, et donc empilées dans un ordre aléatoire.
+    * C’est dans la pioche que sont prises les cartes pour alimenter le tableau, soit 12 cartes au début puis 3 cartes à chaque fois qu'un JOUEUR  (en fait un FRONT) identifie un SET valide et qu'il faut re-remplir le TABLEAU. 
+  - TABLEAU:
+    * le TABLEAU est un ensemble de 12 cartes disposées face visible sur la table, et tous les JOUEURS peuvent le voir.
+    * le TABLEAU est constitué initialement de 12 cartes prises sur le dessus de la PIOCHE, puis, lorsqu’un joueur identifie un SET et retire les 3 cartes correspondantes pour les mettre sur la PILE, est reconstitué en tirant les 3 cartes du dessus de la PIOCHE.
+    * A la fin du jeu, la PIOCHE est forcément vide (condition nécessaire, non suffisante).
+  - PILE:
+    * la pile est constituée de toutes les cartes que les joueurs retirent du TABLEAU lorsqu’ils ont identifié un SET.
+    * il n’y a pas d’action possible par les joueurs sur la PILE (sauf à revenir en arrière dans la partie)
+  - STEP:
+    * un STEP est une image de la partie qui contient, à un moment donné, toutes les informations utiles pour continuer à jouer.
+    * un STEP est à la fois une description du TABLEAU, de la PIOCHE, de la PILE, des JOUEURS et de leurs points et de l’état du jeu (en tant que de besoin).
+    * les actions qui permettent de passer d’un STEP au suivant (typiquement : un JOUEUR identifie un SET, le retire du TABLEAU et le met dans la PILE) sont gérées par la PARTIE.
+    * Un STEP peut être sauvegardé et doit contenir toutes les
+          informations pour permettre de reprendre la partie à partir de cet
+          état initial.
+        * Il peut y avoir au maximum 27 STEPs dans une PARTIE.
+  - PARTIE :
+    * la PARTIE est un moteur d’état qui permet à la fois d’avancer (ou de reculer) dans la partie, et de restituer vers les FRONT toute information utile sur la partie en cours.
+    * la PARTIE conserve tout l’historique de la partie = chaque STEP + quel joueur retire quelles cartes + … de façon à pouvoir reconstituer toute la partie ultérieurement (voire revenir en arrière pour la rejouer différemment).
+    * La PARTIE reçoit du moteur
+      + son ID de partie: identifiant unique, utile pour les sauvegardes et les échanges avec les FRONT.
+      + les ID des joueurs, identifiants uniques, utiles pour les échanges avec les FRONTS.
+    * Initialisation :
+      + la PARTIE constitue la PIOCHE : elle contient 81 cartes (dans un ordre aléatoire, figé pour toute la partie)
+      + la PARTIE remplit le TABLEAU pour la première fois, en s’assurant qu’il y a bien au moins un SET valide dans le tableau (i.e. la PARTIE doit aller chercher des cartes dans la PIOCHE jusqu’à qu’il soit possible d’identifier un SET dans le TABLEAU).
+        Rmq : c’est toujours possible au début du jeu.
+      + la PILE est vide.
+      + tous les joueurs sont connectés (via un FRONT) : à confirmer. 
+    * déroulement : pour passer d’un STEP au suivant, un joueur propose un SET:
+      + si le SET est invalide,  la proposition est rejetée (communication vers les autres joueurs ?) et le jeu continue
+      + si le SET est valide, on sauve le STEP en cours… et on passe au STEP suivant :
+        o les trois cartes du SET sont retirées du TABLEAU et mises dans la PILE
+        o la PARTIE doit tirer 3 cartes de la PIOCHE en garantissant qu’il y a au moins un SET valide dans le TABLEAU :
+          - Si c’est le cas, le nouveau STEP est valide et on retourne au début du traitement du STEP
+          - Si c’est impossible, la PARTIE est finie : on sauvegarde toutes les données, et on publie les résultats finaux vers les FRONT.
+          - La PARTIE est close (sauf si un joueur veut revenir en arrière?) et on met à jour les points des joueurs.
+
+
+Commandes disponibles via l’API :
+
+En consommant cette API, un FRONT doit pouvoir :
+  - initier une nouvelle PARTIE (i.e. créer un ID unique)
+  - initialiser un JOUEUR (ID unique, nom, authentification)
+  - inscrire un JOUEUR sur une partie créée (identifiée par l’ID de la partie)
+  - collecter les informations publiques du STEP en cours (l’ID de la PARTIE, les noms des autres JOUEURS et leurs points dans la partie, la taille de la PIOCHE, la composition du TABLEAU, la taille de la PILE, les cartes de la PILE)… et rien d’autre.
+  - proposer un SET et obtenir une confirmation d’acceptation de ce SET par le MOTEUR
+  - demander de revenir en arrière d’un STEP.
+
+
