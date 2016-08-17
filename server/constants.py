@@ -13,6 +13,10 @@ playersMin = 2
 playersMax = 6
 pointsPerSet = 3
 
+mongoDBserver = 'localhost'
+mongoDBport = 27017
+
+
 def validate_uuid4(uuid_string):
     """
     Validate that a UUID string is in fact a valid uuid4.

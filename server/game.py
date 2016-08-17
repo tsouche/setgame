@@ -38,7 +38,8 @@ HTTP codes returned after a request :
 
 from pymongo import MongoClient
 from bottle import get, post, request, template, run, debug
-from server.player import Player
+import server.constants as constants
+from server.players import Players
 from server.engine import Engine
 
 def _url(path):
@@ -64,10 +65,13 @@ class Game():
         """
         self.gameStarted = False
         self.gameFinished = False
-        dbClient = MongoClient()
-        self.engines = dbClient["engines"]
-        self.players = dbClient["players"]
-        self.engines.insert_one(Engine(self.engines))
+        
+        setDB = MongoClient(constants.mongoDBserver, constants.mongoDBport)
+        
+        self.players = []
+        self.playersDB = setDB.players
+        self.enginesDB = setDB.engines
+        # self.engines.insert_one(Engine(self.engines))
 
     def communicate(self):
         """
@@ -120,9 +124,21 @@ class Game():
 	    	@route('/gameid/set')
 
         """
-
-        @post('/login/<string>')  # with nickname as parameter
-        def login(self, string):
+        
+        def managePlayers(self):
+            """
+            This method manages the players so that they can register to the
+            server with their nickname (must be unique) and then enlist onto
+            a game.
+            The players are persistent: they are stored on the db, although the
+            game will manipulate 'in memory' objects as long as it runs.
+            """
+            # First it will loard from the db the players which would already
+            # have been created before
+            
+            
+        @post('/register/<string>')  # with nickname as parameter
+        def register(self, string):
             p = Player(string)
             pass
 
