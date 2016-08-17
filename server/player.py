@@ -3,7 +3,7 @@ Created on August 8th 2016
 @author: Thierry Souche
 """
 
-import uuid
+import pymongo
 import json
 
 class Player:
@@ -15,16 +15,19 @@ class Player:
     """
 
 
-    def __init__(self, nickname, surname="", name=""):
+    def __init__(self, nickname, surname="", name="", playersDB):
         """
         The nickname is mandatory. It must be a non-empty string.
         the name and surname are optional.
         """
-        self.uniqueID = uuid.uuid4()
         self.nickname = nickname
         self.surname = surname
         self.name = name
         self.points = 0
+        self.id = playersDB.insert_one({ "nickname": self.nickname, 
+                                        "surname": surname, 
+                                        "name": name })
+        return self.id
         
     def forceID(self, forcedUniqueID):
         """

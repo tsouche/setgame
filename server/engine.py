@@ -3,11 +3,11 @@ Created on August 8th 2016
 @author: Thierry Souche
 '''
 
-import uuid
+from pymongo import MongoClient
 import server.constants as constants
-import server.cardset as cardset
-import server.step as step
-import server.player as player
+from server.player import Player
+from server.cardset import CardSet
+from server.step import Step
 
 class Engine:
     """
@@ -24,8 +24,10 @@ class Engine:
         - stop the game if it is instructed to do so
         - save the game history in a JSON file with all 
     """
+    
+     # self.engines.insert_one(Engine(self.engines))
 
-    def __init__(self):
+    def __init__(self, engines, players):
         """
         Initializes the cards set, the first Step and the players list.
         - the game is given a unique gameID (for further reference).
@@ -34,17 +36,25 @@ class Engine:
         - the card set and the first step are initialized.
         The constructor return the unique game ID.
         """
-        self.gameID = uuid.uuid4()
+        self.client = MongoClient()
         self.players = []
-        self.cards = cardset.CardSet()
+        self.cards = CardSet()
         self.cards.randomize()
         self.turnCounter = 0
         self.steps = []
-        self.steps.append(step.Step())
+        self.steps.append(Step())
         self.steps[0].start(self.cards)
         self.gameFinished = False
+        self.id = 
         # return self.gameID
 
+    def toMongo(self):
+        self.playersDB = self.client["players"]
+        self.cardsDB = self.client["cards"]
+        self.client["cards"].insert_one(self.Cards.serialize())
+        self.client["turnCounter"] = self.turnCounter
+        
+        
     def getGameID(self):
         return self.gameID
 

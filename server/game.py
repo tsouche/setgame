@@ -36,8 +36,10 @@ HTTP codes returned after a request :
             Il y a un problème avec le serveur et la requête a planté. Zut ! :(
 """
 
-from bottle import route, run, debug
-import server.engine as engine
+from pymongo import MongoClient
+from bottle import get, post, request, template, run, debug
+from server.player import Player
+from server.engine import Engine
 
 def _url(path):
     return 'https://souchero.synology.me' + path
@@ -62,8 +64,10 @@ class Game():
         """
         self.gameStarted = False
         self.gameFinished = False
-        self.engines = []
-        self.engines.append(engine.Engine())
+        dbClient = MongoClient()
+        self.engines = dbClient["engines"]
+        self.players = dbClient["players"]
+        self.engines.insert_one(Engine(self.engines))
 
     def communicate(self):
         """
@@ -72,12 +76,19 @@ class Game():
         
         Let's assume that the server is at https://server.org/Set/
         
+        The client need to create a player: it will push a "nickname" to the 
+        server who will - if succesful - return a player ID:
+        - POST https://server.org/set/player/
+            post: { "nickname": "str" }
+            answer: { "playerID": "uuid4" }
+        
         The client need to know which games will soon start, and the server 
         answers wit a gameID and a playerID which will be used for subsequent 
         exchanges:
         - GET https://server.org/Set/enlist/
             post: { }
             answer: { "gameID": "uuid4", "gameID": uuid4 }
+        
         
         The server then will answer the clients when they ask about the status 
         of the game: it will answer to all the registered fronts (and they 
@@ -110,8 +121,14 @@ class Game():
 
         """
 
-        @route('/enlist')  # with no parameter
+        @post('/login/<string>')  # with nickname as parameter
+        def login(self, string):
+            p = Player(string)
+            pass
+
+        @get('/enlist')  # with no parameter
         def enlist(self):
+            self.players
             pass
 
         @route('/gameid/game_status') # with 1 parameter: 'gameid'
@@ -124,7 +141,7 @@ class Game():
         @route('/gameid/updated_detail/') # with 2 parameters: 'gameid', 'turncounter'
         def updatedDetails(self):
             pass
-        @route('/gameid/set')
+        @post('/gameid/set')
         def collectSetProposal(self):
             pass
 
