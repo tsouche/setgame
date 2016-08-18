@@ -72,7 +72,11 @@ class Players:
                 result.append(pp)
         return result
         
-    def toString(self, playerID):
+    def playerToString(self, playerID):
+        """
+        This method returns a string representing the player whose ID is passed
+        as argument. 
+        """
         for pp in self.playersList:
             if pp.playerID == playerID:
                 msg = pp.nickname + " - (" + str(pp.points)
@@ -82,7 +86,24 @@ class Players:
                 break
         return msg
     
+    def toString(self):
+        """
+        This method returns a string representing the Players.
+        """
+        if len(self.playersList) == 0:
+            msg = "No player registered yet"
+        else:
+            msg = "List of registered players:\n"
+            for pp in self.playersList:
+                msg += self.playerToString(pp.playerID) + "\n"
+        return msg
+        
     def serializeOne(self, playerID):
+        """
+        This method returns a Dictionary representing the player whose ID is
+        passed as argument. This will be used for exchanges of information
+        over the network between the server and clients.
+        """
         for pp in self.playersList:
             if pp.playerID == playerID:
                 playerDict = {}
@@ -117,4 +138,9 @@ class Players:
         return resultOk
     
     def deserializeAll(self, objDict):
+        """
+        """
+        self.playersList = []
         pass
+    
+    
