@@ -132,69 +132,6 @@ class CardSet:
             code = str(card[0])+str(card[1])+str(card[2])+str(card[3])
         return code
    
-    def cardToString(self,i):
-        """
-        This method return a string showing the status of the card, usable by
-        print(). It is mostly interesting for test purpose.
-        """
-        card = self.cards[i]
-        return "Card #" + str(i) + " ("+ self.getCardCode(i) + "): "   \
-            " - color is "   + str(card[0]) + " - shape is "  + str(card[1]) + \
-            " - filling is " + str(card[2]) + " - number is " + str(card[3])
-
-    def toString(self):
-        """
-        This function returns a string showing the whole card set on 4 raw, with 
-        the successive codes per vertical column.
-        """
-        c = ""
-        s = ""
-        f = ""
-        n = ""
-        for i in range(0, constants.cardsMax):
-            card = self.cards[i]
-            c += str(card[0])    # adds the card i color value to the string
-            s += str(card[1])    # adds the card i shape value to the string
-            f += str(card[2])    # adds the card i filling value to the string
-            n += str(card[3])    # adds the card i number value to the string
-        msg  = "The card set:\n"
-        msg += "   - colors   : " + c + "\n"
-        msg += "   - shapes   : " + s + "\n"
-        msg += "   - fillings : " + f + "\n"
-        msg += "   - numbers  : " + n + "\n"
-        return msg
-
-    def displayCardList(self, cardsList, wide):
-        """
-        This method get as arguments:
-            - 'cardslist', a list of indexes of cards pointing at cards in a 
-                CardSet
-            - 'wide', an integer specifying on how many columns the list of
-                cards should be displayed, in order to make it convenient to 
-                read
-        It returns a string showing a list of cards (with their card code) on
-        the specified number of columns. Mostly useful for tests.
-        """
-        msg = "["
-        nb = 0
-        for c in cardsList:
-                if c==-1:
-                    msg += "--"
-                else:
-                    msg += str(c).zfill(2)
-                msg += " (" + self.getCardCode(c) + "), "
-                if (nb+1)%wide==0 and nb>0:
-                    msg += "\n                 "
-                nb += 1
-        if nb%wide==0 and nb>1:
-        # remove the last newline when the number of value fit the width
-            msg = msg[0 : len(msg)-18]
-        # remove the extra ", " before the last "]"
-        if len(cardsList)>0:
-            msg = msg[0 : len(msg)-2]
-        msg += "]"
-        return msg
-
     def serialize(self):
         """
         This method return a Dictionary describing the cards in their respective

@@ -17,6 +17,39 @@ pointsPerSet = 3
 mongoDBserver = 'localhost'
 mongoDBport = 27017
 
+def displayCardList(cardset, cardsList, wide):
+    """
+    This method get as arguments:
+        - 'cardset', a valid CardSet from which we fetch the card codes
+        - 'cardslist', a list of indexes of cards pointing at cards in the 
+            CardSet
+        - 'wide', an integer specifying on how many columns the list of
+            cards should be displayed, in order to make it convenient to 
+            read
+    It returns a string showing a list of cards (with their card code) on
+    the specified number of columns. Mostly useful for tests.
+    """
+    msg = "["
+    nb = 0
+    for c in cardsList:
+        if c==-1:
+            msg += "--"
+        else:
+            msg += str(c).zfill(2)
+        msg += " (" + cardset.getCardCode(c) + "), "
+        if (nb+1)%wide==0 and nb>0:
+            msg += "\n                 "
+        nb += 1
+    if nb%wide==0 and nb>1:
+        # remove the last newline when the number of value fit the width
+        msg = msg[0 : len(msg)-18]
+    # remove the extra ", " before the last "]"
+    if len(cardsList)>0:
+        msg = msg[0 : len(msg)-2]
+    msg += "]"
+    return msg
+
+
 
 # def validate_uuid4(uuid_string):
 #     """
