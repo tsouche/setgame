@@ -245,9 +245,9 @@ class TestPlayers(unittest.TestCase):
             {'playerID': str(mickey['_id']), 'nickname': "Mickey", 'totalScore': '30', 'gameID': str(mickey['gameID'])},
             {'playerID': str(riri['_id']), 'nickname': "Riri", 'totalScore': '18', 'gameID': str(riri['gameID'])}]}
         players.deserialize(target)
-        self.list_test_players(players.playersColl)
+        # self.list_test_players(players.playersColl)
         result = players.serialize()
-        self.list_test_players(players.playersColl)
+        # self.list_test_players(players.playersColl)
         self.assertEqual(target, result)
         # end of the test
         self.teardown(players.playersColl)

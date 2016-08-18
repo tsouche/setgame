@@ -2,13 +2,14 @@
 Created on August 9th 2016
 @author: Thierry Souche
 '''
-import json
 from random import randint
+from bson.objectid import ObjectId
+
 import server.cardset as cardset
 import server.step as step
-import server.engine as engine
+from server.game import Game
 
-def test_engine():
+def test_game():
     # First series of tests:
     print()
     print("##################################################################################")
@@ -17,16 +18,12 @@ def test_engine():
     print("#                                                                                #")
     print("##################################################################################")
     print()
-    # generate an engine
-    partie = engine.Engine()
-    # create 4 players
-    partie.addPlayer("Donald")
-    partie.addPlayer("Mickey")
-    partie.addPlayer("Dingo")
-    partie.addPlayer("Picsou")
-    nb_players = len(partie.players)
-    print("Here are the players for this game:")
-    print(partie.playersPointsToString   ())
+    # generate an engine with 4 players
+    donald = {'_id': ObjectId(), 'nickname': "Donald"}
+    mickey = {'_id': ObjectId(), 'nickname': "Mickey"}
+    dingo = {'_id': ObjectId(), 'nickname': "Dingo"}
+    picsou = {'_id': ObjectId(), 'nickname': "Picsou"}
+    partie = Game([donald, mickey, dingo, picsou])
     print()
     # initialize the cards
     partie.cards = cardset.CardSet()

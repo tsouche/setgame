@@ -3,7 +3,6 @@ Created on August 5th 2016
 @author: Thierry Souche
 '''
 
-import json
 import server.cardset as cardset
 import server.step as step
 
@@ -143,12 +142,12 @@ def test_step_2():
     print(steps2.toString(cartes))
     print("----------------------------------------------------------------------------------")
     print("----------------------------------------------------------------------------------")
-    print("We do the same with Step 24:")
+    print("We do the same with Step 0:")
     print()
-    print(steps[24].toString(cartes))
+    print(steps[0].toString(cartes))
     print("----------------------------------------------------------------------------------")
-    steps2.deserialize(steps[24].serialize())
-    print(steps2.toString(cartes))
+    stepJSON = steps[0].serialize()
+    print(stepJSON)
     print("----------------------------------------------------------------------------------")
     
     

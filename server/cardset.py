@@ -197,42 +197,40 @@ class CardSet:
 
     def serialize(self):
         """
-        This method return a JSON describing the cards in their respective
+        This method return a Dictionary describing the cards in their respective
         positions. This will enable to save the game, and to exchange all 
-        necessary information between the backend and the various frontends or
+        necessary information between the server and the various frontends or
         apps.
         """
-        cardsetJSON = {}
-        cardsetJSON["__class__"] = "SetCardset"
-        cardsetJSON["cards"] = []
+        cardsetDict = {}
+        cardsetDict["__class__"] = "SetCardset"
+        cardsetDict["cards"] = []
         i = 0
         while i < constants.cardsMax:
             msg = str(i).zfill(2) + "-" + self.getCardCode(i)
-            cardsetJSON["cards"].append(msg)
+            cardsetDict["cards"].append(msg)
             i += 1
-        return cardsetJSON
+        return cardsetDict
     
-    def deserialize(self, objJSON):
+    def deserialize(self, objDict):
         """
-        This function enable to populate a whole cardset from a JSON (if it is 
-        valid).
+        This function enable to populate a whole cardset from a Dictionary (if 
+        it is valid).
         There is no need to erase the previous values of 'cards' since this
         method will overwrite all values: it is actually important that the 
         cards list already contain 81 cards.
         """
         resultOk = False
         nbcards = 0
-        if "__class__" in objJSON:
-            if objJSON["__class__"] == "SetCardset":
-                print("start deserializing")
-                for msg in objJSON["cards"]:
+        if "__class__" in objDict:
+            if objDict["__class__"] == "SetCardset":
+                for msg in objDict["cards"]:
                     i = int(msg[:2])
                     c = int(msg[3])
                     s = int(msg[4])
                     f = int(msg[5])
                     n = int(msg[6])
                     self.cards[i] = [c,s,f,n]
-                    # print("i="+str(i)+" - card[i]="+str([c,s,f,n]))
                     nbcards += 1
             if nbcards == constants.cardsMax:
                 resultOk = True
