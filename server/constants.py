@@ -7,6 +7,7 @@ This modules contains few constants which are useful to the Set gale.
 
 # import uuid
 
+verbose = True      # used to show/hide the prints in unitary tests
 cardsMax = 81
 tableMax = 12
 playersMin = 2
