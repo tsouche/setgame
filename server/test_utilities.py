@@ -6,6 +6,7 @@ This modules contains few constants which are useful to the Set gale.
 '''
 
 from server.cardset import CardSet
+from server.constants import cardsMax
 
 verbose = True
 """
@@ -92,3 +93,62 @@ def displayCardList(cardset, cardsList, wide, tab=""):
     msg += "]"
     return msg
 
+def cardsetToString(cardset):
+    """
+    This function returns a string showing the whole card set on 4 raw, with 
+    the successive codes per vertical column.
+    It is a very compact way to display the whole cardset.
+    """
+    c = s = f = n = ""
+    for i in range(0, cardsMax):
+        card = cardset.cards[i]
+        c += str(card[0])    # adds the card i color value to the string
+        s += str(card[1])    # adds the card i shape value to the string
+        f += str(card[2])    # adds the card i filling value to the string
+        n += str(card[3])    # adds the card i number value to the string
+    msg  = "   - colors   : " + c + "\n"
+    msg += "   - shapes   : " + s + "\n"
+    msg += "   - fillings : " + f + "\n"
+    msg += "   - numbers  : " + n + "\n"
+    return msg
+
+def stepToString(step, cardset):
+    """
+    This methods returns a string showing the status of the Step. The 
+    associated set of cards is passed as argument so that it can display
+    the correspondence between the Step (positions in the pick, table...) 
+    and the cards it points to.
+    """
+    # set the header
+    msg  = "This is the Step " + str(step.turnCounter) + " :\n"
+    # add the 3 cards lists
+    msg += "  - the player: " + step.playerName +" ("+ str(step.playerID) + ")\n"
+    msg += "  - the pick:\n"  + displayCardList(cardset, step.pick, 6, "      ") + "\n"
+    msg += "  - the table:\n" + displayCardList(cardset, step.table,6, "      ") + "\n"
+    msg += "  - the used:\n"  + displayCardList(cardset, step.used, 6, "      ") + "\n"
+    # build the substring showing the 'set' list, both with the position of the 
+    # cards on the Table and with the corresponding cards in the 'cardset'.
+    if step.playerName != "":
+        set_msg  = "  - "+ step.playerName + " proposed this set: "
+    else:
+        set_msg  = "  - the set: "
+    setCardsList = []
+    if len(step.set)>0:
+        for pos in step.set:
+            setCardsList.append(step.table[pos])
+    set_msg += "table positions " + str(step.set) + "\n"
+    set_msg += "          referring to cards " + \
+        displayCardList(cardset, setCardsList,6)
+    msg += set_msg + "\n"
+    return msg
+
+def gameToString(game):
+    msg  = "Generic details:\n"
+    msg += "           gameID = " + str(game.gameID) + "\n"
+    msg += "     turn counter = " + str(game.turnCounter) + "\n"
+    msg += "    game finished = " + str(game.gameFinished) + "\n"
+    msg += "Players:\n"
+    for pp in game.players:
+        msg += "    nickname: " + pp['nickname']
+        msg += " - (" + str(pp['playerID']) + ")\n"
+    return msg

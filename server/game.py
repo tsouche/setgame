@@ -13,10 +13,11 @@ from server.step import Step
 class Game:
     """
     This class runs a complete game:
-        - it is given a unique ID for that specific game, to be stored
         - it is given a list of players
     With these elements:
-        - it will generate a card set and randomize it
+        - it will register to the DB and receive a unique ID (which will be used
+            to refer to that specific game between the webserver and the fronts)
+        - it will generate a cardset and randomize it
         - it will generate the first step and initialize it
     It will then wait for instructions and maintain a state for the game:
         - receive a proposal for a valid set from a player, check if it is 
@@ -40,14 +41,15 @@ class Game:
         """
         setDB = MongoClient(constants.mongoDBserver, constants.mongoDBport).setgame
         self.gamesColl = setDB.games
-        # populate the DB in order to get ans store the gameID
-        self.gameID = self.gamesColl.insert_one({}).inserted_id()
+        # populate the DB with generic details and retrieve the gameID
         self.turnCounter = 0
         self.gameFinished = False
+        self.gameID = self.gamesColl.insert_one({'turncounter': self.turnCounter,
+                'gameFinished': self.gameFinished}).inserted_id
         # populate the players from the argument passed
         self.players = []
         for pp in players:
-            self.players.append({'playerID': pp['_id'], 'name': pp['nickname'],
+            self.players.append({'playerID': pp['_id'], 'nickname': pp['nickname'],
                 'points': 0})
         # populate and randomize the cards
         self.cards = CardSet()
@@ -59,7 +61,12 @@ class Game:
         # return self.gameID
 
     def getGameID(self):
-        return self.gameID
+        """
+        This method returns the 'string-ified' gameID.
+        This is important because only the 'Game' class will ever exchange
+        'real' gameID with the DB.
+        """
+        return str(self.gameID)
     
     def getPlayer(self, playerID):
         result = None

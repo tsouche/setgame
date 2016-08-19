@@ -2,14 +2,56 @@
 Created on August 9th 2016
 @author: Thierry Souche
 '''
+
+import unittest
 from random import randint
 from bson.objectid import ObjectId
 
-import server.cardset as cardset
-import server.step as step
+from server.cardset import CardSet
+from server.step import Step
 from server.game import Game
+from server.test_utilities import vprint, vbar, gameToString
 
-def test_game():
+class test_Game(unittest.TestCase):
+    """
+    This class is used to unit-test the Game class.
+    The setup method will load test data in the database, and the teardown 
+    method will clean the database.
+    """
+    
+    def setup(self):
+        # generate an engine with 4 players. As we use only a subset of the 
+        # 'Players' information, we pass dictionaries straight to the __init__.
+        self.donald = {'_id': ObjectId(), 'nickname': "Donald"}
+        self.mickey = {'_id': ObjectId(), 'nickname': "Mickey"}
+        self.dingo = {'_id': ObjectId(), 'nickname': "Dingo"}
+        self.picsou = {'_id': ObjectId(), 'nickname': "Picsou"}
+        self.nb_players = 4
+        partie = Game([self.donald, self.mickey, self.dingo, self.picsou])
+        return partie
+    
+    def teardown(self):
+        pass
+    
+    def test__init__(self):
+        """
+        Test game.__init__
+        """
+        vbar()
+        print("Test game.__init__")
+        vbar()
+        partie = self.setup()
+        vprint("Builds up 4 players (Donald, Mickey, Dingo and Picsou):")
+        vprint("    " + str(self.donald))
+        vprint("    " + str(self.mickey))
+        vprint("    " + str(self.dingo))
+        vprint("    " + str(self.picsou))
+        vprint("and launch a game with these players:")
+        vprint()
+        vprint(gameToString(partie))
+    
+    
+def test_game_obsolete():
     # First series of tests:
     print()
     print("##################################################################################")
@@ -18,22 +60,16 @@ def test_game():
     print("#                                                                                #")
     print("##################################################################################")
     print()
-    # generate an engine with 4 players
-    donald = {'_id': ObjectId(), 'nickname': "Donald"}
-    mickey = {'_id': ObjectId(), 'nickname': "Mickey"}
-    dingo = {'_id': ObjectId(), 'nickname': "Dingo"}
-    picsou = {'_id': ObjectId(), 'nickname': "Picsou"}
-    partie = Game([donald, mickey, dingo, picsou])
     print()
     # initialize the cards
-    partie.cards = cardset.CardSet()
+    partie.cards = CardSet()
     partie.cards.randomize()
     print("Here is the randomized set of cards used for these tests:")
     print(partie.cards.toString())
     print()
     # Now simulate a whole game by generating a succession of Steps.
     partie.steps = []
-    partie.steps.append(step.Step()) # we create step[0]
+    partie.steps.append(Step()) # we create step[0]
     partie.steps[0].start(partie.cards)
     print("We start a whole new game from there, with the same randomized set of cards.")
     print()
@@ -42,7 +78,7 @@ def test_game():
     # start iterating until the game stops
     while partie.steps[partie.turnCounter].checkIfTableContainsAValidSet(partie.cards):
         # displayStep(step[counter],partie.cards)
-        p = partie.players[randint(0,nb_players-1)]
+        p = partie.players[randint(0, nb_players)]
         # identifies a valid set of 3 cards on the Table
         positions = partie.steps[partie.turnCounter].getValidSetFromTable(partie.cards)
         print("Set proposed by "+p.nickname+": "+str(positions))
@@ -146,11 +182,9 @@ def test_game():
     # remove the data
     del(partie)
 
-if __name__ == "__main__":    # the rest of the code will execute only in case the file is run as main module.
-    # main test execution
-    input("Are you ready to start the tests?")
-    print()
-    test_engine()
-    # end of the tests
-    input("press ENTER to close this test program...")
+
+
+if __name__ == '__main__':
+
+    unittest.main()
 

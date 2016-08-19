@@ -348,40 +348,6 @@ class Step:
             # print(" We continue with an incomplete Table: ",candidate)
         return gameFinished
             
-    def setToString(self, cards):
-        """
-        This method returns a string showing the 'set' list, both with the 
-        position of the cards on the Table and with the corresponding cards in
-        the 'cardset'.
-        """
-        if self.playerName != "":
-            msg  = "  - "+ self.playerName + " proposed this set: "
-        else:
-            msg  = "  - the set: "
-        setCardsList = []
-        if len(self.set)>0:
-            for pos in self.set:
-                setCardsList.append(self.table[pos])
-        msg += "table positions " + str(self.set) + "\n"
-        msg += "            referring to cards " + cards.displayCardList(setCardsList,6)
-        return msg
-    
-    def toString(self, cards):
-        """
-        This methods returns a string showing the status of the Step. The 
-        associated set of cards is passed as argument so that it can display
-        the correspondence between the Step (positions in the pick, table...) 
-        and the cards it points to.
-        """
-        msg  = "This is the Step " + str(self.turnCounter) + " :\n"
-        msg += "  - the player  " + self.playerName +" ("+ str(self.playerID) + ")\n"
-        msg += "  - the pick:   " + cards.displayCardList(self.pick, 6) + "\n"
-        msg += "  - the table:  " + cards.displayCardList(self.table,6) + "\n"
-        msg += "  - the used:   " + cards.displayCardList(self.used, 6) + "\n"
-        msg += self.setToString(cards)
-        msg += "\n\n"
-        return msg
-
     def serialize(self):
         """
         This method return a Dictionary representing the Step. It will enable 

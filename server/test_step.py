@@ -5,6 +5,7 @@ Created on August 5th 2016
 
 import server.cardset as cardset
 import server.step as step
+from server.test_utilities import cardsetToString, stepToString
 
 def test_step_1():
     cartes = cardset.CardSet()
@@ -28,7 +29,7 @@ def test_step_1():
     steps.append(step.Step()) # we create step[1]
     
     steps[0].start(cartes)
-    print(steps[0].toString(cartes))
+    print(stepToString(steps[0], cartes))
     
     # Propose a set with the first 3 cards from the table
     print ("Suggest the 3 first cards on the Table as a valid set:")
@@ -61,7 +62,7 @@ def test_step_2():
     cartes = cardset.CardSet()
     cartes.randomize()
     print("Here is the randomized set of cards used for these tests:")
-    print(cartes.toString())
+    # print(cartes.toString())
     print()    
     # Second series of tests
     print()
@@ -78,7 +79,7 @@ def test_step_2():
     steps[0].start(cartes)
     print("We start a whole new game from there, with the same randomized set of cards.")
     print()
-    print(steps[0].toString(cartes))
+    print(stepToString(steps[0], cartes))
     
     # start iterating until the game stops
     counter = 0
@@ -86,7 +87,7 @@ def test_step_2():
         # displayStep(step[counter],cartes)
         steps.append(step.Step())
         steps[counter+1].fromPrevious(steps[counter],cartes)
-        print(steps[counter+1].toString(cartes))
+        print(stepToString(steps[counter+1], cartes))
         print("---------------------------------------------------------------------------------")
         counter += 1
     # The game should be ended here.
@@ -97,16 +98,16 @@ def test_step_2():
     print("We will now print a summary of the whole game :")
     print("----------------------------------------------------------------------------------")
     print()
-    print(cartes.toString())
+    print(cardsetToString(cartes))
     print()
     for s in steps:
-        print(s.toString(cartes))
+        print(stepToString(s, cartes))
     print()
     print("----------------------------------------------------------------------------------")
     print("We will now test the (de)serialization methods:")
     print("----------------------------------------------------------------------------------")
     print()
-    print(steps[10].toString(cartes))
+    print(stepToString(steps[10], cartes))
     print()
     print("This is the corresponding JSON:")
     stepJSON = steps[10].serialize()
@@ -119,35 +120,20 @@ def test_step_2():
     print()
     steps2 = step.Step()    
     steps2.start(cartes)
-    print(steps2.toString(cartes))
+    print(stepToString(steps2, cartes))
     print()
     print("and we now overwrite it with the JSON:")
     print()
     steps2.deserialize(stepJSON)
-    print(steps2.toString(cartes))
+    print(stepToString(steps2, cartes))
     print()
     print("----------------------------------------------------------------------------------")
     print("We do the same with Step 22:")
     print()
-    print(steps[22].toString(cartes))
+    print(stepToString(steps[22], cartes))
     print("----------------------------------------------------------------------------------")
     steps2.deserialize(steps[22].serialize())
-    print(steps2.toString(cartes))
-    print("----------------------------------------------------------------------------------")
-    print("We do the same with Step 23:")
-    print()
-    print(steps[23].toString(cartes))
-    print("----------------------------------------------------------------------------------")
-    steps2.deserialize(steps[23].serialize())
-    print(steps2.toString(cartes))
-    print("----------------------------------------------------------------------------------")
-    print("----------------------------------------------------------------------------------")
-    print("We do the same with Step 0:")
-    print()
-    print(steps[0].toString(cartes))
-    print("----------------------------------------------------------------------------------")
-    stepJSON = steps[0].serialize()
-    print(stepJSON)
+    print(stepToString(steps2, cartes))
     print("----------------------------------------------------------------------------------")
     
     
