@@ -36,16 +36,21 @@ class TestPlayers(unittest.TestCase):
         playersColl.drop()
     
     def list_test_players(self, playersColl):
-        vprint("Stored in the DB:")
         for pp in playersColl.find():
-            vprint("    "+str(pp))
+            vprint("      "+str(pp))
 
     def test__init__(self):
         """
         Test players.__init__ 
         """
         # setup the test data
-        players = Players(self.setup())
+        playerscoll = self.setup()
+        players = Players(playerscoll)
+        vbar()
+        vprint("Test data creation")
+        vprint("    We create 6 players in the DB:")
+        self.list_test_players(playerscoll)
+        vprint("    These will be used as test data for the whole test suite.")
         # self.list_test_players(players.playersColl)
         # check the number of players read from the database
         vbar()
@@ -53,6 +58,8 @@ class TestPlayers(unittest.TestCase):
         vbar()
         self.assertEqual(players.playersColl.count(), 6)
         # test if the db was properly read
+        vprint("We test that the __init__ will properly read 6 players from the DB, and check")
+        vprint("few details.")
         pp = players.playersColl.find_one({'nickname': "Fifi"})
         self.assertEqual(pp['totalScore'], 0)
         pp = players.playersColl.find_one({'nickname': "Zorro"})
@@ -91,7 +98,9 @@ class TestPlayers(unittest.TestCase):
         # setup the test data
         players = Players(self.setup())
         # removes a player
-        print("test_removePlayer")
+        vbar()
+        print("test players.removePlayer")
+        vbar()
         # self.list_test_players(players.playersColl)
         players.removePlayer("Donald")
         self.assertEqual(players.playersColl.count(), 5)
@@ -110,7 +119,9 @@ class TestPlayers(unittest.TestCase):
         gameID1 = ObjectId()
         gameID2 = ObjectId()
         # modifies few gameID values
-        print("test_setGameID")
+        vbar()
+        print("test players.setGameID")
+        vbar()
         self.assertTrue(players.setGameID("Daisy", gameID1))
         self.assertTrue(players.setGameID("Donald", gameID1))
         self.assertTrue(players.setGameID("Riri", gameID2))
@@ -138,7 +149,9 @@ class TestPlayers(unittest.TestCase):
         players.setGameID("Fifi", gameID2)
         players.setGameID("Loulou", gameID2)
         #self.players.playersColl.find_one_and_replace()
-        print("test_inGame")
+        vbar()
+        print("test players.inGame")
+        vbar()
         self.assertEqual(players.playersColl.count({'gameID': gameID1}), 2)
         self.assertEqual(players.playersColl.count({'gameID': gameID2}), 3)
         msg = ""
@@ -159,7 +172,9 @@ class TestPlayers(unittest.TestCase):
         # setup the test data
         players = Players(self.setup())
         # runs the test
-        print("test_updateTotalScore")
+        vbar()
+        print("test players.updateTotalScore")
+        vbar()
         # self.list_test_players(players.playersColl)
         self.assertTrue(players.updateTotalScore("Daisy", 5))
         self.assertEqual(players.playersColl.find_one({'nickname': "Daisy"})['totalScore'], 50)
@@ -174,7 +189,9 @@ class TestPlayers(unittest.TestCase):
         # setup the test data
         players = Players(self.setup())
         # runs the test
-        print("test_toString")
+        vbar()
+        print("test players.toString")
+        vbar()
         # self.list_test_players(players.playersColl)
         target  = "List of registered players:\n"
         target += "Daisy - (45) not playing currently\n"
@@ -201,7 +218,9 @@ class TestPlayers(unittest.TestCase):
         players.setGameID("Fifi", gameID2)
         players.setGameID("Loulou", gameID2)
         # runs the test
-        print("test_serialize")
+        vbar()
+        print("test players.serialize")
+        vbar()
         donald = players.playersColl.find_one({'nickname': "Donald"})
         mickey = players.playersColl.find_one({'nickname': "Mickey"})
         riri = players.playersColl.find_one({'nickname': "Riri"})
@@ -235,9 +254,8 @@ class TestPlayers(unittest.TestCase):
         players.setGameID("Loulou", gameID2)
         # runs the test
         vbar()
-        print("test_deserialize")
+        print("test players.deserialize")
         vbar()
-        vprint("We create 6 players: donald, Mickey, Riri, Fifi, Loulou and Daisy.")
         donald = players.playersColl.find_one({'nickname': "Donald"})
         mickey = players.playersColl.find_one({'nickname': "Mickey"})
         riri = players.playersColl.find_one({'nickname': "Riri"})
