@@ -3,12 +3,127 @@ Created on August 5th 2016
 @author: Thierry Souche
 '''
 
-import server.cardset as cardset
-import server.step as step
-from server.test_utilities import cardsetToString, stepToString
+import unittest
+
+from server.cardset import CardSet
+from server.step import Step
+from server.test_utilities import vprint, vbar, cardsetToString, stepToString, cardSets, stepDictStart
+
+class test_Step(unittest.TestCase):
+    """
+    This class is used to unit-test the Step class.
+    The setup method will load test data, and the teardown method will clean the
+    database.
+    """
+    
+    def setup(self):
+        # generate a reference Step, derived from the reference cardset #2.
+        cards = cardSets()[2]
+        step_ref = Step()
+        step_ref.start(cards)
+    
+    def teardown(self):
+        pass
+
+    def test__init__(self):
+        """
+        Test Step.__init__
+        """
+        # setup the test data
+        vbar()
+        vprint("We buil test data for testing the class Step")
+        step_test = Step()
+        # run the test
+        vbar()
+        vprint("Test Step.__init__")
+        vbar()
+        vprint("We build a new Step and check that all fields are empty.")
+        self.assertEqual(step_test.turnCounter, 0)
+        self.assertEqual(step_test.playerID, None)
+        self.assertEqual(step_test.playerName, "")
+        self.assertEqual(step_test.pick, [])
+        self.assertEqual(step_test.table, [])
+        self.assertEqual(step_test.used, [])
+        self.assertEqual(step_test.set, [])
+
+    def test_start(self):
+        """
+        Test Step.start
+        """
+        # setup the test data
+        cardset_ref = cardSets()
+        stepdict_ref = stepDictStart()
+        step_test = Step()
+        step_test.start(cardSets()[1])
+        
+        # find 12 cards where there is not Set, in order to put these cards in the 12 first
+        # positions and force the algorythm for the constitution of the first Table (in the 
+        # Start method, to grab a 12th card deeper in the pick.
+        cards = cardSets()[1]
+        count = 0
+        a = 0
+        while a < 70:
+            b = a + 1
+            while b < 71:
+                c = b + 1
+                while c < 72:
+                    d = c + 1
+                    while d < 73:
+                        e = d + 1
+                        while e < 74:
+                            f = e + 1
+                            while f < 75:
+                                g = f + 1
+                                while g < 76:
+                                    h = g + 1
+                                    while h < 77:
+                                        i = h + 1
+                                        while i < 78:
+                                            j = i + 1
+                                            while j < 79:
+                                                k = j + 1
+                                                while k < 80:
+                                                    l = k + 1
+                                                    while l < 81:
+                                                        if not cards.validSetExist([a,b,c,d,e,f,g,h,i,j,k,l]):
+                                                            print("Pour carset 1, le douze-plet gagnant est:")
+                                                            print([a,b,c,d,e,f,g,h,i,j,k,l])
+                                                            a=b=c=d=e=f=g=h=i=j=k=l=81
+                                                        else:
+                                                            count += 1
+                                                            if count > 50000:
+                                                                count = 0
+                                                                print("bof so far",[a,b,c,d,e,f,g,h,i,j,k,l])
+                                                        l += 1
+                                                    k += 1
+                                                j += 1
+                                            i += 1
+                                        h += 1
+                                    g += 1
+                                f += 1
+                            e += 1
+                        d += 1
+                    c += 1
+                b += 1
+            a +=1
+
+
+        # run the test
+        vbar()
+        vprint("Test Step.start")
+        vbar()
+        vprint("We build a new Step for each of the reference cardset, and we compare")
+        vprint("with the reference targets which are:")
+        vprint("  Carset 0 => step.start(Cardset 0) :")
+        vprint()
+        vprint("  Carset 1 => step.start(Cardset 1) :")
+        vprint("  Carset 2 => step.start(Cardset 2) :")
+        vprint("with the target.")
+
+
 
 def test_step_1():
-    cartes = cardset.CardSet()
+    cartes = CardSet()
     cartes.randomize()
     print("Here is the randomized set of cards used for these tests:")
     print(cartes.toString())

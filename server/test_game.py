@@ -10,7 +10,7 @@ from bson.objectid import ObjectId
 from server.cardset import CardSet
 from server.step import Step
 from server.game import Game
-from server.test_utilities import vprint, vbar, gameToString
+from server.test_utilities import vprint, vbar, gameToString, cardsDict, cardSets, cardsetToString, stepToString
 
 class test_Game(unittest.TestCase):
     """
@@ -40,7 +40,50 @@ class test_Game(unittest.TestCase):
         vbar()
         print("Test game.__init__")
         vbar()
+        # build the test data
+        dict_ref = cardsDict()[2]
+        step_ref = {'__class__': 'SetStep', 
+            'playerName': '', 'playerID': 'None', 'turnCounter': '0',
+            'table':
+                ['00-00', '01-01', '02-02', '03-03', '04-04', '05-05',
+                 '06-06', '07-07', '08-08', '09-09', '10-10', '11-11'],
+            'pick':
+                ['00-12', '01-13', '02-14', '03-15', '04-16', '05-17', 
+                 '06-18', '07-19', '08-20', '09-21', '10-22', '11-23', 
+                 '12-24', '13-25', '14-26', '15-27', '16-28', '17-29', 
+                 '18-30', '19-31', '20-32', '21-33', '22-34', '23-35', 
+                 '24-36', '25-37', '26-38', '27-39', '28-40', '29-41', 
+                 '30-42', '31-43', '32-44', '33-45', '34-46', '35-47', 
+                 '36-48', '37-49', '38-50', '39-51', '40-52', '41-53', 
+                 '42-54', '43-55', '44-56', '45-57', '46-58', '47-59', 
+                 '48-60', '49-61', '50-62', '51-63', '52-64', '53-65', 
+                 '54-66', '55-67', '56-68', '57-69', '58-70', '59-71', 
+                 '60-72', '61-73', '62-74', '63-75', '64-76', '65-77', 
+                 '66-78', '67-79', '68-80'],
+            'used': [],
+            'set': []
+            }
+
+        cards_ref = cardSets()
         partie = self.setup()
+        partie.cards.deserialize(dict_ref[2])
+        target  = "Generic details:\n"
+        target += "           gameID = " + str(partie.gameID) + "\n"
+        target += "     turn counter = 0\n"
+        target += "    game finished = False\n"
+        target += "Players:\n"
+        target += "    nickname: Donald - ("+str()+")\n"
+        target += "    nickname: Mickey - (57b758b4f9a2f310a56071d0)\n"
+        target += "    nickname: Dingo - (57b758b4f9a2f310a56071d1)\n"
+        target += "    nickname: Picsou - (57b758b4f9a2f310a56071d2)\n"
+        target += "Cards:\n"
+        target += cardsetToString(cards_ref[2])
+        print("build the target Step")
+        step = Step()
+        step.start(cards_ref[2])
+        print(step.serialize())
+        #     target += stepToString(ss, partie.cards)
+        # compare target data with the output of the 
         vprint("Builds up 4 players (Donald, Mickey, Dingo and Picsou):")
         vprint("    " + str(self.donald))
         vprint("    " + str(self.mickey))
@@ -50,7 +93,18 @@ class test_Game(unittest.TestCase):
         vprint()
         vprint(gameToString(partie))
     
-    
+    def test_getGameID(self):
+        """
+        Test game.getGameID
+        """
+        vbar()
+        print("Test game.__init__")
+        vbar()
+        # build the test data
+        partie = self.setup()
+        target = str(partie.gameID)
+        self.assertEqual(partie.getGameID(), target)
+        
 def test_game_obsolete():
     # First series of tests:
     print()
