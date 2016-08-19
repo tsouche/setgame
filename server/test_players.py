@@ -44,22 +44,21 @@ class TestPlayers(unittest.TestCase):
         Test players.__init__ 
         """
         # setup the test data
-        playerscoll = self.setup()
-        players = Players(playerscoll)
+        players = Players(self.setup())
         vbar()
         vprint("Test data creation")
         vprint("    We create 6 players in the DB:")
-        self.list_test_players(playerscoll)
+        self.list_test_players(players.playersColl)
         vprint("    These will be used as test data for the whole test suite.")
         # self.list_test_players(players.playersColl)
         # check the number of players read from the database
         vbar()
-        print("test players.__init__")
+        print("Test players.__init__")
         vbar()
         self.assertEqual(players.playersColl.count(), 6)
         # test if the db was properly read
-        vprint("We test that the __init__ will properly read 6 players from the DB, and check")
-        vprint("few details.")
+        vprint("We test that the __init__ will properly read 6 players from the DB, and")
+        vprint("check few details.")
         pp = players.playersColl.find_one({'nickname': "Fifi"})
         self.assertEqual(pp['totalScore'], 0)
         pp = players.playersColl.find_one({'nickname': "Zorro"})
@@ -71,14 +70,16 @@ class TestPlayers(unittest.TestCase):
         
     def test_addPlayer(self):
         """
-        Test the addPlayer method 
+        Test players.addPlayer 
         """
         # setup the test data
         players = Players(self.setup())
         # test that the new player is actually added both in memory and in DB
         vbar()
-        print("test players.addPlayer")
+        print("Test players.addPlayer")
         vbar()
+        vprint("We add a player and check that it is properly registered to the DB.")
+        vprint("We also check that querying a non-existing player will not work.")
         self.assertTrue(players.addPlayer("Dingo"))
         self.assertEqual(players.playersColl.count(), 7)
         # check the various fields of registered players
@@ -87,32 +88,33 @@ class TestPlayers(unittest.TestCase):
         # check that it is impossible to register a duplicate nickname
         self.assertFalse(players.addPlayer("Daisy"))
         self.assertEqual(players.playersColl.count(), 7)
-        # self.list_test_players(players.playersColl)
+        vprint("    We now have 7 players in the DB:")
+        self.list_test_players(players.playersColl)
         # end of the test
         self.teardown(players.playersColl)
 
     def test_removePlayer(self):
         """
-        Test the removePlayer method 
+        Test players.removePlayer 
         """
         # setup the test data
         players = Players(self.setup())
         # removes a player
         vbar()
-        print("test players.removePlayer")
+        print("Test players.removePlayer")
         vbar()
-        # self.list_test_players(players.playersColl)
         players.removePlayer("Donald")
         self.assertEqual(players.playersColl.count(), 5)
         pp = players.playersColl.find_one({'nickname': "Donald"})
         self.assertEqual(pp, None)
-        # self.list_test_players(players.playersColl)
+        vprint("We remove Donald and check that we have 5 players left.")
+        self.list_test_players(players.playersColl)
         # end of the test
         self.teardown(players.playersColl)
 
     def test_setGameID(self):
         """
-        Test the setGameID method 
+        Test players.setGameID 
         """
         # setup the test data
         players = Players(self.setup())
@@ -120,8 +122,13 @@ class TestPlayers(unittest.TestCase):
         gameID2 = ObjectId()
         # modifies few gameID values
         vbar()
-        print("test players.setGameID")
+        print("Test players.setGameID")
         vbar()
+        vprint("Test setGameID by forcing the 'gameID' of several players:")
+        vprint("    - Riri, Fifi and Loulou are part of a first game.")
+        vprint("    - Daisy and Donald are part of another game.")
+        vprint("    - Mickey does not play a game.")
+        vprint("  Here are the players:")
         self.assertTrue(players.setGameID("Daisy", gameID1))
         self.assertTrue(players.setGameID("Donald", gameID1))
         self.assertTrue(players.setGameID("Riri", gameID2))
@@ -132,12 +139,13 @@ class TestPlayers(unittest.TestCase):
         self.assertEqual(pp['gameID'], gameID1)
         pp = players.playersColl.find_one({'gameID': gameID2})
         self.assertEqual(pp['gameID'], gameID2)
+        self.list_test_players(players.playersColl)
         # end of the test
         self.teardown(players.playersColl)
             
     def test_inGame(self):
         """
-        Test the inGameID method 
+        Test players.inGame
         """
         # setup the test data
         players = Players(self.setup())
@@ -148,10 +156,12 @@ class TestPlayers(unittest.TestCase):
         players.setGameID("Riri", gameID2)
         players.setGameID("Fifi", gameID2)
         players.setGameID("Loulou", gameID2)
-        #self.players.playersColl.find_one_and_replace()
         vbar()
-        print("test players.inGame")
+        print("Test players.inGame")
         vbar()
+        vprint("We gather a list of the players being part of the fist game, append")
+        vprint("their names (sorted) and compare with 'DaisyDonald'.")
+        vprint("We do the same for the second game, and compare with 'FifiLoulouRiri'.")
         self.assertEqual(players.playersColl.count({'gameID': gameID1}), 2)
         self.assertEqual(players.playersColl.count({'gameID': gameID2}), 3)
         msg = ""
@@ -167,46 +177,53 @@ class TestPlayers(unittest.TestCase):
             
     def test_updateTotalScore(self):
         """
-        Test the updateTotalScore method 
+        Test players.updateTotalScore 
         """
         # setup the test data
         players = Players(self.setup())
         # runs the test
         vbar()
-        print("test players.updateTotalScore")
+        print("Test players.updateTotalScore")
         vbar()
+        vprint("We check that we can properly update the 'totalScore' with more points")
+        vprint("(typically updating the 'totalScore' after a game ended).")
         # self.list_test_players(players.playersColl)
         self.assertTrue(players.updateTotalScore("Daisy", 5))
         self.assertEqual(players.playersColl.find_one({'nickname': "Daisy"})['totalScore'], 50)
-        # self.list_test_players(players.playersColl)
+        self.list_test_players(players.playersColl)
         # end of the test
         self.teardown(players.playersColl)
             
     def test_toString(self):
         """
-        Test the toString method 
+        Test players.toString 
         """
         # setup the test data
         players = Players(self.setup())
+        gameID1 = ObjectId()
+        gameID2 = ObjectId()
+        self.assertTrue(players.setGameID("Donald", gameID1))
+        self.assertTrue(players.setGameID("Riri", gameID2))
         # runs the test
         vbar()
-        print("test players.toString")
+        print("Test players.toString")
         vbar()
+        vprint("We check that 'toString' produces the expected string which is:")
         # self.list_test_players(players.playersColl)
-        target  = "List of registered players:\n"
-        target += "Daisy - (45) not playing currently\n"
-        target += "Donald - (18) not playing currently\n"
+        target  = "Daisy - (45) not playing currently\n"
+        target += "Donald - (18) currently playing game #"+str(gameID1)+"\n"
         target += "Fifi - (0) not playing currently\n"
         target += "Loulou - (33) not playing currently\n"
         target += "Mickey - (30) not playing currently\n"
-        target += "Riri - (18) not playing currently\n"
+        target += "Riri - (18) currently playing game #"+str(gameID2)+"\n"
+        vprint(target)
         self.assertEqual(target, players.toString())
         # end of the test
         self.teardown(players.playersColl)
             
     def test_serialize(self):
         """
-        Test the serialize method 
+        Test players.serialize 
         """
         # setup the test data
         players = Players(self.setup())
@@ -217,10 +234,6 @@ class TestPlayers(unittest.TestCase):
         players.setGameID("Riri", gameID2)
         players.setGameID("Fifi", gameID2)
         players.setGameID("Loulou", gameID2)
-        # runs the test
-        vbar()
-        print("test players.serialize")
-        vbar()
         donald = players.playersColl.find_one({'nickname': "Donald"})
         mickey = players.playersColl.find_one({'nickname': "Mickey"})
         riri = players.playersColl.find_one({'nickname': "Riri"})
@@ -234,6 +247,12 @@ class TestPlayers(unittest.TestCase):
             {'playerID': str(loulou['_id']), 'nickname': "Loulou", 'totalScore': '33', 'gameID': str(loulou['gameID'])},
             {'playerID': str(mickey['_id']), 'nickname': "Mickey", 'totalScore': '30', 'gameID': str(mickey['gameID'])},
             {'playerID': str(riri['_id']), 'nickname': "Riri", 'totalScore': '18', 'gameID': str(riri['gameID'])}]}
+        # runs the test
+        vbar()
+        print("Test players.serialize")
+        vbar()
+        vprint("We compare the result of the 'serialize' method with the target which is:")
+        vprint(target)
         Dict = players.serialize()
         self.assertEqual(target, Dict)
         # end of the test
@@ -241,7 +260,7 @@ class TestPlayers(unittest.TestCase):
         
     def test_deserialize(self):
         """
-        Test the deserialize method 
+        Test players.deserialize 
         """
         # setup the test data
         players = Players(self.setup())
@@ -252,10 +271,6 @@ class TestPlayers(unittest.TestCase):
         players.setGameID("Riri", gameID2)
         players.setGameID("Fifi", gameID2)
         players.setGameID("Loulou", gameID2)
-        # runs the test
-        vbar()
-        print("test players.deserialize")
-        vbar()
         donald = players.playersColl.find_one({'nickname': "Donald"})
         mickey = players.playersColl.find_one({'nickname': "Mickey"})
         riri = players.playersColl.find_one({'nickname': "Riri"})
@@ -270,9 +285,15 @@ class TestPlayers(unittest.TestCase):
             {'playerID': str(mickey['_id']), 'nickname': "Mickey", 'totalScore': '30', 'gameID': str(mickey['gameID'])},
             {'playerID': str(riri['_id']), 'nickname': "Riri", 'totalScore': '18', 'gameID': str(riri['gameID'])}]}
         players.deserialize(target)
-        # self.list_test_players(players.playersColl)
+        # runs the test
+        vbar()
+        print("Test players.deserialize")
+        vbar()
+        vprint("We erase and rebuilt the DB thanks to the 'deserialize' method, and we")
+        vprint("then compare the 'serialized' image of this new DB with the target,")
+        vprint("which is:")
+        vprint(target)
         result = players.serialize()
-        # self.list_test_players(players.playersColl)
         self.assertEqual(target, result)
         # end of the test
         self.teardown(players.playersColl)

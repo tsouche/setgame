@@ -79,10 +79,8 @@ class Players:
         """
         This method returns a string representing the Players.
         """
-        if self.playersColl.count() == 0:
-            msg = "No player registered yet"
-        else:
-            msg = "List of registered players:\n"
+        msg = ""
+        if self.playersColl.count() > 0:
             for pp in self.playersColl.find({}).sort('nickname'):
                 msg += pp['nickname'] + " - (" + str(pp['totalScore']) + ")"
                 if pp['gameID'] == None:
