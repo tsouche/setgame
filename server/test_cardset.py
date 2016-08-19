@@ -5,7 +5,7 @@ Created on August 2nd 2016
 
 import unittest
 from server.cardset import CardSet
-from server.constants import displayCardList
+from server.test_utilities import displayCardList, vprint, vbar, cardsList, cardsDict, cardSets
 
 class test_CardSet(unittest.TestCase):
     """
@@ -15,28 +15,8 @@ class test_CardSet(unittest.TestCase):
     """
 
     def setup(self):
-
-        def readDictionary(Dict):
-            cards = []
-            for i in range(0,81):
-                cards.append([0,0,0,0])
-            for code in Dict['cards']:
-                i = int(code[:2])
-                c = int(code[3])
-                s = int(code[4])
-                f = int(code[5])
-                n = int(code[6])
-                cards[i] = [c,s,f,n]
-            return cards
-        
-        # initializes test data.
-        Dict0 = {'cards': ['00-0000', '01-0001', '02-0002', '03-0010', '04-0011', '05-0012', '06-0020', '07-0021', '08-0022', '09-0100', '10-0101', '11-0102', '12-0110', '13-0111', '14-0112', '15-0120', '16-0121', '17-0122', '18-0200', '19-0201', '20-0202', '21-0210', '22-0211', '23-0212', '24-0220', '25-0221', '26-0222', '27-1000', '28-1001', '29-1002', '30-1010', '31-1011', '32-1012', '33-1020', '34-1021', '35-1022', '36-1100', '37-1101', '38-1102', '39-1110', '40-1111', '41-1112', '42-1120', '43-1121', '44-1122', '45-1200', '46-1201', '47-1202', '48-1210', '49-1211', '50-1212', '51-1220', '52-1221', '53-1222', '54-2000', '55-2001', '56-2002', '57-2010', '58-2011', '59-2012', '60-2020', '61-2021', '62-2022', '63-2100', '64-2101', '65-2102', '66-2110', '67-2111', '68-2112', '69-2120', '70-2121', '71-2122', '72-2200', '73-2201', '74-2202', '75-2210', '76-2211', '77-2212', '78-2220', '79-2221', '80-2222']}
-        Dict1 = {'cards': ['00-0202', '01-2010', '02-0010', '03-0221', '04-1001', '05-1212', '06-1022', '07-0001', '08-2001', '09-2111', '10-0002', '11-1202', '12-1012', '13-1120', '14-1101', '15-2202', '16-2102', '17-2020', '18-0120', '19-0212', '20-2221', '21-2201', '22-1112', '23-2000', '24-1010', '25-2200', '26-0111', '27-0101', '28-2021', '29-0110', '30-1020', '31-1111', '32-0021', '33-2210', '34-0011', '35-1211', '36-0210', '37-2112', '38-2002', '39-2222', '40-1222', '41-0112', '42-0222', '43-0211', '44-0102', '45-0121', '46-1200', '47-1201', '48-2012', '49-1100', '50-2022', '51-1220', '52-1102', '53-1210', '54-1221', '55-0022', '56-0020', '57-0200', '58-2100', '59-1121', '60-0201', '61-1000', '62-1021', '63-2120', '64-0220', '65-0012', '66-2101', '67-2122', '68-2011', '69-1110', '70-2220', '71-2211', '72-0100', '73-1002', '74-1122', '75-2121', '76-2212', '77-0122', '78-0000', '79-2110', '80-1011']}
-        Dict2 = {'cards': ['00-2202', '01-0122', '02-2200', '03-0200', '04-0120', '05-1200', '06-2021', '07-2120', '08-0212', '09-1201', '10-1001', '11-0000', '12-2100', '13-2222', '14-1111', '15-1000', '16-2022', '17-1012', '18-1221', '19-0010', '20-1011', '21-0201', '22-2201', '23-1220', '24-0012', '25-2011', '26-2001', '27-0211', '28-2220', '29-1202', '30-0011', '31-1101', '32-0102', '33-0100', '34-1010', '35-1122', '36-2210', '37-0022', '38-1110', '39-2221', '40-2101', '41-0001', '42-2211', '43-1112', '44-1102', '45-2002', '46-1002', '47-0112', '48-1121', '49-1222', '50-2012', '51-1211', '52-1120', '53-0020', '54-0101', '55-2000', '56-0210', '57-2010', '58-1022', '59-0110', '60-0111', '61-2102', '62-2212', '63-0002', '64-1212', '65-0021', '66-2020', '67-0221', '68-1020', '69-0121', '70-1210', '71-2122', '72-2112', '73-2121', '74-0220', '75-0202', '76-2110', '77-0222', '78-1021', '79-2111', '80-1100']}
-        cards0 = readDictionary(Dict0)
-        cards1 = readDictionary(Dict1)
-        cards2 = readDictionary(Dict2)
-        return [cards0, cards1, cards2]
+        # initializes test data
+        return cardSets()
     
     def teardown(self):
         pass
@@ -46,32 +26,92 @@ class test_CardSet(unittest.TestCase):
         Test the __init__ method
         """
         # setup the test data
-        cards_ref = self.setup()[0]
+        cards_ref = self.setup()
+        # this 'print' section is run only once for the test suite
+        vprint()
+        vbar()
+        vprint("Here are the test data:")
+        vbar()
+        vprint("Test Cardset 0:")
+        vprint(displayCardList(cards_ref[0], cardsList(81), 6,"    "))
+        vprint("Test Cardset 1:")
+        vprint(displayCardList(cards_ref[1], cardsList(81), 6,"    "))
+        vprint("Test Cardset 2:")
+        vprint(displayCardList(cards_ref[2], cardsList(81), 6,"    "))
         # runs the test
-        cardset = CardSet()
-        self.assertEqual(cardset.cards, cards_ref)
+        vbar()
+        print("Test cardset.__init__")
+        vbar()
+        vprint("Newly generated cardset should be equal to Cardset 0:")
+        cards_test = self.setup()[0]
+        vprint("New Cardset:")
+        vprint(displayCardList(cards_test, cardsList(81), 6,"    "))
+        self.assertEqual(cards_test.cards, cards_ref[0].cards)
         # end of the test
         self.teardown()
-        
-    def test_switch(self):
+
+    def test_getCardCode(self):
         """
-        Test the switch method
+        Test the getCardCode method
         """
         # setup the test data
-        cards = self.setup()
+        cards_ref = self.setup()
         # runs the test
-        
+        vbar()
+        print("Test cardset.getCardsCode")
+        vbar()
+        vprint("We will compare card codes for various cards in Cardset 0 and 2:")
+        vprint("From Cardset 0:")
+        vprint("    Cardcode of card  0 should be '0000'")
+        self.assertEqual(cards_ref[0].getCardCode(0), "0000")
+        vprint("    Cardcode of card 39 should be '1110'")
+        self.assertEqual(cards_ref[0].getCardCode(39), "1110")
+        vprint("    Cardcode of card 61 should be '2021'")
+        self.assertEqual(cards_ref[0].getCardCode(61), "2021")
+        vprint("From Cardset 2:")
+        vprint("    Cardcode of card 19 should be '0010'")
+        self.assertEqual(cards_ref[2].getCardCode(19), "0010")
+        vprint("    Cardcode of card 27 should be '0211'")
+        self.assertEqual(cards_ref[2].getCardCode(27), "0211")
+        vprint("    Cardcode of card 76 should be '2212'")
+        self.assertEqual(cards_ref[2].getCardCode(76), "2110")
         # end of the test
         self.teardown()
+
         
     def test_randomize(self):
         """
         Test the randomize method
         """
         # setup the test data
-        cards = self.setup()
+        cards_ref = self.setup()
         # runs the test
-        
+        vbar()
+        print("Test cardset.randomize")
+        vbar()
+        # test switching cards on a not randomized game
+        vprint("Here is the Cardset not yet randomized:")
+        cards_test = CardSet()
+        vprint(displayCardList(cards_test, cardsList(81), 6,"    "))
+        cards_test.randomize()
+        vprint("Here is the same Cardset, after randomize:")
+        vprint(displayCardList(cards_test, cardsList(81), 6,"    "))
+        val = 0
+        for i in range(0,81):
+            if cards_ref[0].cards[i] == cards_test.cards[i]:
+                val += 1
+        vprint("There still are "+str(val)+" cards in their original rank.")
+        vprint("Target of the test is to get below 5, as a metrix of 'well randomized' cardset.")
+        total = 0.0
+        for i in range(0,10):
+            cards_test = CardSet()
+            cards_test.randomize()
+            for j in range(0,81):
+                if cards_ref[0].cards[j] == cards_test.cards[j]:
+                    total += 1.0
+        average = total / 10.0
+        vprint("We now do it 10 times and the average is: "+str(average))
+        self.assertTrue(average < 5.0)
         # end of the test
         self.teardown()
         
@@ -80,9 +120,25 @@ class test_CardSet(unittest.TestCase):
         Test the setIsValid method
         """
         # setup the test data
-        cards = self.setup()
+        cards_test = self.setup()
         # runs the test
-        
+        vbar()
+        print("Test cardset.setIsValid")
+        vbar()
+        # detect set in non-randomized cards
+        vprint("From Cardset 0:")
+        vprint("   "+displayCardList(cards_test[0], [0,1,2], 3)+" is a valid Set")
+        self.assertTrue(cards_test[0].setIsValid(0,1,2))
+        vprint("   "+displayCardList(cards_test[0], [1,3,8], 3)+" is a valid Set")
+        self.assertTrue(cards_test[0].setIsValid(1,3,8))
+        vprint("   "+displayCardList(cards_test[0], [0,4,9], 3)+" is not a valid Set")
+        self.assertFalse(cards_test[0].setIsValid(0,4,9))
+        # detect set in randomized cards
+        vprint("From Cardset 2:")
+        vprint("   "+displayCardList(cards_test[2], [0,3,9], 3)+" is a valid Set")
+        self.assertTrue(cards_test[2].setIsValid(0,3,9))
+        vprint("   "+displayCardList(cards_test[2], [0,3,8], 3)+" is not a valid Set")
+        self.assertFalse(cards_test[2].setIsValid(0,3,8))
         # end of the test
         self.teardown()
         
@@ -91,31 +147,22 @@ class test_CardSet(unittest.TestCase):
         Test the validSetExists method
         """
         # setup the test data
-        cards = self.setup()
+        cards_ref = self.setup()
         # runs the test
-        
-        # end of the test
-        self.teardown()
-        
-    def test_getCardCode(self):
-        """
-        Test the getCardCode method
-        """
-        # setup the test data
-        cards = self.setup()
-        # runs the test
-        
-        # end of the test
-        self.teardown()
-        
-    def test_displayCardList(self):
-        """
-        Test the displayCardList method
-        """
-        # setup the test data
-        cards = self.setup()
-        # runs the test
-        
+        vbar()
+        print("Test cardset.validSetExists")
+        vbar()
+        vprint("We test the existence of a valid Set of 3 cads in a list of cards.")
+        cardslist = [0,1,2,3,4,5,6,7,8,9,10,11]
+        vprint("From Cardset 0, we choose:")
+        vprint(displayCardList(cards_ref[0], cardslist, 6, "    "))
+        vprint("    > a set exist and should be detected")
+        self.assertTrue(cards_ref[0].validSetExist(cardslist))
+        cardslist = [0,1,3,5,9,10]
+        vprint("From Cardset 0, we choose:")
+        vprint(displayCardList(cards_ref[0], cardslist, 6, "    "))
+        vprint("    > no set exist")
+        self.assertFalse(cards_ref[0].validSetExist(cardslist))
         # end of the test
         self.teardown()
         
@@ -124,9 +171,22 @@ class test_CardSet(unittest.TestCase):
         Test the serialize method
         """
         # setup the test data
-        cards = self.setup()
+        dict_ref = cardsDict()
+        cards_ref = self.setup()
         # runs the test
-        
+        vbar()
+        print("Test cardset.serialize")
+        vbar()
+        dict_test_0 = cards_ref[0].serialize()
+        dict_test_1 = cards_ref[1].serialize()
+        dict_test_2 = cards_ref[2].serialize()
+        vprint("We compare the reference cardset dictionary with the one produced by serialize method:")
+        vprint("    Cardset 0: "+str(dict_test_0))
+        vprint("    Cardset 1: "+str(dict_test_1))
+        vprint("    Cardset 2: "+str(dict_test_2))
+        self.assertEqual(dict_ref[0], dict_test_0)
+        self.assertEqual(dict_ref[1], dict_test_1)
+        self.assertEqual(dict_ref[2], dict_test_2)
         # end of the test
         self.teardown()
         
@@ -135,119 +195,40 @@ class test_CardSet(unittest.TestCase):
         Test the deserialize method
         """
         # setup the test data
-        cards = self.setup()
+        dict_ref = cardsDict()
+        cards_ref = self.setup()
+        cards_test = []
+        cards_test.append(CardSet())
+        cards_test.append(CardSet())
+        cards_test.append(CardSet())
         # runs the test
+        vbar()
+        print("Test cardset.deserialize")
+        vbar()
+        vprint("We compare cardsets created from reference dictionaries with reference")
+        vprint("cardsets.")
+        vprint("  > Cardset 0: reference followed by test (first 6 cards only)")
+        cards_test[0].deserialize(dict_ref[0])
+        vprint(displayCardList(cards_ref[0], cardsList(6), 6, "     "))
+        vprint(displayCardList(cards_test[0], cardsList(6), 6, "     "))
+        self.assertEqual(cards_test[0].cards, cards_ref[0].cards)
+        vprint("  > Cardset 1: reference followed by test cardset (first 6 cards only)")
+        cards_test[1].deserialize(dict_ref[1])
+        vprint(displayCardList(cards_ref[1], cardsList(6), 6, "     "))
+        vprint(displayCardList(cards_test[1], cardsList(6), 6, "     "))
+        self.assertEqual(cards_test[1].cards, cards_ref[1].cards)
+        vprint("  > Cardset 2: reference followed by test cardset (first 6 cards only)")
+        cards_test[2].deserialize(dict_ref[2])
+        vprint(displayCardList(cards_ref[2], cardsList(6), 6, "     "))
+        vprint(displayCardList(cards_test[2], cardsList(6), 6, "     "))
+        self.assertEqual(cards_test[2].cards, cards_ref[2].cards)
         
         # end of the test
         self.teardown()
         
 
     
-if __name__ == "__main__":    # the rest of the code will execute only in case the file is run as main module.
+if __name__ == '__main__':
 
-    # main test execution
-    input("Etes-vous prêt à commencer les test ?")
-
-    # populate a new card set and display these cards in their original order.
-    # this aims at testing the initialisation and displayCodes functions
-    cartes = CardSet()
-    # run various tests
-    print("Un jeu est initialisé :")
-    print(cartes.toString())
-    print()
-    cardsetJSON = cartes.serialize()
-    print("JSON = "+str(cardsetJSON))
-    # Test the 'setIsValid' method.
-    def printTestSetIsValid(i,j,k):
-        print("We now test the ability to check the validity of a set of 3 cards :")
-        msg = "    - we choose cards "
-        msg = msg + str(i).zfill(2) + " (" + cartes.getCardCode(i) + "),"
-        msg = msg + str(j).zfill(2) + " (" + cartes.getCardCode(j) + "),"
-        msg = msg + str(k).zfill(2) + " (" + cartes.getCardCode(k) + ")." 
-        print(msg)
-        msg = "    - algorithm states that this set is "
-        if not cartes.setIsValid(i,j,k):
-            msg = msg + "NOT "
-        msg = msg + "valid."
-        print(msg)
-    printTestSetIsValid(0, 1, 2)
-    print()
-    printTestSetIsValid(0, 1, 1)
-    print()
-    printTestSetIsValid(0, 1, 5)
-    print()
-    # Test the 'validSetExist' method.
-    def printTestValidSetExists(index):
-        print("We chose the following cards:", index)
-        for i in index:
-            print("    - card"+str(i).zfill(2)+" ("+cartes.getCardCode(i)+")")
-        msg = "There is "
-        if cartes.validSetExist(index):
-            msg += "at least one "
-        else:
-            msg += "no "
-        msg += "valid set of 3 cards in the series of cards"
-        print(msg)
-        print()
-        
-    print("We will now test the ability to state if a valid set exists in a set of cards")
-    print()
-    printTestValidSetExists([0,1,2,3,4,5,6,7,8,9,10,11])
-    printTestValidSetExists([0,1,3,5,9,10])
-
-    # Test the 'switch' method.
-    print("We now switch cards 0 and 2 :")
-    cartes.switch(0,2)
-    print(cartes.toString())
-    print()
-
-    # Test the 'switch' method.
-    print("We now switch cards 0 and 80 :")
-    cartes.switch(0,80)
-    print(cartes.toString())
-    print()
-    # randomise the whole set and display the result - test the randomize function...
-    cartes.randomize()
-    print("Le jeu est mélangé :")
-    print(cartes.toString())
-    print()
-    # ... and again.
-    cartes.randomize()
-    print("... et encore.")
-    print(cartes.toString())
-    print()
-    # tests the "getCardCode" method
-    print("We use 'getCardCode' to display the first 4 cards:")
-    print("Card 0: ",cartes.getCardCode(0))
-    print("Card 1: ",cartes.getCardCode(1))
-    print("Card 2: ",cartes.getCardCode(2))
-    print("Card 3: ",cartes.getCardCode(3))
-    print()
-    # tests the "cardLitteral" method
-    print("We use 'cardToString' to display the first 4 cards:")
-    print(cartes.cardToString(0))
-    print(cartes.cardToString(1))
-    print(cartes.cardToString(2))
-    print(cartes.cardToString(3))
-    print()
-    # test the serialization of a cardset
-    print("Now we (de)serialize the cardset (usefull to exchange/save information:")
-    print()
-    cardsetJSON = cartes.serialize()
-    print("JSON = "+str(cardsetJSON))
-    print()
-    print("We will now use the JSON produced here to overwrite a cardset:")
-    print()
-    del(cartes)
-    cartes = CardSet()
-    print("Here is a brand new cardset:")
-    print(cartes.toString())
-    print()
-    print("Here it is after we overwrite it:")
-    cartes.deserialize(cardsetJSON)
-    print(cartes.toString())
-    print()
-    # end of the tests
-    input("press ENTER to close this test program...")
-
+    unittest.main()
 

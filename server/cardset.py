@@ -32,29 +32,18 @@ class CardSet:
                     for number in acceptedValues:
                         self.cards.append([color, shape, filling, number])
 
-    def switch(self, i, j):
-        """ This function permutes the cards i and j within the set.
-            We assume that i and j are integers in the [0,63] range.
+    def getCardCode(self, i):
         """
-        cardi = self.cards[i]
-        cardj = self.cards[j]
-        temp = []
-        # stores the j values into a temporary variable
-        temp.append(cardj[0])
-        temp.append(cardj[1])
-        temp.append(cardj[2])
-        temp.append(cardj[3])
-        # copy the i card into the J card
-        cardj[0] = cardi[0]     # color
-        cardj[1] = cardi[1]     # shape
-        cardj[2] = cardi[2]     # filling
-        cardj[3] = cardi[3]     # number
-        # copy the temp card into the i card
-        cardi[0] = temp[0]      # color
-        cardi[1] = temp[1]      # shape
-        cardi[2] = temp[2]      # filling
-        cardi[3] = temp[3]      # number
-
+        This method return the 4 values (from 0 to 2) describing the color, 
+        shape, filling and number of the card 'i' in the cardset list.
+        This function is mostly interesting for test purpose.
+        """
+        code = "----"
+        if i>=0:
+            card = self.cards[i]
+            code = str(card[0])+str(card[1])+str(card[2])+str(card[3])
+        return code
+       
     def randomize(self):
         """
         Randomizes the card set, which is supposed to be a valid 81 cards set.
@@ -63,8 +52,8 @@ class CardSet:
         for i in range(0, cmax*10):
             a = randint(1,cmax)-1
             b = randint(1,cmax)-1
-            self.switch(a, b)
-            i += 1
+            # switches the two cards' values
+            self.cards[a], self.cards[b] = self.cards[b], self.cards[a]
 
     def setIsValid(self, i, j, k):
         """
@@ -120,18 +109,6 @@ class CardSet:
                 i += 1
         return exist
  
-    def getCardCode(self, i):
-        """
-        This method return the 4 values (from 0 to 2) describing the color, 
-        shape, filling and number of the card 'i' in the cardset list.
-        This function is mostly interesting for test purpose.
-        """
-        code = "----"
-        if i>=0:
-            card = self.cards[i]
-            code = str(card[0])+str(card[1])+str(card[2])+str(card[3])
-        return code
-   
     def serialize(self):
         """
         This method return a Dictionary describing the cards in their respective

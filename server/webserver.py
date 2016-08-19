@@ -136,7 +136,6 @@ class Game():
             
         @post('/register/<string>')  # with nickname as parameter
         def register(self, string):
-            p = Player(string)
             pass
 
         @get('/enlist')  # with no parameter
@@ -144,17 +143,15 @@ class Game():
             self.players
             pass
 
-        @route('/gameid/game_status') # with 1 parameter: 'gameid'
-        def gameStatus(self):
+        @get('/<gameid>/game_status') # with 1 parameter: 'gameid'
+        def gameStatus(self,gameid_str):
             pass
             
-        @route('/gameid/full_details') # with 1 parameter: 'gameid'
-        def fullDetails(self):
+        @get('/<gameid>/full_details') # with 1 parameter: 'gameid'
+        def fullDetails(self,gameid_str):
             pass
-        @route('/gameid/updated_detail/') # with 2 parameters: 'gameid', 'turncounter'
-        def updatedDetails(self):
-            pass
-        @post('/gameid/set')
+
+        @post('/<gameid>/set')
         def collectSetProposal(self):
             pass
 
