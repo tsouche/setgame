@@ -60,7 +60,6 @@ def cardSets():
             cc[k] = [c,s,f,n]
     return cards_test
 
-    
 def displayCardList(cardset, cardsList, wide, tab=""):
     """
     This method get as arguments:

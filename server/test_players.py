@@ -8,6 +8,7 @@ import pymongo
 from bson.objectid import ObjectId
 import server.constants as constants
 from server.players import Players
+from server.test_utilities import vprint, vbar
 
 
 class TestPlayers(unittest.TestCase):
@@ -35,20 +36,21 @@ class TestPlayers(unittest.TestCase):
         playersColl.drop()
     
     def list_test_players(self, playersColl):
-        if constants.verbose:
-            print("Stored in the DB:")
-            for pp in playersColl.find():
-                print("    "+str(pp))
+        vprint("Stored in the DB:")
+        for pp in playersColl.find():
+            vprint("    "+str(pp))
 
     def test__init__(self):
         """
-        Test the __init__ method 
+        Test players.__init__ 
         """
         # setup the test data
         players = Players(self.setup())
         # self.list_test_players(players.playersColl)
         # check the number of players read from the database
-        print("test__init__")
+        vbar()
+        print("test players.__init__")
+        vbar()
         self.assertEqual(players.playersColl.count(), 6)
         # test if the db was properly read
         pp = players.playersColl.find_one({'nickname': "Fifi"})
@@ -67,7 +69,9 @@ class TestPlayers(unittest.TestCase):
         # setup the test data
         players = Players(self.setup())
         # test that the new player is actually added both in memory and in DB
-        print("test_addPlayer")
+        vbar()
+        print("test players.addPlayer")
+        vbar()
         self.assertTrue(players.addPlayer("Dingo"))
         self.assertEqual(players.playersColl.count(), 7)
         # check the various fields of registered players
@@ -230,7 +234,10 @@ class TestPlayers(unittest.TestCase):
         players.setGameID("Fifi", gameID2)
         players.setGameID("Loulou", gameID2)
         # runs the test
+        vbar()
         print("test_deserialize")
+        vbar()
+        vprint("We create 6 players: donald, Mickey, Riri, Fifi, Loulou and Daisy.")
         donald = players.playersColl.find_one({'nickname': "Donald"})
         mickey = players.playersColl.find_one({'nickname': "Mickey"})
         riri = players.playersColl.find_one({'nickname': "Riri"})
@@ -257,3 +264,4 @@ class TestPlayers(unittest.TestCase):
 if __name__ == '__main__':
 
     unittest.main()
+

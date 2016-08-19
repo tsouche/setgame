@@ -19,7 +19,7 @@ class CardSet:
         - a method enables to generate a whole set, with 81 cards
         - a method checks that 3 cards compose a valid 'set'
         - a method checks that there is at least one valid 'set' in a subset 
-            of cards
+            of cards.
     """
     
     def __init__(self):

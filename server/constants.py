@@ -14,4 +14,3 @@ pointsPerSet = 3
 mongoDBserver = 'localhost'
 mongoDBport = 27017
 
-

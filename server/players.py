@@ -10,7 +10,7 @@ class Players:
     """
     This class manages the players: it stores and manipulate
     - nickname (identifying uniquely the player)
-    - totalScore = cumulated points over time
+    - totalScore = accumulated points over time
     - gameID = id of the game in which the player is currently engaged
     The data are stored in a MongoDB.  
     """

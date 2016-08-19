@@ -15,7 +15,7 @@ class test_CardSet(unittest.TestCase):
     """
 
     def setup(self):
-        # initializes test data
+        # initializes test data = create 3 cardsets
         return cardSets()
     
     def teardown(self):
