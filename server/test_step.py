@@ -4,10 +4,13 @@ Created on August 5th 2016
 '''
 
 import unittest
+from bson.objectid import ObjectId
 
 from server.cardset import CardSet
 from server.step import Step
-from server.test_utilities import vprint, vbar, cardsetToString, stepToString, cardSets, stepDictStart
+from server.test_utilities import vprint, vbar, cardsetToString, stepToString
+from server.test_utilities import refCardsets_Dict, refCardsets
+from server.test_utilities import refStepStarts_Dict, refStepStarts, refStepStartBis, refStepSecond
 
 class test_Step(unittest.TestCase):
     """
@@ -17,13 +20,23 @@ class test_Step(unittest.TestCase):
     """
     
     def setup(self):
-        # generate a reference Step, derived from the reference cardset #2.
-        cards = cardSets()[2]
-        step_ref = Step()
-        step_ref.start(cards)
+        # generate reference test data with 3 couples (cardset + step)
+        cardsets_ref = refCardsets()
+        stepStarts_ref = refStepStarts()
+        return [cardsets_ref, stepStarts_ref]
     
     def teardown(self):
         pass
+
+    def step_equality(self, step1, step2):
+        test_equal = (int(step1.turnCounter) == int(step2.turnCounter))
+        test_equal = test_equal and (step1.playerID    == step2.playerID   )
+        test_equal = test_equal and (step1.playerName  == step2.playerName )
+        test_equal = test_equal and (step1.pick        == step2.pick       )
+        test_equal = test_equal and (step1.table       == step2.table      )
+        test_equal = test_equal and (step1.used        == step2.used       )
+        test_equal = test_equal and (step1.set         == step2.set        )
+        return test_equal
 
     def test__init__(self):
         """
@@ -51,74 +64,156 @@ class test_Step(unittest.TestCase):
         Test Step.start
         """
         # setup the test data
-        cardset_ref = cardSets()
-        stepdict_ref = stepDictStart()
-        step_test = Step()
-        step_test.start(cardSets()[1])
-        
-        # find 12 cards where there is not Set, in order to put these cards in the 12 first
-        # positions and force the algorythm for the constitution of the first Table (in the 
-        # Start method, to grab a 12th card deeper in the pick.
-        cards = cardSets()[1]
-        count = 0
-        a = 0
-        while a < 70:
-            b = a + 1
-            while b < 71:
-                c = b + 1
-                while c < 72:
-                    d = c + 1
-                    while d < 73:
-                        e = d + 1
-                        while e < 74:
-                            f = e + 1
-                            while f < 75:
-                                g = f + 1
-                                while g < 76:
-                                    h = g + 1
-                                    while h < 77:
-                                        i = h + 1
-                                        while i < 78:
-                                            j = i + 1
-                                            while j < 79:
-                                                k = j + 1
-                                                while k < 80:
-                                                    l = k + 1
-                                                    while l < 81:
-                                                        if not cards.validSetExist([a,b,c,d,e,f,g,h,i,j,k,l]):
-                                                            print("Pour carset 1, le douze-plet gagnant est:")
-                                                            print([a,b,c,d,e,f,g,h,i,j,k,l])
-                                                            a=b=c=d=e=f=g=h=i=j=k=l=81
-                                                        else:
-                                                            count += 1
-                                                            if count > 50000:
-                                                                count = 0
-                                                                print("bof so far",[a,b,c,d,e,f,g,h,i,j,k,l])
-                                                        l += 1
-                                                    k += 1
-                                                j += 1
-                                            i += 1
-                                        h += 1
-                                    g += 1
-                                f += 1
-                            e += 1
-                        d += 1
-                    c += 1
-                b += 1
-            a +=1
-
-
+        [cardsets_ref, stepStart_ref] = self.setup()
         # run the test
         vbar()
         vprint("Test Step.start")
         vbar()
         vprint("We build a new Step for each of the reference cardset, and we compare")
         vprint("with the reference targets which are:")
-        vprint("  Carset 0 => step.start(Cardset 0) :")
-        vprint()
-        vprint("  Carset 1 => step.start(Cardset 1) :")
-        vprint("  Carset 2 => step.start(Cardset 2) :")
-        vprint("with the target.")
+        stepStarts_test = []
+        stepStarts_test.append(Step())
+        stepStarts_test.append(Step())
+        stepStarts_test.append(Step())
+        stepStarts_test[0].start(cardsets_ref[0])
+        stepStarts_test[1].start(cardsets_ref[1])
+        stepStarts_test[2].start(cardsets_ref[2])
+        vprint("Cardset 0: the step should be equal to:")
+        vprint(stepToString(stepStart_ref[0], cardsets_ref[0], "  "))
+        self.assertTrue(self.step_equality(stepStart_ref[0], stepStarts_test[0]))
+        vprint("Cardset 1: the step should be equal to:")
+        vprint(stepToString(stepStart_ref[1], cardsets_ref[1], "  "))
+        self.assertTrue(self.step_equality(stepStart_ref[0], stepStarts_test[0]))
+        vprint("Cardset 2: the step should be equal to:")
+        vprint(stepToString(stepStart_ref[2], cardsets_ref[2], "  "))
+        self.assertTrue(self.step_equality(stepStart_ref[0], stepStarts_test[0]))
+
+    def test_validateSetFromTable(self):
+        """
+        Test Step.validateSetFromTable
+        """
+        # setup the test data
+        [cardsets_ref, stepStart_ref] = self.setup()
+        [player, sets, stepStartBis_ref] = refStepStartBis()
+        # run the test
+        vbar()
+        vprint("Test Step.validateSetFromTable")
+        vbar()
+        vprint("We run the method on two reference steps, and it should return")
+        vprint("known answers each time.")
+        # basic test, no need for additional test data
+        vprint("  > We will check few invalid Sets to see if they are rejected")
+        vprint("    - Cardset 0 / step 0 - without populating:")
+        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], [0,1,3])
+        self.assertFalse(result)
+        vprint("        [ 0, 1, 3] should be False => " + str(result))
+        vprint("    - Cardset 1 / step 1 - without populating:")
+        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], [0,1,2])
+        self.assertFalse(result)
+        vprint("        [ 0, 1, 2] should be False => " + str(result))
+        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], [9,10,11])
+        self.assertFalse(result)
+        vprint("        [ 9,10,11] should be False => " + str(result))
+        vprint("  > we will check if valid sets are return True, with no population")
+        vprint("    option activated")
+        vprint("    - Cardset 0 / step 0 - without populating:")
+        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], [0,1,2])
+        self.assertTrue(result)
+        vprint("        [ 0, 1, 2] should be True  => " + str(result))
+        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], [9,10,11])
+        self.assertTrue(result)
+        vprint("        [ 9,10,11] should be True  => " + str(result))
+        vprint("     - Cardset 1 / step 1 - without populating:")
+        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], [1,6,11])
+        self.assertTrue(result)
+        vprint("        [ 1, 6,11] should be True  => " + str(result))
+        # real test against test data
+        vprint("  > we will now propose valid sets with 'population' option activated,")
+        vprint("    and compare the outcome with reference data")
+
+        # here we populate the 'reference Start' steps:
+        #    => they become 'test StartBis' steps
+        vprint("    - Cardset 1 / step 1 - set [0,1,2] - populating with 'Donald'")
+        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], [0,1,2], True, player)
+        self.assertFalse(result)
+        self.assertEqual(stepStart_ref[1].playerID, None)
+        self.assertEqual(stepStart_ref[1].playerName, "")
+        self.assertEqual(stepStart_ref[1].set, [])
+        vprint("       [ 0, 1, 2] should be False => " + str(result))
+        vprint("       so we check it was not populated:")
+        vprint("             playerID = " + str(stepStart_ref[1].playerID))
+        vprint("           playerName = " + stepStart_ref[1].playerName)
+        vprint("                  set = " + str(stepStart_ref[1].set))
+
+        vprint("    - Cardset 1 / step 1 - set "+str(sets[0])+" - populating with 'Donald'")
+        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], sets[0], True, player)
+        self.assertTrue(result)
+        self.assertTrue(self.step_equality(stepStart_ref[1], stepStartBis_ref[0]))
+        vprint("        [ 1, 6,11] should be True  => " + str(result))
+        vprint("        so we check it was populated")
+        vprint("              playerID = " + str(stepStart_ref[1].playerID))
+        vprint("            playerName = " + stepStart_ref[1].playerName)
+        vprint("                   set = " + str(stepStart_ref[1].set))
+
+        vprint("    - Cardset 2 / step 2 - set "+str(sets[1])+" - populating with 'Donald'")
+        result = stepStart_ref[2].validateSetFromTable(cardsets_ref[2], sets[1], True, player)
+        self.assertTrue(result)
+        self.assertTrue(self.step_equality(stepStart_ref[2], stepStartBis_ref[1]))
+        vprint("        [ 0, 3, 9] should be True  => " + str(result))
+        vprint("        so we check it was populated")
+        vprint("              playerID = " + str(stepStart_ref[2].playerID))
+        vprint("            playerName = " + stepStart_ref[2].playerName)
+        vprint("                   set = " + str(stepStart_ref[2].set))
+
+    def test_fromPrevious(self):
+        """
+        Test Step.fromPrevious
+        """
+        # setup the test data
+        # BEWARE:
+        # - there are 3 examples in the 'Starts' series, indexed 0, 1 and 2
+        # - there are only two in the 'Seconds' series, indexed 0 and 1
+        # => index 0 in the 'Starts' disappears in the 'Seconds'
+        # => index 1 in the 'Starts' correspond to index 0 in the 'Seconds'
+        # => index 2 in the 'Starts' correspond to index 1 in the 'Seconds'
+        [cardsets_ref, stepStarts_ref] = self.setup()
+        [player, sets, stepStartBis_ref] = refStepStartBis()
+        [player, sets, stepSeconds_ref] = refStepSecond()
+        stepSeconds_test = []
+        stepSeconds_test.append(Step())
+        stepSeconds_test.append(Step())
+        # run the test
+        vbar()
+        vprint("Test Step.fromPrevious")
+        vbar()
+        vprint("We run the 'fromPrevious' method on two test steps, using the 'startBis'")
+        vprint("reference steps as a stable starting point, and we compare the result")
+        vprint("with the reference 'stepSecond'.")
+        vprint("    stepStart -> propose Set [1, 6,11] -> stepStartBis")
+        vprint("    apply 'from previous' on stepStartBis  =  stepSecond")
+        vprint("  > Cardset 1: the result should look like")
+        stepSeconds_test[0].fromPrevious(stepStartBis_ref[0], cardsets_ref[1])
+        print(stepSeconds_test[0].serialize())
+
+        vprint("  > Cardset 2: the result should look like")
+        stepSeconds_test[1].fromPrevious(stepStartBis_ref[1], cardsets_ref[2])
+        print(stepSeconds_test[1].serialize())
+
+
+
+        vprint(stepToString(stepSeconds_ref[0], cardsets_ref[1], "      "))
+        stepStarts_ref[1].validateSetFromTable(cardsets_ref[1], sets[0], True, player)
+        stepSeconds_test[0].fromPrevious(stepStarts_ref[1], cardsets_ref[1]) 
+        self.assertTrue(self.step_equality(stepSeconds_ref[0], stepSeconds_test[0]))
+        vprint("  > Cardset 2, Step: start -> propose Set [0, 3, 9] -> from previous")
+        vprint("    The newly generated step should equal:")
+        vprint(stepToString(stepSeconds_ref[1], cardsets_ref[2], "      "))
+        stepStarts_ref[2].validateSetFromTable(cardsets_ref[2], sets[1], True, player)
+        stepSeconds_test[1].fromPrevious(stepStarts_ref[2], cardsets_ref[2]) 
+        self.assertTrue(self.step_equality(stepSeconds_ref[1], stepSeconds_test[1]))
+
+
+
 
 
 

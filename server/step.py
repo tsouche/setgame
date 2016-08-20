@@ -90,10 +90,9 @@ class Step:
                 if player != None:
                     self.playerID = player['playerID']
                     self.playerName = player['nickname']
-                    player.points += constants.pointsPerSet
         return valid
     
-    def checkIfTableContainsAValidSet(self, cards, populate=False, player=None):
+    def __checkIfTableContainsAValidSet(self, cards, populate=False, player=None):
         """
         This methods checks that there is at least one valid set of 3 cards on
         the Table.
@@ -128,42 +127,6 @@ class Step:
             i+=1
         return valid  
 
-    def getValidSetFromTable(self,cards):
-        """
-        This methods gives back the positions of three cards from the Table
-        composing a valid set.
-        This function is useful only for tests purposes, so we assume here that
-        the Table is valid, i.e. it contains at least one valid Set.
-        This function is a restricted copy of "checkIfTableContainsAValidSet".
-        """
-        # We constitute a list of cards by discarding the (potential) holes on
-        # the Table.
-        candidate = []
-        for card in self.table:
-            if card != -1:
-                candidate.append(card)
-        nb = len(candidate)
-        # Now look for a valid set of 3 cards in the 'candidate' list
-        i0 = j0 = k0 = -1
-        i=0
-        while i<nb-2:
-            j=i+1
-            while j<nb-1:
-                k=j+1
-                while k<nb:
-                    if self.validateSetFromTable(cards,[i,j,k]):
-                        i0 = i
-                        j0 = j
-                        k0 = k
-                        k=nb
-                        j=nb
-                        i=nb
-                    k+=1
-                j+=1
-            i+=1
-        # returns the triplet identified in the imbricated loops
-        return [i0, j0, k0]
-
     def start(self,cards):
         """
         This methods fills the Table with the first twelve cards, and the Pick
@@ -175,7 +138,7 @@ class Step:
         cmax = constants.cardsMax
         # Fills the table with 11 cards only
         i = 0
-        while i+1<tmax:
+        while i<tmax-1:
             self.table.append(i)
             i += 1
         # the rest of the cards will be move to the Pick            
@@ -191,7 +154,7 @@ class Step:
             self.table.append(self.pick[0])
             del(self.pick[0])
             # check if the newly composed Table is valid
-            if self.checkIfTableContainsAValidSet(cards, False):
+            if self.__checkIfTableContainsAValidSet(cards, False):
                 # The Table is valid: exit the loop
                 i = cmax
             else:

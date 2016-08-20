@@ -5,7 +5,7 @@ Created on August 2nd 2016
 
 import unittest
 from server.cardset import CardSet
-from server.test_utilities import displayCardList, vprint, vbar, cardsList, cardsDict, cardSets
+from server.test_utilities import displayCardList, vprint, vbar, cardsList, refCardsets_Dict, refCardsets
 
 class test_CardSet(unittest.TestCase):
     """
@@ -16,7 +16,7 @@ class test_CardSet(unittest.TestCase):
 
     def setup(self):
         # initializes test data = create 3 cardsets
-        return cardSets()
+        return refCardsets()
     
     def teardown(self):
         pass
@@ -171,7 +171,7 @@ class test_CardSet(unittest.TestCase):
         Test the serialize method
         """
         # setup the test data
-        dict_ref = cardsDict()
+        dict_ref = refCardsets_Dict()
         cards_ref = self.setup()
         # runs the test
         vbar()
@@ -195,7 +195,7 @@ class test_CardSet(unittest.TestCase):
         Test the deserialize method
         """
         # setup the test data
-        dict_ref = cardsDict()
+        dict_ref = refCardsets_Dict()
         cards_ref = self.setup()
         cards_test = []
         cards_test.append(CardSet())
