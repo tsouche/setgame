@@ -29,13 +29,20 @@ class test_Step(unittest.TestCase):
         pass
 
     def step_equality(self, step1, step2):
-        test_equal = (int(step1.turnCounter) == int(step2.turnCounter))
+        test_equal = (step1.turnCounter == step2.turnCounter)
+        # print("equal1:",test_equal)
         test_equal = test_equal and (step1.playerID    == step2.playerID   )
+        # print("equal2:",test_equal)
         test_equal = test_equal and (step1.playerName  == step2.playerName )
+        # print("equal3:",test_equal)
         test_equal = test_equal and (step1.pick        == step2.pick       )
+        # print("equal4:",test_equal)
         test_equal = test_equal and (step1.table       == step2.table      )
+        # print("equal5:",test_equal)
         test_equal = test_equal and (step1.used        == step2.used       )
+        # print("equal6:",test_equal)
         test_equal = test_equal and (step1.set         == step2.set        )
+        # print("equal7:",test_equal)
         return test_equal
 
     def test__init__(self):
@@ -44,7 +51,7 @@ class test_Step(unittest.TestCase):
         """
         # setup the test data
         vbar()
-        vprint("We buil test data for testing the class Step")
+        vprint("We build test data for testing the class Step")
         step_test = Step()
         # run the test
         vbar()
@@ -78,15 +85,15 @@ class test_Step(unittest.TestCase):
         stepStarts_test[0].start(cardsets_ref[0])
         stepStarts_test[1].start(cardsets_ref[1])
         stepStarts_test[2].start(cardsets_ref[2])
-        vprint("Cardset 0: the step should be equal to:")
+        vprint("Cardset 1: the step should be equal to:")
         vprint(stepToString(stepStart_ref[0], cardsets_ref[0], "  "))
         self.assertTrue(self.step_equality(stepStart_ref[0], stepStarts_test[0]))
-        vprint("Cardset 1: the step should be equal to:")
+        vprint("Cardset 2: the step should be equal to:")
         vprint(stepToString(stepStart_ref[1], cardsets_ref[1], "  "))
-        self.assertTrue(self.step_equality(stepStart_ref[0], stepStarts_test[0]))
+        self.assertTrue(self.step_equality(stepStart_ref[1], stepStarts_test[1]))
         vprint("Cardset 2: the step should be equal to:")
         vprint(stepToString(stepStart_ref[2], cardsets_ref[2], "  "))
-        self.assertTrue(self.step_equality(stepStart_ref[0], stepStarts_test[0]))
+        self.assertTrue(self.step_equality(stepStart_ref[2], stepStarts_test[2]))
 
     def test_validateSetFromTable(self):
         """
@@ -102,68 +109,52 @@ class test_Step(unittest.TestCase):
         vprint("We run the method on two reference steps, and it should return")
         vprint("known answers each time.")
         # basic test, no need for additional test data
-        vprint("  > We will check few invalid Sets to see if they are rejected")
-        vprint("    - Cardset 0 / step 0 - without populating:")
-        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], [0,1,3])
-        self.assertFalse(result)
-        vprint("        [ 0, 1, 3] should be False => " + str(result))
-        vprint("    - Cardset 1 / step 1 - without populating:")
-        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], [0,1,2])
+        vprint("  > We will check few Sets on cardset 0 /step 0 to see if they are ")
+        vprint("    validated or rejected, without populating the step:")
+        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], [0,1,2])
         self.assertFalse(result)
         vprint("        [ 0, 1, 2] should be False => " + str(result))
-        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], [9,10,11])
+        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], [9,10,11])
         self.assertFalse(result)
         vprint("        [ 9,10,11] should be False => " + str(result))
-        vprint("  > we will check if valid sets are return True, with no population")
-        vprint("    option activated")
-        vprint("    - Cardset 0 / step 0 - without populating:")
-        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], [0,1,2])
-        self.assertTrue(result)
-        vprint("        [ 0, 1, 2] should be True  => " + str(result))
-        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], [9,10,11])
-        self.assertTrue(result)
-        vprint("        [ 9,10,11] should be True  => " + str(result))
-        vprint("     - Cardset 1 / step 1 - without populating:")
-        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], [1,6,11])
+        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], [1,6,11])
         self.assertTrue(result)
         vprint("        [ 1, 6,11] should be True  => " + str(result))
-        # real test against test data
-        vprint("  > we will now propose valid sets with 'population' option activated,")
-        vprint("    and compare the outcome with reference data")
-
         # here we populate the 'reference Start' steps:
         #    => they become 'test StartBis' steps
-        vprint("    - Cardset 1 / step 1 - set [0,1,2] - populating with 'Donald'")
-        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], [0,1,2], True, player)
+        vprint("  > we will now propose valid sets with 'population' option activated,")
+        vprint("    and compare the outcome (so called 'stepStartBis') with reference data")
+        vprint("    - Cardset 0 / step 0 - set [0,1,2] - populating with 'Donald'")
+        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[0], [0,1,2], True, player)
         self.assertFalse(result)
-        self.assertEqual(stepStart_ref[1].playerID, None)
-        self.assertEqual(stepStart_ref[1].playerName, "")
-        self.assertEqual(stepStart_ref[1].set, [])
+        self.assertEqual(stepStart_ref[0].playerID, None)
+        self.assertEqual(stepStart_ref[0].playerName, "")
+        self.assertEqual(stepStart_ref[0].set, [])
         vprint("       [ 0, 1, 2] should be False => " + str(result))
         vprint("       so we check it was not populated:")
-        vprint("             playerID = " + str(stepStart_ref[1].playerID))
-        vprint("           playerName = " + stepStart_ref[1].playerName)
-        vprint("                  set = " + str(stepStart_ref[1].set))
+        vprint("             playerID = " + str(stepStart_ref[0].playerID))
+        vprint("           playerName = " + stepStart_ref[0].playerName)
+        vprint("                  set = " + str(stepStart_ref[0].set))
 
-        vprint("    - Cardset 1 / step 1 - set "+str(sets[0])+" - populating with 'Donald'")
-        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], sets[0], True, player)
+        vprint("    - Cardset 0 / step 0 - set "+str(sets[0])+" - populating with 'Donald'")
+        result = stepStart_ref[0].validateSetFromTable(cardsets_ref[0], sets[0], True, player)
         self.assertTrue(result)
-        self.assertTrue(self.step_equality(stepStart_ref[1], stepStartBis_ref[0]))
-        vprint("        [ 1, 6,11] should be True  => " + str(result))
+        self.assertTrue(self.step_equality(stepStart_ref[0], stepStartBis_ref[0]))
+        vprint("        "+str(sets[0])+" should be True  => " + str(result))
+        vprint("        so we check it was populated")
+        vprint("              playerID = " + str(stepStart_ref[0].playerID))
+        vprint("            playerName = " + stepStart_ref[0].playerName)
+        vprint("                   set = " + str(stepStart_ref[0].set))
+
+        vprint("    - Cardset 1 / step 1 - set "+str(sets[1])+" - populating with 'Donald'")
+        result = stepStart_ref[1].validateSetFromTable(cardsets_ref[1], sets[1], True, player)
+        self.assertTrue(result)
+        self.assertTrue(self.step_equality(stepStart_ref[1], stepStartBis_ref[1]))
+        vprint("        [ 0, 3, 9] should be True  => " + str(result))
         vprint("        so we check it was populated")
         vprint("              playerID = " + str(stepStart_ref[1].playerID))
         vprint("            playerName = " + stepStart_ref[1].playerName)
         vprint("                   set = " + str(stepStart_ref[1].set))
-
-        vprint("    - Cardset 2 / step 2 - set "+str(sets[1])+" - populating with 'Donald'")
-        result = stepStart_ref[2].validateSetFromTable(cardsets_ref[2], sets[1], True, player)
-        self.assertTrue(result)
-        self.assertTrue(self.step_equality(stepStart_ref[2], stepStartBis_ref[1]))
-        vprint("        [ 0, 3, 9] should be True  => " + str(result))
-        vprint("        so we check it was populated")
-        vprint("              playerID = " + str(stepStart_ref[2].playerID))
-        vprint("            playerName = " + stepStart_ref[2].playerName)
-        vprint("                   set = " + str(stepStart_ref[2].set))
 
     def test_fromPrevious(self):
         """
@@ -189,28 +180,20 @@ class test_Step(unittest.TestCase):
         vprint("We run the 'fromPrevious' method on two test steps, using the 'startBis'")
         vprint("reference steps as a stable starting point, and we compare the result")
         vprint("with the reference 'stepSecond'.")
+        vprint()
         vprint("    stepStart -> propose Set [1, 6,11] -> stepStartBis")
         vprint("    apply 'from previous' on stepStartBis  =  stepSecond")
-        vprint("  > Cardset 1: the result should look like")
-        stepSeconds_test[0].fromPrevious(stepStartBis_ref[0], cardsets_ref[1])
-        print(stepSeconds_test[0].serialize())
-
-        vprint("  > Cardset 2: the result should look like")
-        stepSeconds_test[1].fromPrevious(stepStartBis_ref[1], cardsets_ref[2])
-        print(stepSeconds_test[1].serialize())
-
-
-
-        vprint(stepToString(stepSeconds_ref[0], cardsets_ref[1], "      "))
-        stepStarts_ref[1].validateSetFromTable(cardsets_ref[1], sets[0], True, player)
-        stepSeconds_test[0].fromPrevious(stepStarts_ref[1], cardsets_ref[1]) 
+        vprint()
+        vprint("  > Cardset 0: the result should look like")
+        vprint(stepToString(stepSeconds_ref[0], cardsets_ref[0], "    "))
+        stepSeconds_test[0].fromPrevious(stepStartBis_ref[0], cardsets_ref[0])        
         self.assertTrue(self.step_equality(stepSeconds_ref[0], stepSeconds_test[0]))
-        vprint("  > Cardset 2, Step: start -> propose Set [0, 3, 9] -> from previous")
-        vprint("    The newly generated step should equal:")
-        vprint(stepToString(stepSeconds_ref[1], cardsets_ref[2], "      "))
-        stepStarts_ref[2].validateSetFromTable(cardsets_ref[2], sets[1], True, player)
-        stepSeconds_test[1].fromPrevious(stepStarts_ref[2], cardsets_ref[2]) 
+
+        vprint("  > Cardset 1: the result should look like")
+        vprint(stepToString(stepSeconds_ref[1], cardsets_ref[1], "    "))
+        stepSeconds_test[1].fromPrevious(stepStartBis_ref[1], cardsets_ref[1])
         self.assertTrue(self.step_equality(stepSeconds_ref[1], stepSeconds_test[1]))
+
 
 
 

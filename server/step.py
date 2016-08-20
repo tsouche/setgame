@@ -191,18 +191,18 @@ class Step:
         # increment the turn counter
         self.turnCounter = previousStep.turnCounter + 1
         # copy the former 'pick', 'table' and 'used' into the new Step
+        self.pick = []
         for i in previousStep.pick:
             self.pick.append(i)
+        self.table = []
         for i in previousStep.table:
             self.table.append(i)
+        self.used = []
         for i in previousStep.used:
             self.used.append(i)
+        self.set = []
         for t in previousStep.set:
             self.set.append(t)
-        # print("       pick  = ", self.pick)
-        # print("       table = ", self.table)
-        # print("       used  = ", self.used)
-        # print("       set  = ", self.set)
         # copies the 3 cards from 'table' (as pointed by the 'set') into the
         # 'used', fill these three positions in 'table' with invalid values (-1)
         # print("  - move the 3 valid cards from table to used")
@@ -217,9 +217,6 @@ class Step:
             self.table[tablePosition] = -1
             # remove the set which was already used
             del self.set[0]
-        # print("       table = ", self.table)
-        # print("       used = ", self.used)
-        # print("       set  = ", self.set)
         # replace the 3 empty positions in the 'table' with three cards from
         # the 'pick' with a condition that the new set of (up to) 12 cards will 
         # enable to compose at least one 'valid set of 3 cards'.
