@@ -4,7 +4,7 @@ Created on August 2nd 2016
 '''
 
 import unittest
-from server.constants import cardsMax, tableMax
+from server.constants import cardsMax
 from server.cardset import CardSet
 from server.test_utilities import displayCardList, vprint, vbar, cardsList, refCardsets_Dict, refCardsets
 

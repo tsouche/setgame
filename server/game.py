@@ -9,7 +9,6 @@ from bson.objectid import ObjectId
 import server.constants as constants
 from server.cardset import CardSet
 from server.step import Step
-from server.test_utilities import stepToString
 
 class Game:
     """
@@ -73,29 +72,6 @@ class Game:
         """
         return str(self.gameID)
     
-    def getPlayer(self, playerID):
-        """
-        We assume here that the playerID is either None or a valid ObjectId, and
-        thus readable by the 'Players' class if useful. 
-        """
-        good_player = None
-        for pp in self.players:
-            if pp['playerID'] == playerID:
-                good_player = pp
-        return good_player
-    
-    def addPoints(self, playerID, pts):
-        """
-        We assume here that the playerID is either None or a valid ObjectId, and
-        thus readable by the 'Players' class if useful. 
-        """
-        valid = False
-        good_player = self.getPlayer(playerID)
-        if good_player != None:
-            good_player['points'] += pts
-            valid = True
-        return valid
-        
     def receiveSetProposal(self, playerID, positionsOnTable):
         """
         This methods collect 'positionsOnTable', a list of 3 indexes which are 
@@ -108,14 +84,20 @@ class Game:
         identify over the net with such an unique ID.
         """
         valid = False
-        pp = self.getPlayer(playerID)
-        if pp != None:
+        # find the good player
+        good_player = None
+        for pp in self.players:
+            if pp['playerID'] == playerID:
+                good_player = pp
+        # if the playerID is valid, we can continue
+        if good_player != None:
             s = self.steps[self.turnCounter]
-            if s.validateSetFromTable(self.cards, positionsOnTable, True, pp):
+            if s.validateSetFromTable(self.cards, positionsOnTable, True, good_player):
                 # The set of 3 cards is valid 'populate' is True, so the 'Set' 
                 # list is populated accordingly: it enables to create a new Step
                 valid = True
-                self.addPoints(playerID, constants.pointsPerSet)
+                # add points to the player
+                good_player['points'] += constants.pointsPerSet
                 # Reminder: the method 'validateSetFromTable' populates the 'set' 
                 #    list in the 'previous' Step.
                 self.steps.append(Step())
@@ -129,24 +111,40 @@ class Game:
         This method returns True if the game is over, i.e. there are no possible
         sets valid on the Table.
         """
-        finished = False
+        self.gameFinished = False
         last_step = self.steps[self.turnCounter]
         set_available = last_step.checkIfTableContainsAValidSet(self.cards)
         if not set_available:
             # there no valid set on the Table
-            finished = True
             self.gameFinished = True
-        return finished
+        return self.gameFinished
+
+    def getPoints(self):
+        """
+        This method is useful to give the points collected during the game back
+        to the 'program' who called the Game class (typically: the 'setserver'. 
+        The results are given as a list of dictionaries:
+               [ { 'playerID': str(ObjectId), 'points': str(points) },
+                 { 'playerID': str(ObjectId), 'points': str(points) },
+                                       ...,
+                 { 'playerID': str(ObjectId), 'points': str(points) }  ]
+        """
+        dict_players = []
+        for pp in self.players:
+            dict_players.append( { 'playerID': str(pp['playerID']),
+                             'points': str(pp['points']  )  })
+        return dict_players
 
     def serialize(self):
         objDict = {}
         objDict["__class__"] = "SetGame"
         objDict["gameID"] = str(self.gameID)
-        objDict["gameFinished"] = self.gameFinished
-        objDict["turnCounter"] = self.turnCounter
+        objDict["gameFinished"] = str(self.gameFinished)
+        objDict["turnCounter"] = str(self.turnCounter)
         objDict["players"] = []
         for pp in self.players:
-            objDict["players"].append(pp)
+            objDict["players"].append( { 'playerID': str(pp['playerID']), 
+                'nickname': pp['nickname'], 'points': str(pp['points'])})
         objDict["cardset"] = self.cards.serialize()
         objDict["steps"] = []
         for s in self.steps:
@@ -169,7 +167,8 @@ class Game:
                 # retrieves the players
                 self.players = []
                 for pDict in objDict["players"]:
-                    self.players.append(pDict)
+                    self.players.append( { 'playerID': ObjectId(pDict['playerID']),
+                        'nickname': pDict['nickname'], 'points': int(pDict['points'])})
                 # retrieves the cards
                 self.cards.deserialize(objDict["cardset"])
                 # retrieves the steps
@@ -180,42 +179,4 @@ class Game:
                     self.steps.append(s)
                 resultOk = True
         return resultOk
-
-    def getValidSetFromTable(self):
-        """
-        This methods gives back the positions of three cards from the Table
-        composing a valid set.
-        This function is useful only for tests purposes, so we assume here that
-        the Table is valid, i.e. it contains at least one valid Set.
-        """
-        # just for making the code more readable
-        step = self.steps[self.turnCounter]
-        cards = self.cards
-        # We constitute a list of cards by discarding the (potential) holes on
-        # the Table.
-        candidate = []
-        for card in step.table:
-            if card != -1:
-                candidate.append(card)
-                nb = len(candidate)
-        # Now look for a valid set of 3 cards in the 'candidate' list
-        i0 = j0 = k0 = -1
-        i=0
-        while i<nb-2:
-            j=i+1
-            while j<nb-1:
-                k=j+1
-                while k<nb:
-                    if step.validateSetFromTable(cards,[i,j,k]):
-                        i0 = i
-                        j0 = j
-                        k0 = k
-                        i = j = k = nb
-                    k+=1
-                j+=1
-            i+=1
-        # returns the triplet identified in the imbricated loops
-        # if it returls [-1, -1, -1], it means that there is no set on the Table.
-        return [i0, j0, k0]
-    
 
