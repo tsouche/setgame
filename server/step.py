@@ -58,7 +58,7 @@ class Step:
         # initializes all lists and variables
         self.turnCounter = 0
         self.playerID = None
-        self.playerName = ""
+        self.nickname = ""
         self.pick = []
         self.table = []
         self.used = []
@@ -74,7 +74,7 @@ class Step:
         Reminder: until that moment, the 'set' list is empty. The method 
         'validateSetFromTable' is the ONLY method which will fill properly the
         'Set' list and enable to move from one Step to the following Step.
-        NB: player is like { 'playerID': ObjectId, 'nickname': string }
+        NB: player is like { 'playerID': str('ObjectId'), 'nickname': string }
         """
         valid = False
         i = self.table[positionsOnTable[0]]
@@ -87,12 +87,15 @@ class Step:
                 self.set.append(positionsOnTable[1])
                 self.set.append(positionsOnTable[2])
                 # Theoretically, the playerID should be valid when 'populate' is True
-                if player != None:
-                    self.playerID = player['playerID']
-                    self.playerName = player['nickname']
+                if player == None:
+                    self.playerID = None
+                    self.nickname = ""
+                else:
+                    self.playerID = ObjectId(player['playerID'])
+                    self.nickname = player['nickname']
         return valid
     
-    def __checkIfTableContainsAValidSet(self, cards, populate=False, player=None):
+    def checkIfTableContainsAValidSet(self, cards, populate=False, player=None):
         """
         This methods checks that there is at least one valid set of 3 cards on
         the Table.
@@ -137,11 +140,13 @@ class Step:
         tmax = constants.tableMax
         cmax = constants.cardsMax
         # Fills the table with 11 cards only
+        self.table = []
         i = 0
         while i<tmax-1:
             self.table.append(i)
             i += 1
         # the rest of the cards will be move to the Pick            
+        self.pick = []
         while i<cmax:
             self.pick.append(i)
             i += 1
@@ -154,7 +159,7 @@ class Step:
             self.table.append(self.pick[0])
             del(self.pick[0])
             # check if the newly composed Table is valid
-            if self.__checkIfTableContainsAValidSet(cards, False):
+            if self.checkIfTableContainsAValidSet(cards, False):
                 # The Table is valid: exit the loop
                 i = cmax
             else:
@@ -163,10 +168,12 @@ class Step:
                 self.pick.append(self.table[tmax-1])
                 del (self.table[tmax-1])
             i +=1
-        # Last, we need to empty the 'Set' list since we used it to identify the
+        # Also, we need to empty the 'Set' list since we used it to identify the
         # valid 12th card of the Table.
         del(self.set)
         self.set = []
+        # And for the sake of security, we also reset the 'Used' list.
+        self.used = []
         # end
 
     def fromPrevious(self, previousStep, cards):
@@ -188,6 +195,8 @@ class Step:
         """
         # initiates the boolean detecting the end of the game
         gameFinished = False
+        self.playerID = None
+        self.nickname = ""
         # increment the turn counter
         self.turnCounter = previousStep.turnCounter + 1
         # copy the former 'pick', 'table' and 'used' into the new Step
@@ -320,7 +329,7 @@ class Step:
         stepDict["__class__"] = "SetStep"
         stepDict["turnCounter"] = str(self.turnCounter)
         stepDict["playerID"] = str(self.playerID)
-        stepDict["playerName"] = self.playerName
+        stepDict["nickname"] = self.nickname
         # store the 'Pick' list
         stepDict["pick"] = []
         i = 0
@@ -397,8 +406,8 @@ class Step:
                 else:
                     self.playerID = ObjectId(objDict['playerID'])
                 # print(objJSON["playerID"]," => ", self.playerID)
-                self.playerName = str(objDict["playerName"])
-                # print(objJSON["playerName"]," => ", self.playerName)
+                self.nickname = str(objDict["nickname"])
+                # print(objJSON["nickname"]," => ", self.nickname)
                 # retrieve the 'Pick'
                 # print("read the lists from the JSON")
                 self.pick = dictToSortedList(objDict["pick"])

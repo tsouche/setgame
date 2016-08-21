@@ -9,6 +9,7 @@ from bson.objectid import ObjectId
 import server.constants as constants
 from server.cardset import CardSet
 from server.step import Step
+from server.test_utilities import stepToString
 
 class Game:
     """
@@ -31,7 +32,7 @@ class Game:
         """
         Initializes the cards set, the first Step and the players list.
         - players is a Dictionary passed as argument, listing the players, each
-            player being like: { '_id': ObjectID, 'nickname: string }
+            player being like: { '_id': str('ObjectID'), 'nickname: string }
         Game will:
         - connect to the mongo server and its 'setGames' collection, and
             retrieve a gameID which will enable the server to handle exchanges
@@ -47,9 +48,13 @@ class Game:
         self.gameID = self.gamesColl.insert_one({'turncounter': self.turnCounter,
                 'gameFinished': self.gameFinished}).inserted_id
         # populate the players from the argument passed
+        # NB: the field 'points' counts for teh points gained during the 
+        #     current game, and does not link with the 'totalScore' field in
+        #     the DB (which is a global information, not managed at the 'Game' 
+        #     level.
         self.players = []
         for pp in players:
-            self.players.append({'playerID': pp['_id'], 'nickname': pp['nickname'],
+            self.players.append({'playerID': ObjectId(pp['playerID']), 'nickname': pp['nickname'],
                 'points': 0})
         # populate and randomize the cards
         self.cards = CardSet()
@@ -69,18 +74,25 @@ class Game:
         return str(self.gameID)
     
     def getPlayer(self, playerID):
-        result = None
+        """
+        We assume here that the playerID is either None or a valid ObjectId, and
+        thus readable by the 'Players' class if useful. 
+        """
+        good_player = None
         for pp in self.players:
             if pp['playerID'] == playerID:
-                result = pp
-                break
-        return result
-
-    def addPoint(self, playerID, pts):
-        pp = self.getPlayer(playerID)
+                good_player = pp
+        return good_player
+    
+    def addPoints(self, playerID, pts):
+        """
+        We assume here that the playerID is either None or a valid ObjectId, and
+        thus readable by the 'Players' class if useful. 
+        """
         valid = False
-        if pp != None:
-            pp['points'] += pts
+        good_player = self.getPlayer(playerID)
+        if good_player != None:
+            good_player['points'] += pts
             valid = True
         return valid
         
@@ -90,10 +102,10 @@ class Game:
         positions on the Table at this moment of the game, and check whether it 
         is a valid Set.
         If so, the next Step is generated.
-        NB: playerID is assumed to be a valid UUID4 identifier. We choose to 
+        NB: playerID is assumed to be a valid ObjectId identifier. We choose to 
         identify the player from his ID because such a 'set proposal' should 
         come from a distant front (an app, a web portal...) which should 
-        identify over the net with such an ID.
+        identify over the net with such an unique ID.
         """
         valid = False
         pp = self.getPlayer(playerID)
@@ -103,7 +115,7 @@ class Game:
                 # The set of 3 cards is valid 'populate' is True, so the 'Set' 
                 # list is populated accordingly: it enables to create a new Step
                 valid = True
-                self.addPoint(playerID, constants.pointsPerSet)
+                self.addPoints(playerID, constants.pointsPerSet)
                 # Reminder: the method 'validateSetFromTable' populates the 'set' 
                 #    list in the 'previous' Step.
                 self.steps.append(Step())
@@ -118,7 +130,9 @@ class Game:
         sets valid on the Table.
         """
         finished = False
-        if not self.steps[self.turnCounter].checkIfTableContainsAValidSet(self.cards):
+        last_step = self.steps[self.turnCounter]
+        set_available = last_step.checkIfTableContainsAValidSet(self.cards)
+        if not set_available:
             # there no valid set on the Table
             finished = True
             self.gameFinished = True
@@ -167,4 +181,41 @@ class Game:
                 resultOk = True
         return resultOk
 
+    def getValidSetFromTable(self):
+        """
+        This methods gives back the positions of three cards from the Table
+        composing a valid set.
+        This function is useful only for tests purposes, so we assume here that
+        the Table is valid, i.e. it contains at least one valid Set.
+        """
+        # just for making the code more readable
+        step = self.steps[self.turnCounter]
+        cards = self.cards
+        # We constitute a list of cards by discarding the (potential) holes on
+        # the Table.
+        candidate = []
+        for card in step.table:
+            if card != -1:
+                candidate.append(card)
+                nb = len(candidate)
+        # Now look for a valid set of 3 cards in the 'candidate' list
+        i0 = j0 = k0 = -1
+        i=0
+        while i<nb-2:
+            j=i+1
+            while j<nb-1:
+                k=j+1
+                while k<nb:
+                    if step.validateSetFromTable(cards,[i,j,k]):
+                        i0 = i
+                        j0 = j
+                        k0 = k
+                        i = j = k = nb
+                    k+=1
+                j+=1
+            i+=1
+        # returns the triplet identified in the imbricated loops
+        # if it returls [-1, -1, -1], it means that there is no set on the Table.
+        return [i0, j0, k0]
+    
 

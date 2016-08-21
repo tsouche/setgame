@@ -8,7 +8,7 @@ import pymongo
 from bson.objectid import ObjectId
 import server.constants as constants
 from server.players import Players
-from server.test_utilities import vprint, vbar
+from server.test_utilities import vprint, vbar, refPlayers_Dict
 
 
 class TestPlayers(unittest.TestCase):
@@ -24,12 +24,11 @@ class TestPlayers(unittest.TestCase):
         playersColl = setDB.players
         # populate db with test data about players
         playersColl.drop()
-        playersColl.insert({'nickname': "Donald", 'totalScore': 18, 'gameID': None})
-        playersColl.insert({'nickname': "Mickey", 'totalScore': 30, 'gameID': None})
-        playersColl.insert({'nickname': "Riri", 'totalScore': 18, 'gameID': None})
-        playersColl.insert({'nickname': "Fifi", 'totalScore': 0, 'gameID': None})
-        playersColl.insert({'nickname': "Loulou", 'totalScore': 33, 'gameID': None})
-        playersColl.insert({'nickname': "Daisy", 'totalScore': 45, 'gameID': None})
+        for pp in refPlayers_Dict():
+            playersColl.insert_one({'_id': ObjectId(pp['playerID']), 
+                                'nickname': pp['nickname'], 
+                                'totalScore': int(pp['totalScore']), 
+                                'gameID': None})
         return playersColl
         
     def teardown(self, playersColl):
@@ -80,7 +79,9 @@ class TestPlayers(unittest.TestCase):
         vbar()
         vprint("We add a player and check that it is properly registered to the DB.")
         vprint("We also check that querying a non-existing player will not work.")
-        self.assertTrue(players.addPlayer("Dingo"))
+        playerID = players.addPlayer("Dingo")
+        read_id = players.playersColl.find_one({'nickname': "Dingo"})['_id']
+        self.assertEqual(playerID, read_id)
         self.assertEqual(players.playersColl.count(), 7)
         # check the various fields of registered players
         pp = players.playersColl.find_one({'nickname': "Dingo"})

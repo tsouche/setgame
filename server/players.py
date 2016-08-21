@@ -32,10 +32,17 @@ class Players:
         valid = False
         if self.playersColl.find_one({'nickname': nickname}) == None:
             # creates the players in the DB
-            self.playersColl.insert_one({'nickname': nickname, 'totalScore': 0, 
-                                         'gameID': None})
-            valid = True
+            playerID = self.playersColl.insert_one({'nickname': nickname, 'totalScore': 0, 
+                                         'gameID': None}).inserted_id
+            valid = playerID
         return valid
+    
+    def getPlayerID(self, nickname):
+        playerID = None
+        pp = self.playersColl.find_one({'nickname': nickname})
+        if pp != None:
+            playerID = pp['_id']
+        return playerID
     
     def removePlayer(self, nickname):
         """
