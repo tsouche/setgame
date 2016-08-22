@@ -233,19 +233,22 @@ class test_Game(unittest.TestCase):
             # get that set acknowledged by the game
             if partie.receiveSetProposal(next_playerID, next_set,):
                 # Here we are: we have past one more turn/
-                vprint("    turnCounter = " 
-                       + str(partie.turnCounter)
-                       + ": set = " + str(next_set)
-                       + " *** " + str(partie.steps[partie.turnCounter-1].serialize()))
-        vprint("    and the round 25: "+ str(partie.steps[24].serialize))
+                vprint("    turnCounter = " + str(partie.turnCounter)
+                       + ": set = " + str(next_set))
+        vprint("    turnCounter = " + str(partie.turnCounter+1)
+                       + ": set = [--,--,--]")
         vprint("    *** game over *** we now compare the outcome with reference data")
         valid = True
+        tab = "      -> "
+        msg = tab
         for i in range(0, partie.turnCounter + 1):
             ref_step = refSteps()[index][i]
             test_step = partie.steps[i]
             valid = valid and step_equality(ref_step, test_step)
-            vprint("    -> step " + str(i) + ": "+ str(valid))
-        vprint("    The game is fully compliant: " + str(valid))
+            msg += " step " + str(i).zfill(2) + ": "+ str(valid)
+            if (i+1)%6 == 0:
+                msg += "\n" + tab
+        vprint(msg+"\n    The game is fully compliant: " + str(valid))
         return valid
 
     def test_receiveSetProposal(self):
@@ -257,8 +260,8 @@ class test_Game(unittest.TestCase):
         vbar()
         # run a full game with the '0 data series' starting point, and then
         # compare the steps with reference test data (series 0)
-        self.assertTrue(self.runAGame(1))
         self.assertTrue(self.runAGame(0))
+        self.assertTrue(self.runAGame(1))
 
     def test_isGameFinished(self):
         """
