@@ -7,14 +7,13 @@ import unittest
 from bson.objectid import ObjectId
 
 from server.game import Game
-from server.test_step import step_equality
 from server.test_utilities import vprint, vbar, refSetsAndPlayers
 from server.test_utilities import cardsetToString, stepToString
-from server.test_utilities import cardset_equality, step_equality, game_equality
+from server.test_utilities import cardset_equality, step_equality, game_compliant
 from server.test_utilities import refPlayers_Dict
 from server.test_utilities import refCardsets_Dict, refCardsets
 from server.test_utilities import refSteps
-from server.test_utilities import refGame_Dict
+from server.test_utilities import refGame_start, refGame_Finished
 
 def gameToString_header(game):
     """
@@ -119,7 +118,7 @@ class test_Game(unittest.TestCase):
         playersDict = refPlayers_Dict()
         partie = Game(playersDict)
         # overwrite the gameID with the reference test data
-        partie.gameID = ObjectId(refGame_Dict()[test_data_index]['gameID'])
+        partie.gameID = ObjectId(refGame_start()[test_data_index]['gameID'])
         # Overwrite the cardset with reference test data
         cards_dict = refCardsets_Dict()[test_data_index]
         partie.cards.deserialize(cards_dict)
@@ -128,6 +127,25 @@ class test_Game(unittest.TestCase):
         # The game is ready to start.
         return partie
     
+    def progress(self, game, test_data_index):
+        """
+        Takes the game in a current status, and make it progress with one step
+        by using the reference test data (the series 0 or 1 being pointed by the 
+        'test_data_index' argument.
+        """
+        # collect the sets and players to be used
+        list_setsAndPlayers = refSetsAndPlayers()[test_data_index]
+        # check if we can still iterate or if the game is finished according to 
+        # the test data
+        mx_turn = len(list_setsAndPlayers)
+        turn = game.turnCounter
+        if turn < mx_turn:
+            # iterate
+            next_set = list_setsAndPlayers[turn]['set']
+            next_player = list_setsAndPlayers[turn]['player']
+            next_playerID = ObjectId(next_player['playerID'])
+            game.receiveSetProposal(next_playerID, next_set)
+        
     def setupAndProgress(self, test_data_index, nbTurns):
         """
         Initialize a game from test data, using the 'setup' method, and
@@ -136,18 +154,9 @@ class test_Game(unittest.TestCase):
         """
         # initiate the game
         partie = self.setup(test_data_index)
-        # collect the sets and players to be used
-        list_setsAndPlayers = refSetsAndPlayers()[test_data_index]
-        # limit the number of iterations to the number of possible turns
-        # according to teh test data
-        nbTurns = min(nbTurns, len(list_setsAndPlayers))
         # start iteration until the nb of turns request
         for i in range(0, nbTurns):
-            next_set = list_setsAndPlayers[i]['set']
-            next_player = list_setsAndPlayers[i]['player']
-            next_playerID = ObjectId(next_player['playerID'])
-            if not partie.receiveSetProposal(next_playerID, next_set):
-                print("BOGUS: il y a une couille dans les données de test")
+            self.progress(partie, test_data_index)
         # gives the game back in a controlled state
         return partie
         
@@ -169,7 +178,7 @@ class test_Game(unittest.TestCase):
         vprint("We start with a first iteration: we push one set and compare the")
         vprint("full status of the game with target:")
         # compare status with target
-        ref_gameID = ObjectId(refGame_Dict()[test_data_index]['gameID'])
+        ref_gameID = ObjectId(refGame_start()[test_data_index]['gameID'])
         result = (partie.gameID == ref_gameID)
         vprint("  >  gameID is compliant: "+str(result))
         self.assertTrue(result)
@@ -209,47 +218,10 @@ class test_Game(unittest.TestCase):
         test_data_index = 0
         partie = self.setup(test_data_index)
         test_gameID = partie.getGameID() # the result must be a string
-        ref_gameID = refGame_Dict()[test_data_index]['gameID']
+        ref_gameID = refGame_start()[test_data_index]['gameID']
         result = ref_gameID == test_gameID
         self.assertTrue(ref_gameID, test_gameID)
         vprint("  > returned gameID is compliant: " + str(result))
-
-    def runAGame(self, index):
-        """
-        This method runs a game to its end, in order to produce the test data
-        and enable the comparison with reference data.
-        'index' (0 or 1) indicate which reference data set should be used. 
-        """
-        partie = self.setup(index)
-        ref_setAndPlayer_list = refSetsAndPlayers()[index]
-        vprint("  > Cardset " + str(index) + 
-               ": we start rolling through the game")
-        while not partie.isGameFinished():
-            # identify a set
-            i = partie.turnCounter
-            next_set = ref_setAndPlayer_list[i]['set']
-            next_player = ref_setAndPlayer_list[i]['player']
-            next_playerID = ObjectId(next_player['playerID'])
-            # get that set acknowledged by the game
-            if partie.receiveSetProposal(next_playerID, next_set,):
-                # Here we are: we have past one more turn/
-                vprint("    turnCounter = " + str(partie.turnCounter)
-                       + ": set = " + str(next_set))
-        vprint("    turnCounter = " + str(partie.turnCounter+1)
-                       + ": set = [--,--,--]")
-        vprint("    *** game over *** we now compare the outcome with reference data")
-        valid = True
-        tab = "      -> "
-        msg = tab
-        for i in range(0, partie.turnCounter + 1):
-            ref_step = refSteps()[index][i]
-            test_step = partie.steps[i]
-            valid = valid and step_equality(ref_step, test_step)
-            msg += " step " + str(i).zfill(2) + ": "+ str(valid)
-            if (i+1)%6 == 0:
-                msg += "\n" + tab
-        vprint(msg+"\n    The game is fully compliant: " + str(valid))
-        return valid
 
     def test_receiveSetProposal(self):
         """
@@ -260,8 +232,28 @@ class test_Game(unittest.TestCase):
         vbar()
         # run a full game with the '0 data series' starting point, and then
         # compare the steps with reference test data (series 0)
-        self.assertTrue(self.runAGame(0))
-        self.assertTrue(self.runAGame(1))
+        vprint("  > Cardset 0: we start rolling through the game")
+        partie = self.setupAndProgress(0, 30)   # a game can never go beyond 27 turns
+        vprint("    Game over: we now compare the outcome with reference data")
+        vprint("    turn = " + str(partie.turnCounter+1)
+                       + ": set = [--,--,--], here is the final status:")
+        vprint(stepToString(partie.steps[partie.turnCounter], partie.cards, "    "))
+        vprint("    We check the compliance with reference data:")
+        valid = game_compliant(partie, 0, "    -> ")
+        self.assertTrue(valid)
+        vprint("    The game is fully compliant: " + str(valid))
+        # run a full game with the '0 data series' starting point, and then
+        # compare the steps with reference test data (series 0)
+        vprint("  > Cardset 1: we start rolling through the game")
+        partie = self.setupAndProgress(1, 30)   # a game can never go beyond 27 turns
+        vprint("    Game over: we now compare the outcome with reference data")
+        vprint("    turn = " + str(partie.turnCounter+1)
+                       + ": set = [--,--,--], here is the final status:")
+        vprint(stepToString(partie.steps[partie.turnCounter], partie.cards, "    "))
+        vprint("    We check the compliance with reference data:")
+        valid = game_compliant(partie, 1, "    ")
+        self.assertTrue(valid)
+        vprint("    The game is fully compliant: " + str(valid))
 
     def test_isGameFinished(self):
         """

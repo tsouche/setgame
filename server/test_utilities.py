@@ -72,6 +72,64 @@ def refPlayers():
         players.append(pp)
     return players
 
+
+def refPlayersInGame_Dict():
+    players_dict = []
+    # For cardset 0, reference game 0:
+    players_dict.append([])
+    players_dict[0].append({'playerID': '57b8529a124e9b6187cf6c2a', 
+                    'nickname': "Donald", 
+                    'points': '18'})
+    players_dict[0].append({'playerID': '57b9a003124e9b13e6759bda', 
+                    'nickname': "Mickey", 
+                    'points': '15'})
+    players_dict[0].append({'playerID': '57b9a003124e9b13e6759bdb', 
+                    'nickname': "Riri", 
+                    'points': '3'})
+    players_dict[0].append({'playerID': '57b9a003124e9b13e6759bdc', 
+                    'nickname': "Fifi", 
+                    'points': '12'})
+    players_dict[0].append({'playerID': '57b9bffb124e9b2e056a765c', 
+                    'nickname': "Loulou", 
+                    'points': '6'})
+    players_dict[0].append({'playerID': '57b9bffb124e9b2e056a765d', 
+                    'nickname': "Daisy", 
+                    'points': '21'})
+    # For cardset 1, reference game 1:
+    players_dict.append([])
+    players_dict[1].append({'playerID': '57b8529a124e9b6187cf6c2a', 
+                    'nickname': "Donald", 
+                    'points': '18'})
+    players_dict[1].append({'playerID': '57b9a003124e9b13e6759bda', 
+                    'nickname': "Mickey", 
+                    'points': '15'})
+    players_dict[1].append({'playerID': '57b9a003124e9b13e6759bdb', 
+                    'nickname': "Riri", 
+                    'points': '3'})
+    players_dict[1].append({'playerID': '57b9a003124e9b13e6759bdc', 
+                    'nickname': "Fifi", 
+                    'points': '12'})
+    players_dict[1].append({'playerID': '57b9bffb124e9b2e056a765c', 
+                    'nickname': "Loulou", 
+                    'points': '6'})
+    players_dict[1].append({'playerID': '57b9bffb124e9b2e056a765d', 
+                    'nickname': "Daisy", 
+                    'points': '21'})
+    return players_dict
+
+def refPlayersInGame():
+    players = []
+    # i (0 or 1) indicate the reference data series
+    for i in range(0,2):
+        players.append([])
+        for p_dict in refPlayersInGame_Dict()[i]:
+            pp = { 'playerID': ObjectId(p_dict['playerID']),
+               'nickname': p_dict['nickname'],
+               'points': int(p_dict['points'])
+            }
+            players[i].append(pp)
+    return players
+
 def refCardsets_Dict():
     # List of reference dictionaries
     Dict = []
@@ -1210,7 +1268,26 @@ def refSteps():
         steps_list_of_lists.append(steps_list)
     return steps_list_of_lists
 
-def refGame_Dict():
+def refGame_turnN(n):
+    """
+    This function returns 2 reference Game headers, enabling to pass the 
+    'game_equality' properly at the indicated turn 'n'
+    """
+    Dict_games = []
+    # Header for the reference test data 0
+    Dict_games.append({ 'gameID': '57b9bec5124e9b2d2503b72b',
+                        'gameFinished': 'False',
+                        'turnCounter': str(n)})
+    # Header for the reference test data 0
+    Dict_games.append({ 'gameID': '57ba0a72124e9b6a4c4298c4',
+                        'gameFinished': 'False',
+                        'turnCounter': str(n)})
+    return Dict_games
+
+def refGame_start():
+    return refGame_turnN(0)
+
+def refGame_Finished():
     """
     This function returns 2 reference Game headers, enabling to pass the 
     'game_equality' properly
@@ -1218,12 +1295,12 @@ def refGame_Dict():
     Dict_games = []
     # Header for the reference test data 0
     Dict_games.append({ 'gameID': '57b9bec5124e9b2d2503b72b',
-                        'gameFinished': 'False',
-                        'turnCounter': '0'})
+                        'gameFinished': 'True',
+                        'turnCounter': '25'})
     # Header for the reference test data 0
     Dict_games.append({ 'gameID': '57ba0a72124e9b6a4c4298c4',
-                        'gameFinished': 'False',
-                        'turnCounter': '0'})
+                        'gameFinished': 'True',
+                        'turnCounter': '24'})
     return Dict_games
     
 def displayCardList(cardset, cardsList, wide, tab=""):
@@ -1352,27 +1429,50 @@ def stepDict_equality(dict1, dict2):
     # print("equal7:",test_equal)
     return test_equal
 
-def game_equality(game1, game2):
+def game_compliant(game, index, tab):
     """
     This function returns True if the two games show the same generic details,
     the same players, the same cardsets and the same steps.
     """
+    # loads the relevant reference data
+    temp_dict = refGame_Finished()[index]
+    generic2 = {'gameID': ObjectId(temp_dict['gameID']),
+                'turnCounter': int(temp_dict['turnCounter']),
+                'gameFinished': (temp_dict['gameFinished'] == 'True') }
+    players2 = refPlayersInGame()[index]
+    cardset2 = refCardsets()[index]
+    steps2  = refSteps()[index]
+    # set the validity flags
+    valid_generic = valid_players = valid_cardset = valid_steps = False
     # compare the generic details
-    test_equal =                      (game1.gameID == game2.gameID) 
-    test_equal = test_equal and  (game1.turnCounter == game2.turnCounter)
-    test_equal = test_equal and (game1.gameFinished == game2.gameFinished)
+    valid_generic = (game.gameID == generic2['gameID']) and \
+                    (game.turnCounter == generic2['turnCounter']) and \
+                    (game.gameFinished == generic2['gameFinished'])
+    vprint(tab + "generic details: " + str(valid_generic))
     # compare the players
-    if test_equal and (len(game1.players) == len(game2.players)):
-        for p1 in game1.players:
-            test_equal = test_equal and (p1 in game1.players)    
+    if valid_generic:
+        valid_players = (len(game.players) == len(players2))
+        for p1 in game.players:
+            valid_players = valid_players and (p1 in players2)
+        vprint(tab + "players: " + str(valid_players))
     # compare the cardsets
-    if test_equal:
-        test_equal = test_equal and cardset_equality(game1.cards, game2.cards)
-    if test_equal and (len(game1.steps) == len(game2.steps) == game1.turnCounter):
-        i = 0
-        while i <= game1.turnCounter:
-            test_equal = test_equal and step_equality(game1.steps[i], game2.steps[i])
-            i += 1
-    return test_equal
-    
-    
+    if valid_players:
+        valid_cardset = cardset_equality(game.cards, cardset2)
+        vprint(tab + "cardsets: " + str(valid_cardset))
+    # compare the steps
+    if valid_cardset:
+        valid_steps = (len(game.steps) == len(steps2) == game.turnCounter+1)
+        msg = tab
+        vprint(tab + "steps:")
+        for i in range(0, game.turnCounter + 1):
+            step1 = game.steps[i]
+            step2 = steps2[i]
+            valid_steps = valid_steps and step_equality(step1, step2)
+            msg += " step " + str(i).zfill(2) + ": "+ str(valid_steps)
+            if (i+1)%6 == 0:
+                msg += "\n" + tab
+        vprint(msg)
+    valid = valid_generic and valid_players and valid_cardset and valid_steps
+    return valid
+
+
