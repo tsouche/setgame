@@ -248,7 +248,6 @@ class test_Game(unittest.TestCase):
         vprint("    The game is fully compliant: " + str(valid))
         return valid
 
-        
     def test_receiveSetProposal(self):
         """
         Test game.receiveSetProposal
@@ -258,8 +257,8 @@ class test_Game(unittest.TestCase):
         vbar()
         # run a full game with the '0 data series' starting point, and then
         # compare the steps with reference test data (series 0)
-        self.assertTrue(self.runAGame(0))
         self.assertTrue(self.runAGame(1))
+        self.assertTrue(self.runAGame(0))
 
     def test_isGameFinished(self):
         """
@@ -269,7 +268,6 @@ class test_Game(unittest.TestCase):
         print("Test game.isGameFinished")
         vbar()
 
-    
     def test_getPoints(self):
         """
         Test game.getPoints
