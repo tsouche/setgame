@@ -9,7 +9,7 @@ from server.step import Step
 from server.test_utilities import vprint, vbar, stepToString, stepDict_to_Step
 from server.test_utilities import refCardsets
 from server.test_utilities import refSetsAndPlayers
-from server.test_utilities import refSteps_Dict, refSteps
+from server.test_utilities import refGames_Dict, refSteps
 from server.test_utilities import step_equality  
 
 class test_Step(unittest.TestCase):
@@ -356,7 +356,8 @@ class test_Step(unittest.TestCase):
         # setup the test data
         dictStart_ref = self.refStepStarts_Dict()
         [cardsets_ref, stepStarts_ref] = self.setup()
-        dictStartBis_ref = refSteps_Dict()
+        dictStartBis_ref0 = refGames_Dict()[0]['steps'][0]
+        dictStartBis_ref1 = refGames_Dict()[1]['steps'][0]
         stepStartBis_ref = refSteps()
         dictSecond_ref = self.refStepSecond_Dict()
         stepSeconds_ref = self.refStepSecond()
@@ -377,9 +378,9 @@ class test_Step(unittest.TestCase):
         step_test = stepStartBis_ref[0][0]
         dict_test = step_test.serialize()
         vprint("  > Cardets 0 - Step 0 - stepStartBis:")
-        vprint("       Target: " + str(dictStartBis_ref[0][0]))
+        vprint("       Target: " + str(dictStartBis_ref0))
         vprint("       Result: " + str(dict_test))
-        self.assertTrue(self.stepDict_equality(dict_test, dictStartBis_ref[0][0]))
+        self.assertTrue(self.stepDict_equality(dict_test, dictStartBis_ref0))
         step_test = stepSeconds_ref[0]
         dict_test = step_test.serialize()
         vprint("  > Cardets 0 - Step 0 - stepSecond:")
@@ -397,9 +398,9 @@ class test_Step(unittest.TestCase):
         step_test = stepStartBis_ref[1][0]
         dict_test = step_test.serialize()
         vprint("  > Cardets 1 - Step 1 - stepStartBis:")
-        vprint("       Target: " + str(dictStartBis_ref[1][0]))
+        vprint("       Target: " + str(dictStartBis_ref1))
         vprint("       Result: " + str(dict_test))
-        self.assertTrue(self.stepDict_equality(dict_test, dictStartBis_ref[1][0]))
+        self.assertTrue(self.stepDict_equality(dict_test, dictStartBis_ref1))
         step_test = stepSeconds_ref[1]
         dict_test = step_test.serialize()
         vprint("  > Cardets 1 - Step 1 - stepSecond:")
@@ -414,7 +415,8 @@ class test_Step(unittest.TestCase):
         # setup the test data
         dictStart_ref = self.refStepStarts_Dict()
         [cardsets_ref, stepStarts_ref] = self.setup()
-        dictStartBis_ref = refSteps_Dict()
+        dictStartBis_ref0 = refGames_Dict()[0]['steps'][0]
+        dictStartBis_ref1 = refGames_Dict()[1]['steps'][0]
         stepStartBis_ref = refSteps()
         step_test = Step()
         # run the test
@@ -431,7 +433,7 @@ class test_Step(unittest.TestCase):
         vprint("       Result: " + stepToString(step_test, cardsets_ref[0], "     "))
         self.assertTrue(step_equality(step_test, stepStarts_ref[0]))
         vprint()
-        step_test.deserialize(dictStartBis_ref[0][0])
+        step_test.deserialize(dictStartBis_ref0)
         vprint("  > Cardets 0 - Step 0 - stepStartBis:")
         vprint("       Target: " + stepToString(stepStartBis_ref[0][0], cardsets_ref[0], "     "))
         vprint("       Result: " + stepToString(step_test, cardsets_ref[0], "     "))

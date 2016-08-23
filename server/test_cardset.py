@@ -6,7 +6,9 @@ Created on August 2nd 2016
 import unittest
 from server.constants import cardsMax
 from server.cardset import CardSet
-from server.test_utilities import displayCardList, vprint, vbar, cardsList, refCardsets_Dict, refCardsets
+from server.test_utilities import displayCardList, vprint, vbar
+from server.test_utilities import cardsList
+from server.test_utilities import refGames_Dict, refCardsets
 
 class test_CardSet(unittest.TestCase):
     """
@@ -61,7 +63,7 @@ class test_CardSet(unittest.TestCase):
         vbar()
         print("Test cardset.getCardsCode")
         vbar()
-        vprint("We will compare card codes for various cards in Cardset 0 and 2:")
+        vprint("We will compare card codes for various cards in Cardset 1 and 2:")
         vprint("From Cardset 1:")
         vprint("    Cardcode of card 19 should be '0010'")
         self.assertEqual(cards_ref[1].getCardCode(19), "0010")
@@ -171,7 +173,6 @@ class test_CardSet(unittest.TestCase):
         Test the serialize method
         """
         # setup the test data
-        dict_ref = refCardsets_Dict()
         cards_ref = self.setup()
         # runs the test
         vbar()
@@ -179,14 +180,11 @@ class test_CardSet(unittest.TestCase):
         vbar()
         dict_test_0 = cards_ref[0].serialize()
         dict_test_1 = cards_ref[1].serialize()
-        dict_test_2 = cards_ref[2].serialize()
         vprint("We compare the reference cardset dictionary with the one produced by serialize method:")
         vprint("    Cardset 0: "+str(dict_test_0))
         vprint("    Cardset 1: "+str(dict_test_1))
-        vprint("    Cardset 2: "+str(dict_test_2))
-        self.assertEqual(dict_ref[0], dict_test_0)
-        self.assertEqual(dict_ref[1], dict_test_1)
-        self.assertEqual(dict_ref[2], dict_test_2)
+        self.assertEqual(refGames_Dict()[0]['cardset'], dict_test_0)
+        self.assertEqual(refGames_Dict()[1]['cardset'], dict_test_1)
         # end of the test
         self.teardown()
         
@@ -195,10 +193,8 @@ class test_CardSet(unittest.TestCase):
         Test the deserialize method
         """
         # setup the test data
-        dict_ref = refCardsets_Dict()
         cards_ref = self.setup()
         cards_test = []
-        cards_test.append(CardSet())
         cards_test.append(CardSet())
         cards_test.append(CardSet())
         # runs the test
@@ -208,20 +204,17 @@ class test_CardSet(unittest.TestCase):
         vprint("We compare cardsets created from reference dictionaries with reference")
         vprint("cardsets.")
         vprint("  > Cardset 0: reference followed by test (first 6 cards only)")
-        cards_test[0].deserialize(dict_ref[0])
+        dict_ref = refGames_Dict()[0]['cardset']
+        cards_test[0].deserialize(dict_ref)
         vprint(displayCardList(cards_ref[0], cardsList(6), 6, "     "))
         vprint(displayCardList(cards_test[0], cardsList(6), 6, "     "))
         self.assertEqual(cards_test[0].cards, cards_ref[0].cards)
         vprint("  > Cardset 1: reference followed by test cardset (first 6 cards only)")
-        cards_test[1].deserialize(dict_ref[1])
+        dict_ref = refGames_Dict()[1]['cardset']
+        cards_test[1].deserialize(dict_ref)
         vprint(displayCardList(cards_ref[1], cardsList(6), 6, "     "))
         vprint(displayCardList(cards_test[1], cardsList(6), 6, "     "))
         self.assertEqual(cards_test[1].cards, cards_ref[1].cards)
-        vprint("  > Cardset 2: reference followed by test cardset (first 6 cards only)")
-        cards_test[2].deserialize(dict_ref[2])
-        vprint(displayCardList(cards_ref[2], cardsList(6), 6, "     "))
-        vprint(displayCardList(cards_test[2], cardsList(6), 6, "     "))
-        self.assertEqual(cards_test[2].cards, cards_ref[2].cards)
         
         # end of the test
         self.teardown()

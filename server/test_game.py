@@ -9,9 +9,10 @@ from bson.objectid import ObjectId
 from server.game import Game
 from server.test_utilities import vprint, vbar, refSetsAndPlayers
 from server.test_utilities import cardsetToString, stepToString
+from server.test_utilities import refGames_Dict
 from server.test_utilities import cardset_equality, step_equality, game_compliant
-from server.test_utilities import refPlayers_Dict, refPlayersInGame_Dict
-from server.test_utilities import refCardsets_Dict, refCardsets
+from server.test_utilities import refPlayers_Dict
+from server.test_utilities import refCardsets
 from server.test_utilities import refSteps
 from server.test_utilities import refGame_start, refGame_Finished
 from server.players import Players
@@ -121,7 +122,7 @@ class test_Game(unittest.TestCase):
         # overwrite the gameID with the reference test data
         partie.gameID = ObjectId(refGame_start()[test_data_index]['gameID'])
         # Overwrite the cardset with reference test data
-        cards_dict = refCardsets_Dict()[test_data_index]
+        cards_dict = refGames_Dict()[test_data_index]['cardset']
         partie.cards.deserialize(cards_dict)
         # Force 'Steps' to take into account this new cardset.
         partie.steps[0].start(partie.cards)
@@ -134,17 +135,15 @@ class test_Game(unittest.TestCase):
         by using the reference test data (the series 0 or 1 being pointed by the 
         'test_data_index' argument.
         """
-        # collect the sets and players to be used
-        list_setsAndPlayers = refSetsAndPlayers()[test_data_index]
         # check if we can still iterate or if the game is finished according to 
         # the test data
-        mx_turn = len(list_setsAndPlayers)
+        mx_turn = len(refGames_Dict()[test_data_index]['turnCounter'])+1
         turn = game.turnCounter
         if turn < mx_turn:
-            # iterate
-            next_set = list_setsAndPlayers[turn]['set']
-            next_player = list_setsAndPlayers[turn]['player']
-            next_playerID = ObjectId(next_player['playerID'])
+            # read the reference Step and apply
+            step = refGames_Dict()[test_data_index]['steps'][turn]
+            next_set = step['set']
+            next_playerID = ObjectId(step['playerID'])
             game.receiveSetProposal(next_playerID, next_set)
         
     def setupAndProgress(self, test_data_index, nbTurns):
@@ -293,8 +292,8 @@ class test_Game(unittest.TestCase):
         print("Test game.getPoints")
         vbar()
         # load the reference data
-        ref_playerPoints = refPlayersInGame_Dict()
         for test_data_index in range(0,2):
+            ref_playerPoints = refGames_Dict()[test_data_index]['players']
             vprint("  Cardset " + str(test_data_index) + ":")
             # check that all points are set at 0 at the start
             partie = self.setup(test_data_index)

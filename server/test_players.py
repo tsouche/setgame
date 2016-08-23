@@ -8,7 +8,7 @@ import pymongo
 from bson.objectid import ObjectId
 import server.constants as constants
 from server.players import Players
-from server.test_utilities import vprint, vbar, refPlayers_Dict
+from server.test_utilities import vprint, vbar, refPlayers
 
 
 class TestPlayers(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestPlayers(unittest.TestCase):
         playersColl = setDB.players
         # populate db with test data about players
         playersColl.drop()
-        for pp in refPlayers_Dict():
+        for pp in refPlayers():
             playersColl.insert_one({'_id': ObjectId(pp['playerID']), 
                                 'nickname': pp['nickname'], 
                                 'totalScore': int(pp['totalScore']), 

@@ -34,34 +34,17 @@ def cardsList(nb):
             lst.append(i)
     return lst
 
-def refPlayers_Dict():
-    players_dict = []
-    players_dict.append({'playerID': '57b8529a124e9b6187cf6c2a', 
-                    'nickname': "Donald", 
-                    'totalScore': '18',
-                    'gameID': 'None'})
-    players_dict.append({'playerID': '57b9a003124e9b13e6759bda', 
-                    'nickname': "Mickey", 
-                    'totalScore': '30',
-                    'gameID': 'None'})
-    players_dict.append({'playerID': '57b9a003124e9b13e6759bdb', 
-                    'nickname': "Riri", 
-                    'totalScore': '18',
-                    'gameID': 'None'})
-    players_dict.append({'playerID': '57b9a003124e9b13e6759bdc', 
-                    'nickname': "Fifi", 
-                    'totalScore': '0',
-                    'gameID': 'None'})
-    players_dict.append({'playerID': '57b9bffb124e9b2e056a765c', 
-                    'nickname': "Loulou", 
-                    'totalScore': '33',
-                    'gameID': 'None'})
-    players_dict.append({'playerID': '57b9bffb124e9b2e056a765d', 
-                    'nickname': "Daisy", 
-                    'totalScore': '45',
-                    'gameID': 'None'})
-    return players_dict
+def refPlayers():
+    return [
+    {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald", 'totalScore': '18', 'gameID': 'None'},
+    {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey", 'totalScore': '30', 'gameID': 'None'},
+    {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri", 'totalScore': '18', 'gameID': 'None'},
+    {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi", 'totalScore': '0', 'gameID': 'None'},
+    {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou", 'totalScore': '33', 'gameID': 'None'},
+    {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy", 'totalScore': '45', 'gameID': 'None'}
+    ]
 
+"""
 def refPlayersInGame_Dict():
     players_dict = []
     # For cardset 0, reference game 0:
@@ -105,65 +88,7 @@ def refPlayersInGame_Dict():
                     'nickname': "Daisy", 
                     'points': '6'})
     return players_dict
-
-def refCardsets_Dict():
-    # List of reference dictionaries
-    Dict = []
-    # This cardset is built in such a way that it is not possible to find a 
-    # valid set of 3 cards amongst teh 12 first cards. This is used to force the
-    # Step.start method to go in a 'rarely used' algorithm.
-    Dict.append({'__class__': 'SetCardset', 
-        'cards': ['00-0202', '01-2010', '02-0010', '03-0221', '04-1001', '05-1212', 
-                  '06-1022', '07-0002', '08-1202', '09-1012', '10-1101', '11-2020', 
-                  '12-0001', '13-2001', '14-2111', '15-1120', '16-2202', '17-2102', 
-                  '18-0120', '19-0212', '20-2221', '21-2201', '22-1112', '23-2000', 
-                  '24-1010', '25-2200', '26-0111', '27-0101', '28-2021', '29-0110', 
-                  '30-1020', '31-1111', '32-0021', '33-2210', '34-0011', '35-1211', 
-                  '36-0210', '37-2112', '38-2002', '39-2222', '40-1222', '41-0112', 
-                  '42-0222', '43-0211', '44-0102', '45-0121', '46-1200', '47-1201', 
-                  '48-2012', '49-1100', '50-2022', '51-1220', '52-1102', '53-1210', 
-                  '54-1221', '55-0022', '56-0020', '57-0200', '58-2100', '59-1121', 
-                  '60-0201', '61-1000', '62-1021', '63-2120', '64-0220', '65-0012', 
-                  '66-2101', '67-2122', '68-2011', '69-1110', '70-2220', '71-2211',
-                  '72-0100', '73-1002', '74-1122', '75-2121', '76-2212', '77-0122', 
-                  '78-0000', '79-2110', '80-1011']
-        })
-    # This third cardset will be 'normal' from teh start perspective but will 
-    # enable to continue playing until there are only 6 cards on the Table.
-    Dict.append({'__class__': 'SetCardset', 
-        'cards': ['00-2202', '01-0122', '02-2200', '03-0200', '04-0120', '05-1200', 
-                  '06-2021', '07-2120', '08-0212', '09-1201', '10-1001', '11-0000', 
-                  '12-2100', '13-2222', '14-1111', '15-1000', '16-2022', '17-1012', 
-                  '18-1221', '19-0010', '20-1011', '21-0201', '22-2201', '23-1220', 
-                  '24-0012', '25-2011', '26-2001', '27-0211', '28-2220', '29-1202', 
-                  '30-0011', '31-1101', '32-0102', '33-0100', '34-1010', '35-1122', 
-                  '36-2210', '37-0022', '38-1110', '39-2221', '40-2101', '41-0001', 
-                  '42-2211', '43-1112', '44-1102', '45-2002', '46-1002', '47-0112', 
-                  '48-1121', '49-1222', '50-2012', '51-1211', '52-1120', '53-0020', 
-                  '54-0101', '55-2000', '56-0210', '57-2010', '58-1022', '59-0110', 
-                  '60-0111', '61-2102', '62-2212', '63-0002', '64-1212', '65-0021', 
-                  '66-2020', '67-0221', '68-1020', '69-0121', '70-1210', '71-2122', 
-                  '72-2112', '73-2121', '74-0220', '75-0202', '76-2110', '77-0222', 
-                  '78-1021', '79-2111', '80-1100']
-        })
-    # This cardset is not randomized.
-    Dict.append({'__class__': 'SetCardset', 
-        'cards': ['00-0000', '01-0001', '02-0002', '03-0010', '04-0011', '05-0012', 
-                  '06-0020', '07-0021', '08-0022', '09-0100', '10-0101', '11-0102', 
-                  '12-0110', '13-0111', '14-0112', '15-0120', '16-0121', '17-0122', 
-                  '18-0200', '19-0201', '20-0202', '21-0210', '22-0211', '23-0212', 
-                  '24-0220', '25-0221', '26-0222', '27-1000', '28-1001', '29-1002', 
-                  '30-1010', '31-1011', '32-1012', '33-1020', '34-1021', '35-1022', 
-                  '36-1100', '37-1101', '38-1102', '39-1110', '40-1111', '41-1112', 
-                  '42-1120', '43-1121', '44-1122', '45-1200', '46-1201', '47-1202', 
-                  '48-1210', '49-1211', '50-1212', '51-1220', '52-1221', '53-1222', 
-                  '54-2000', '55-2001', '56-2002', '57-2010', '58-2011', '59-2012', 
-                  '60-2020', '61-2021', '62-2022', '63-2100', '64-2101', '65-2102', 
-                  '66-2110', '67-2111', '68-2112', '69-2120', '70-2121', '71-2122', 
-                  '72-2200', '73-2201', '74-2202', '75-2210', '76-2211', '77-2212', 
-                  '78-2220', '79-2221', '80-2222']
-        })
-    return Dict
+"""
 
 def refGames_Dict():
     # List of 2 reference Game dictionaries, used to assert the test results 
@@ -906,7 +831,8 @@ def refGames_Dict():
         } )
     # returns the reference data set
     return Dict_games
-    
+
+"""    
 def refPlayers():
     players = []
     for p_dict in refPlayers_Dict():
@@ -916,7 +842,9 @@ def refPlayers():
             }
         players.append(pp)
     return players
+"""
 
+"""
 def refPlayersInGame():
     players = []
     # i (0 or 1) indicate the reference data series
@@ -930,6 +858,7 @@ def refPlayersInGame():
             }
             players[i].append(pp)
     return players
+"""
 
 def refCardsets():
     """
@@ -943,20 +872,47 @@ def refCardsets():
             CardSet class.
     """
     # loads the test data into CardSets
-    Dict = refCardsets_Dict()
+    Dict = refGames_Dict()
     cardsets_ref = []
-    cardsets_ref.append(CardSet())
-    cardsets_ref.append(CardSet())
-    cardsets_ref.append(CardSet())
-    for i in range(0,3):
+    cardsets_ref.append(CardSet())  # cardset 0
+    cardsets_ref.append(CardSet())  # cardset 1
+    cardsets_ref.append(CardSet())  # cardset init
+    # overwrite the cardsets 0 and 1
+    for i in range(0,2):
         cc = cardsets_ref[i].cards
-        for code in Dict[i]['cards']:
+        for code in Dict[i]['cardset']['cards']:
             k = int(code[:2])
             c = int(code[3])
             s = int(code[4])
             f = int(code[5])
             n = int(code[6])
             cc[k] = [c,s,f,n]
+    # overwrite the cardset init
+    Dict = {'__class__': 'SetCardset', 
+        'cards': ['00-0000', '01-0001', '02-0002', '03-0010', '04-0011', '05-0012', 
+                  '06-0020', '07-0021', '08-0022', '09-0100', '10-0101', '11-0102', 
+                  '12-0110', '13-0111', '14-0112', '15-0120', '16-0121', '17-0122', 
+                  '18-0200', '19-0201', '20-0202', '21-0210', '22-0211', '23-0212', 
+                  '24-0220', '25-0221', '26-0222', '27-1000', '28-1001', '29-1002', 
+                  '30-1010', '31-1011', '32-1012', '33-1020', '34-1021', '35-1022', 
+                  '36-1100', '37-1101', '38-1102', '39-1110', '40-1111', '41-1112', 
+                  '42-1120', '43-1121', '44-1122', '45-1200', '46-1201', '47-1202', 
+                  '48-1210', '49-1211', '50-1212', '51-1220', '52-1221', '53-1222', 
+                  '54-2000', '55-2001', '56-2002', '57-2010', '58-2011', '59-2012', 
+                  '60-2020', '61-2021', '62-2022', '63-2100', '64-2101', '65-2102', 
+                  '66-2110', '67-2111', '68-2112', '69-2120', '70-2121', '71-2122', 
+                  '72-2200', '73-2201', '74-2202', '75-2210', '76-2211', '77-2212', 
+                  '78-2220', '79-2221', '80-2222']
+        }
+    cc = cardsets_ref[2].cards
+    for code in Dict['cards']:
+        k = int(code[:2])
+        c = int(code[3])
+        s = int(code[4])
+        f = int(code[5])
+        n = int(code[6])
+        cc[k] = [c,s,f,n]
+    # returns the 3 filled cardsets.
     return cardsets_ref
 
 def refSetsAndPlayers():
@@ -1053,13 +1009,12 @@ def refSteps():
     Populate a reference 'list of lists of Steps', from the reference 'list of
     lists of Step dictionaries'. 
     """
-    dicts_list_of_lists = refSteps_Dict()
     steps_list_of_lists = []
     for i in range(0,2):
+        # get the list of dictionaries
+        dicts_list = refGames_Dict()[i]['steps']
         # build a list of steps
-        dicts_list = dicts_list_of_lists[i]
         steps_list = []
-        j = 0
         for j in range(0, len(dicts_list)):
             temp = Step()
             stepDict_to_Step(dicts_list[j], temp)
