@@ -72,6 +72,28 @@ class Game:
         """
         return str(self.gameID)
     
+    def getGameFinished(self):
+        """
+        This method returns gameFinished.
+        """
+        return self.gameFinished
+        
+    def getPoints(self):
+        """
+        This method is useful to give the points collected during the game back
+        to the 'program' who called the Game class (typically: the 'setserver'. 
+        The results are given as a list of dictionaries:
+               [ { 'playerID': str(ObjectId), 'points': str(points) },
+                 { 'playerID': str(ObjectId), 'points': str(points) },
+                                       ...,
+                 { 'playerID': str(ObjectId), 'points': str(points) }  ]
+        """
+        dict_players = []
+        for pp in self.players:
+            dict_players.append( { 'playerID': str(pp['playerID']),
+                             'points': str(pp['points']  )  })
+        return dict_players
+
     def receiveSetProposal(self, playerID, positionsOnTable):
         """
         This methods collect 'positionsOnTable', a list of 3 indexes which are 
@@ -95,46 +117,25 @@ class Game:
             if s.validateSetFromTable(self.cards, positionsOnTable, True, good_player):
                 # The set of 3 cards is valid 'populate' is True, so the 'Set' 
                 # list is populated accordingly: it enables to create a new Step
+                # Reminder: the method 'validateSetFromTable' populates the 'set' 
+                #    list in the 'previous' Step.
                 valid = True
                 # add points to the player
                 good_player['points'] += constants.pointsPerSet
-                # Reminder: the method 'validateSetFromTable' populates the 'set' 
-                #    list in the 'previous' Step.
                 self.steps.append(Step())
                 self.turnCounter += 1
                 # Populate this new Step from the previous one
-                self.gameFinished = self.steps[self.turnCounter].fromPrevious(self.steps[self.turnCounter-1],self.cards)
+                self.steps[self.turnCounter].fromPrevious(self.steps[self.turnCounter-1],self.cards)
+                # check if the game is finished
+                self.gameFinished = False
+                last_step = self.steps[self.turnCounter]
+                set_available = last_step.checkIfTableContainsAValidSet(self.cards)
+                if not set_available:
+                    # there no valid set on the Table
+                    self.gameFinished = True
+        # indicate if the proposed set is valid
         return valid
     
-    def isGameFinished(self):
-        """
-        This method returns True if the game is over, i.e. there are no possible
-        sets valid on the Table.
-        """
-        self.gameFinished = False
-        last_step = self.steps[self.turnCounter]
-        set_available = last_step.checkIfTableContainsAValidSet(self.cards)
-        if not set_available:
-            # there no valid set on the Table
-            self.gameFinished = True
-        return self.gameFinished
-
-    def getPoints(self):
-        """
-        This method is useful to give the points collected during the game back
-        to the 'program' who called the Game class (typically: the 'setserver'. 
-        The results are given as a list of dictionaries:
-               [ { 'playerID': str(ObjectId), 'points': str(points) },
-                 { 'playerID': str(ObjectId), 'points': str(points) },
-                                       ...,
-                 { 'playerID': str(ObjectId), 'points': str(points) }  ]
-        """
-        dict_players = []
-        for pp in self.players:
-            dict_players.append( { 'playerID': str(pp['playerID']),
-                             'points': str(pp['points']  )  })
-        return dict_players
-
     def serialize(self):
         objDict = {}
         objDict["__class__"] = "SetGame"

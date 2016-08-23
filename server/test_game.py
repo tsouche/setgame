@@ -10,10 +10,11 @@ from server.game import Game
 from server.test_utilities import vprint, vbar, refSetsAndPlayers
 from server.test_utilities import cardsetToString, stepToString
 from server.test_utilities import cardset_equality, step_equality, game_compliant
-from server.test_utilities import refPlayers_Dict
+from server.test_utilities import refPlayers_Dict, refPlayersInGame_Dict
 from server.test_utilities import refCardsets_Dict, refCardsets
 from server.test_utilities import refSteps
 from server.test_utilities import refGame_start, refGame_Finished
+from server.players import Players
 
 def gameToString_header(game):
     """
@@ -219,9 +220,38 @@ class test_Game(unittest.TestCase):
         partie = self.setup(test_data_index)
         test_gameID = partie.getGameID() # the result must be a string
         ref_gameID = refGame_start()[test_data_index]['gameID']
-        result = ref_gameID == test_gameID
-        self.assertTrue(ref_gameID, test_gameID)
+        result = (ref_gameID == test_gameID)
+        self.assertTrue(result)
         vprint("  > returned gameID is compliant: " + str(result))
+
+    def test_getGameFinished(self):
+        """
+        Test game.getGameFinished
+        """
+        vbar()
+        print("Test game.isGameFinished")
+        vbar()
+        # retrieve gameFinished at the beginning and at the end of the game, 
+        # for both Game 0 and Game 1.
+        for test_data_index in range(0,2):
+            # test at the beginning of the game
+            partie = self.setup(test_data_index)
+            # get the test flag
+            test_gameFinished = partie.getGameFinished()
+            # get the reference flag as a string, and convert it as a boolean
+            ref_gameFinished = (refGame_start()[test_data_index]['gameFinished'] == 'True')
+            result = (ref_gameFinished == test_gameFinished)
+            self.assertTrue(result)
+            vprint("  > Cardset " + str(test_data_index) + ": game started: " + str(result))
+            # test at the end of the game
+            partie = self.setupAndProgress(test_data_index, 30)
+            # get the test flag
+            test_gameFinished = partie.getGameFinished()
+            # get the reference flag as a string, and convert it as a boolean
+            ref_gameFinished = (refGame_Finished()[test_data_index]['gameFinished'] == 'True')
+            result = (ref_gameFinished == test_gameFinished)
+            self.assertTrue(result)
+            vprint("  > Cardset " + str(test_data_index) + ": game ended  : " + str(result))
 
     def test_receiveSetProposal(self):
         """
@@ -255,14 +285,6 @@ class test_Game(unittest.TestCase):
         self.assertTrue(valid)
         vprint("    The game is fully compliant: " + str(valid))
 
-    def test_isGameFinished(self):
-        """
-        Test game.isGameFinished
-        """
-        vbar()
-        print("Test game.isGameFinished")
-        vbar()
-
     def test_getPoints(self):
         """
         Test game.getPoints
@@ -270,7 +292,29 @@ class test_Game(unittest.TestCase):
         vbar()
         print("Test game.getPoints")
         vbar()
-
+        # load the reference data
+        ref_playerPoints = refPlayersInGame_Dict()
+        for test_data_index in range(0,2):
+            vprint("  Cardset " + str(test_data_index) + ":")
+            # check that all points are set at 0 at the start
+            partie = self.setup(test_data_index)
+            test_playerPoints = partie.getPoints()
+            valid = True
+            for pp in ref_playerPoints[test_data_index]:
+                temp = {'playerID': pp['playerID'], 'points': '0'}
+                valid = valid and (temp in test_playerPoints)
+            vprint("    > start of game: result is compliant: " + str(valid))
+            self.assertTrue(valid)
+            # run the game to the end and check the points
+            partie = self.setupAndProgress(test_data_index, 30)
+            test_playerPoints = partie.getPoints()
+            valid = True
+            for pp in ref_playerPoints[test_data_index]:
+                temp = {'playerID': pp['playerID'], 'points': str(pp['points'])}
+                valid = valid and (temp in test_playerPoints)
+            vprint("    >   end of game: result is compliant: " + str(valid))
+            self.assertTrue(valid)
+                             
     def test_serialize(self):
         """
         Test game.serialize
@@ -278,6 +322,11 @@ class test_Game(unittest.TestCase):
         vbar()
         print("Test game.serialize")
         vbar()
+        # build the test data
+        partie = self.setupAndProgress(0,30)
+        print("Cardset0:", partie.serialize())
+        partie = self.setupAndProgress(1,30)
+        print("Cardset1:", partie.serialize())
 
     def test_deserialize(self):
         """
