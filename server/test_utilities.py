@@ -44,52 +44,6 @@ def refPlayers():
     {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy", 'totalScore': '45', 'gameID': 'None'}
     ]
 
-"""
-def refPlayersInGame_Dict():
-    players_dict = []
-    # For cardset 0, reference game 0:
-    players_dict.append([])
-    players_dict[0].append({'playerID': '57b8529a124e9b6187cf6c2a', 
-                    'nickname': "Donald", 
-                    'points': '18'})
-    players_dict[0].append({'playerID': '57b9a003124e9b13e6759bda', 
-                    'nickname': "Mickey", 
-                    'points': '15'})
-    players_dict[0].append({'playerID': '57b9a003124e9b13e6759bdb', 
-                    'nickname': "Riri", 
-                    'points': '3'})
-    players_dict[0].append({'playerID': '57b9a003124e9b13e6759bdc', 
-                    'nickname': "Fifi", 
-                    'points': '12'})
-    players_dict[0].append({'playerID': '57b9bffb124e9b2e056a765c', 
-                    'nickname': "Loulou", 
-                    'points': '6'})
-    players_dict[0].append({'playerID': '57b9bffb124e9b2e056a765d', 
-                    'nickname': "Daisy", 
-                    'points': '21'})
-    # For cardset 1, reference game 1:
-    players_dict.append([])
-    players_dict[1].append({'playerID': '57b8529a124e9b6187cf6c2a', 
-                    'nickname': "Donald", 
-                    'points': '15'})
-    players_dict[1].append({'playerID': '57b9a003124e9b13e6759bda', 
-                    'nickname': "Mickey", 
-                    'points': '18'})
-    players_dict[1].append({'playerID': '57b9a003124e9b13e6759bdb', 
-                    'nickname': "Riri", 
-                    'points': '6'})
-    players_dict[1].append({'playerID': '57b9a003124e9b13e6759bdc', 
-                    'nickname': "Fifi", 
-                    'points': '6'})
-    players_dict[1].append({'playerID': '57b9bffb124e9b2e056a765c', 
-                    'nickname': "Loulou", 
-                    'points': '21'})
-    players_dict[1].append({'playerID': '57b9bffb124e9b2e056a765d', 
-                    'nickname': "Daisy", 
-                    'points': '6'})
-    return players_dict
-"""
-
 def refGames_Dict():
     # List of 2 reference Game dictionaries, used to assert the test results 
     # against these reference data.
@@ -98,7 +52,6 @@ def refGames_Dict():
     #   - a generic details section
     #   - a cardset
     #   - a series of Steps
-
     # this dictionary corresponds to the test data set 0
     Dict_games.append(
         {'__class__': 'SetGame', 
@@ -386,7 +339,7 @@ def refGames_Dict():
     # this dictionary corresponds to the test data set 1
     Dict_games.append(
         {'__class__': 'SetGame', 
-        'gameID': '57b9bec5124e9b2d2503b72b', 
+        'gameID': '57ba0a72124e9b6a4c4298c4', 
         'gameFinished': 'True', 
         'turnCounter': '24', 
         'players': [
@@ -497,7 +450,7 @@ def refGames_Dict():
                               '24-60', '25-61', '26-62', '27-63', '28-64', '29-65', '30-66', '31-67', '32-68', '33-69', '34-70', '35-71', 
                               '36-72', '37-73', '38-74', '39-75', '40-76', '41-77', '42-78', '43-79', '44-80'], 
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18', 
-                              '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28'] }
+                              '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28'] },
                 {   '__class__': 'SetStep', 'turnCounter': '9', 'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
                     'table': ['00-35', '01-26', '02-38', '03-13', '04-37', '05-31', '06-33', '07-27', '08-36', '09-15', '10-10', '11-30'],
                     'set':   ['00', '02', '05'], 
@@ -656,34 +609,6 @@ def refGames_Dict():
         } )
     # returns the reference data set
     return Dict_games
-
-"""    
-def refPlayers():
-    players = []
-    for p_dict in refPlayers_Dict():
-        pp = { 'playerID': ObjectId(p_dict['playerID']),
-               'nickname': p_dict['nickname'],
-               'totalScore': int(p_dict['totalScore'])
-            }
-        players.append(pp)
-    return players
-"""
-
-"""
-def refPlayersInGame():
-    players = []
-    # i (0 or 1) indicate the reference data series
-    for i in range(0,2):
-        players.append([])
-        ref_dict = refGames_Dict()[i]['players']
-        for p_dict in ref_dict:
-            pp = { 'playerID': ObjectId(p_dict['playerID']),
-               'nickname': p_dict['nickname'],
-               'points': int(p_dict['points'])
-            }
-            players[i].append(pp)
-    return players
-"""
 
 def refCardsets():
     """
@@ -847,7 +772,7 @@ def refSteps():
         steps_list_of_lists.append(steps_list)
     return steps_list_of_lists
 
-def refGame_turnN(n):
+def refGameHeader_turnN(n):
     """
     This function returns 2 reference Game headers, enabling to pass the 
     'game_equality' properly at the indicated turn 'n'
@@ -863,10 +788,10 @@ def refGame_turnN(n):
                         'turnCounter': str(n)})
     return Dict_games
 
-def refGame_start():
-    return refGame_turnN(0)
+def refGameHeader_start():
+    return refGameHeader_turnN(0)
 
-def refGame_Finished():
+def refGameHeader_Finished():
     """
     This function returns 2 reference Game headers, enabling to pass the 
     'game_equality' properly
@@ -1014,11 +939,14 @@ def game_compliant(game, index, tab):
     the same players, the same cardsets and the same steps.
     """
     # loads the relevant reference data
-    temp_dict = refGame_Finished()[index]
+    temp_dict = refGameHeader_Finished()[index]
     generic2 = {'gameID': ObjectId(temp_dict['gameID']),
                 'turnCounter': int(temp_dict['turnCounter']),
                 'gameFinished': (temp_dict['gameFinished'] == 'True') }
-    players2 = refPlayersInGame()[index]
+    players2 = refGames_Dict()[index]['players']
+    for pp in players2:
+        pp['playerID'] = ObjectId(pp['playerID'])
+        pp['points'] = int(pp['points'])
     cardset2 = refCardsets()[index]
     steps2  = refSteps()[index]
     # set the validity flags

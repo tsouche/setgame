@@ -11,11 +11,9 @@ from server.test_utilities import vprint, vbar, refSetsAndPlayers
 from server.test_utilities import cardsetToString, stepToString
 from server.test_utilities import refGames_Dict
 from server.test_utilities import cardset_equality, step_equality, game_compliant
-from server.test_utilities import refPlayers_Dict
 from server.test_utilities import refCardsets
 from server.test_utilities import refSteps
-from server.test_utilities import refGame_start, refGame_Finished
-from server.players import Players
+from server.test_utilities import refGameHeader_start, refGameHeader_Finished
 
 def gameToString_header(game):
     """
@@ -117,10 +115,10 @@ class test_Game(unittest.TestCase):
         progress against reference data available from 'refSteps'.
         """
         # read the players and initiate a game.
-        playersDict = refPlayers_Dict()
+        playersDict = refGames_Dict()[test_data_index]['players']
         partie = Game(playersDict)
         # overwrite the gameID with the reference test data
-        partie.gameID = ObjectId(refGame_start()[test_data_index]['gameID'])
+        partie.gameID = ObjectId(refGameHeader_start()[test_data_index]['gameID'])
         # Overwrite the cardset with reference test data
         cards_dict = refGames_Dict()[test_data_index]['cardset']
         partie.cards.deserialize(cards_dict)
@@ -137,13 +135,18 @@ class test_Game(unittest.TestCase):
         """
         # check if we can still iterate or if the game is finished according to 
         # the test data
-        mx_turn = len(refGames_Dict()[test_data_index]['turnCounter'])+1
+        mx_turn = int(refGames_Dict()[test_data_index]['turnCounter'])+1
         turn = game.turnCounter
         if turn < mx_turn:
             # read the reference Step and apply
-            step = refGames_Dict()[test_data_index]['steps'][turn]
-            next_set = step['set']
-            next_playerID = ObjectId(step['playerID'])
+            step_dict = refGames_Dict()[test_data_index]['steps'][turn]
+            next_set = []
+            for i in step_dict['set']:
+                next_set.append(int(i))
+            if step_dict['playerID'] == 'None':
+                next_playerID = None
+            else:
+                next_playerID = ObjectId(step_dict['playerID'])
             game.receiveSetProposal(next_playerID, next_set)
         
     def setupAndProgress(self, test_data_index, nbTurns):
@@ -178,7 +181,7 @@ class test_Game(unittest.TestCase):
         vprint("We start with a first iteration: we push one set and compare the")
         vprint("full status of the game with target:")
         # compare status with target
-        ref_gameID = ObjectId(refGame_start()[test_data_index]['gameID'])
+        ref_gameID = ObjectId(refGameHeader_start()[test_data_index]['gameID'])
         result = (partie.gameID == ref_gameID)
         vprint("  >  gameID is compliant: "+str(result))
         self.assertTrue(result)
@@ -196,9 +199,12 @@ class test_Game(unittest.TestCase):
         #  - Step 1 is in an intermediate status: cannot be compared yet.
 
         # We fetch from reference data the next player and the next Set:
-        next_set = refSetsAndPlayers()[test_data_index][0]['set']
-        next_player = refSetsAndPlayers()[test_data_index][0]['player']
-        next_playerID = ObjectId(next_player['playerID'])
+        nextset_dict = refGames_Dict()[test_data_index]['steps'][0]['set']
+        next_set = []
+        for ss in nextset_dict:
+            next_set.append(int(ss))
+        next_playerID = refGames_Dict()[test_data_index]['steps'][0]['playerID']
+        next_playerID = ObjectId(next_playerID)
         # The player proposes the Set:
         partie.receiveSetProposal(next_playerID, next_set)
         # We now can compare Step 0 with reference test data.
@@ -218,7 +224,7 @@ class test_Game(unittest.TestCase):
         test_data_index = 0
         partie = self.setup(test_data_index)
         test_gameID = partie.getGameID() # the result must be a string
-        ref_gameID = refGame_start()[test_data_index]['gameID']
+        ref_gameID = refGameHeader_start()[test_data_index]['gameID']
         result = (ref_gameID == test_gameID)
         self.assertTrue(result)
         vprint("  > returned gameID is compliant: " + str(result))
@@ -238,7 +244,7 @@ class test_Game(unittest.TestCase):
             # get the test flag
             test_gameFinished = partie.getGameFinished()
             # get the reference flag as a string, and convert it as a boolean
-            ref_gameFinished = (refGame_start()[test_data_index]['gameFinished'] == 'True')
+            ref_gameFinished = (refGameHeader_start()[test_data_index]['gameFinished'] == 'True')
             result = (ref_gameFinished == test_gameFinished)
             self.assertTrue(result)
             vprint("  > Cardset " + str(test_data_index) + ": game started: " + str(result))
@@ -247,7 +253,7 @@ class test_Game(unittest.TestCase):
             # get the test flag
             test_gameFinished = partie.getGameFinished()
             # get the reference flag as a string, and convert it as a boolean
-            ref_gameFinished = (refGame_Finished()[test_data_index]['gameFinished'] == 'True')
+            ref_gameFinished = (refGameHeader_Finished()[test_data_index]['gameFinished'] == 'True')
             result = (ref_gameFinished == test_gameFinished)
             self.assertTrue(result)
             vprint("  > Cardset " + str(test_data_index) + ": game ended  : " + str(result))
@@ -299,7 +305,7 @@ class test_Game(unittest.TestCase):
             partie = self.setup(test_data_index)
             test_playerPoints = partie.getPoints()
             valid = True
-            for pp in ref_playerPoints[test_data_index]:
+            for pp in ref_playerPoints:
                 temp = {'playerID': pp['playerID'], 'points': '0'}
                 valid = valid and (temp in test_playerPoints)
             vprint("    > start of game: result is compliant: " + str(valid))
@@ -308,7 +314,7 @@ class test_Game(unittest.TestCase):
             partie = self.setupAndProgress(test_data_index, 30)
             test_playerPoints = partie.getPoints()
             valid = True
-            for pp in ref_playerPoints[test_data_index]:
+            for pp in ref_playerPoints:
                 temp = {'playerID': pp['playerID'], 'points': str(pp['points'])}
                 valid = valid and (temp in test_playerPoints)
             vprint("    >   end of game: result is compliant: " + str(valid))
@@ -322,10 +328,34 @@ class test_Game(unittest.TestCase):
         print("Test game.serialize")
         vbar()
         # build the test data
-        partie = self.setupAndProgress(0,30)
-        print("Cardset0:", partie.serialize())
-        partie = self.setupAndProgress(1,30)
-        print("Cardset1:", partie.serialize())
+        vprint("We compare the output of the 'game.serialize' method with reference")
+        vprint("dictionaries.")
+        for test_data_index in range(0,2):
+            # build the data
+            partie = self.setupAndProgress(test_data_index,30)
+            test_dict = partie.serialize()
+            ref_dict = refGames_Dict()[test_data_index]
+            # compare various sections of the dictionaries
+            vprint("   > Game " + str(test_data_index) + ":")
+            result = (test_dict['gameID'] == ref_dict['gameID'])
+            vprint("              gameID: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict['gameFinished'] == ref_dict['gameFinished'])
+            vprint("        gameFinished: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict['turnCounter'] == ref_dict['turnCounter'])
+            vprint("         turnCounter: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict['cardset'] == ref_dict['cardset'])
+            vprint("             cardset: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict['steps'] == ref_dict['steps'])
+            vprint("               steps: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict == ref_dict)
+            vprint("           ---------------")
+            vprint("              Global: " + str(result))
+            self.assertTrue(result)
 
     def test_deserialize(self):
         """
@@ -334,10 +364,36 @@ class test_Game(unittest.TestCase):
         vbar()
         print("Test game.deserialize")
         vbar()
+        vprint("We overwrite a game with the 'game.deserialize' method, using the")
+        vprint("reference dictionaries, and compare the outcome with reference games:")
+        for test_data_index in range(0,2):
+            # build test data
+            ref_dict = refGames_Dict()[test_data_index]
+            test_game = self.setup(test_data_index)
+            test_game.deserialize(ref_dict)
+            test_dict = test_game.serialize()
+            # compare various sections of the dictionaries
+            vprint("   > Game " + str(test_data_index) + ":")
+            result = (test_dict['gameID'] == ref_dict['gameID'])
+            vprint("              gameID: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict['gameFinished'] == ref_dict['gameFinished'])
+            vprint("        gameFinished: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict['turnCounter'] == ref_dict['turnCounter'])
+            vprint("         turnCounter: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict['cardset'] == ref_dict['cardset'])
+            vprint("             cardset: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict['steps'] == ref_dict['steps'])
+            vprint("               steps: " + str(result))
+            self.assertTrue(result)
+            result = (test_dict == ref_dict)
+            vprint("           ---------------")
+            vprint("              Global: " + str(result))
+            self.assertTrue(result)
 
-        
-        
-        
     
 if __name__ == '__main__':
 
