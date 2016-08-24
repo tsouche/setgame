@@ -15,12 +15,12 @@ class Players:
     The data are stored in a MongoDB.  
     """
         
-    def __init__(self, playersColl):
+    def __init__(self, setDB):
         """
         Links with the relevant collection in the Mongo database.
         """
         # initiates the players collections and the 'in memory' list
-        self.playersColl = playersColl
+        self.playersColl = setDB.players
         
     def addPlayer(self, nickname):
         """
@@ -63,6 +63,16 @@ class Players:
         pp = self.playersColl.find_one_and_update({'nickname': nickname},
             {'$set': {'gameID': gameID}}, return_document=ReturnDocument.AFTER)
         return pp['gameID'] == gameID
+    
+    def deregister(self, gameID_str):
+        """
+        This method deregisters any player who was registered on the gameID.
+        The argument 'gameID' is a string: str(ObjectId)
+        """
+        gameID = ObjectId(gameID_str)
+        pp = self.playersColl.find_update({'gameID': gameID},
+            {'$set': {'gameID': None}}, return_document=ReturnDocument.AFTER)
+        return len(pp)
     
     def inGame(self, gameID):
         """

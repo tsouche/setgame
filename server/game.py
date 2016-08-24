@@ -27,7 +27,7 @@ class Game:
         - save the game history in a JSON file with all 
     """
     
-    def __init__(self, players):
+    def __init__(self, players, setDB):
         """
         Initializes the cards set, the first Step and the players list.
         - players is a Dictionary passed as argument, listing the players, each
@@ -39,7 +39,6 @@ class Game:
         - initialize a card set (randomized)
         - initialize the first step of a list.
         """
-        setDB = MongoClient(constants.mongoDBserver, constants.mongoDBport).setgame
         self.gamesColl = setDB.games
         # populate the DB with generic details and retrieve the gameID
         self.turnCounter = 0

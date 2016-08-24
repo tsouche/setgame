@@ -37,8 +37,12 @@ HTTP codes returned after a request :
 """
 
 from pymongo import MongoClient
-from bottle import get, post, request, template, run, debug
-import server.constants as constants
+from bottle import Bottle, get, post, request, template, run, debug
+
+from server.constants import mongoserver_address, mongoserver_port
+from server.constants import setserver_address, setserver_port
+from server.constants import playersMin, playersMax
+
 from server.players import Players
 from server.game import Game
 
@@ -65,13 +69,45 @@ class Game():
         """
         self.gameStarted = False
         self.gameFinished = False
+        # connects to the DB
+        self.setDB = MongoClient(mongoserver_address, mongoserver_port)
+        # initiates the in-memory storage
+        self.players = Players(self.setDB)
+        self.games = []
+        # starts the wab server
+
+    def startGame(self, playersList):
+        """
+        This method starts a new game with a list of players. The players refer
+        to players registered in the DB (via their playerID, and are passed to 
+        the 'Game' as dictionaries: 
+            { 'playerID': str(ObjectId), 'nickname': string }
+        The lsit is assumed filled with 'valid' players and we check that there
+        are not more players than authorized.
+        """
+        gameID = None
+        nb = len(playersList)
+        if (nb >= playersMin) and (nb <= playersMin):
+            self.games.append(Game(playersList, self.setDB))
         
-        setDB = MongoClient(constants.mongoDBserver, constants.mongoDBport)
-        
-        self.players = []
-        self.playersDB = setDB.players
-        self.enginesDB = setDB.engines
-        # self.engines.insert_one(Engine(self.engines))
+    def stopGame(self, gameID, hard):
+        """
+        This function stops a game and de-registers the players who were part of this
+        game.
+           - hard == True: it will kill the game irrespective of its status.
+           - hard == False: it first checks that the game is finished. 
+        """
+        # identify the right game and check that it is finished
+        gameID_str = str(gameID)
+        i = 0
+        while i < len(self.games):
+            if self.games[i].getGameID() == gameID_str:
+                if self.games[i].getGameFinished() or hard:
+                    # stops the game
+                    del(self.game[i])
+                    i = len(self.games)
+                    # deregister the players
+                    for 
 
     def communicate(self):
         """
@@ -122,21 +158,21 @@ class Game():
             @route('/gameid/set')
         """
         
-        def managePlayers(self):
+        @set_app.post('/register/<nickname>')  # with nickname as parameter
+        def registerPlayers(self, string):
             """
-            This method manages the players so that they can register to the
-            server with their nickname (must be unique) and then enlist onto
-            a game.
+            This method registers new players so that they can play and connect 
+            to the server with their nickname (must be unique) and then enlist 
+            onto a game.
             The players are persistent: they are stored on the db, although the
             game will manipulate 'in memory' objects as long as it runs.
             """
             # First it will loard from the db the players which would already
             # have been created before
+            nickname = str(nickname)
             
-            
-        @post('/register/<string>')  # with nickname as parameter
-        def register(self, string):
             pass
+        
 
         @get('/enlist')  # with no parameter
         def enlist(self):
@@ -155,6 +191,7 @@ class Game():
         def collectSetProposal(self):
             pass
 
+        # start the server
+        set_app = Bottle()
+        run(set_app, host=setserver_address, port=setserver_port, debug=True)
 
-    debug(True)
-    run()

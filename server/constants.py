@@ -11,6 +11,7 @@ playersMin = 2
 playersMax = 6
 pointsPerSet = 3
 
-mongoDBserver = 'localhost'
-mongoDBport = 27017
-
+mongoserver_address = 'localhost'
+mongoserver_port = 27017
+setserver_address = 'localhost'
+setserver_port = 8080
