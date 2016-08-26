@@ -22,6 +22,45 @@ class Players:
         # initiates the players collections and the 'in memory' list
         self.playersColl = setDB.players
         
+    def getPlayerID(self, nickname):
+        playerID = None
+        pp = self.playersColl.find_one({'nickname': nickname})
+        if pp != None:
+            playerID = pp['_id']
+        return playerID
+    
+    def getGameID(self, playerID):
+        """
+        This method return the gameID of the player.
+        We assume that the playerID is a valid ObjectId.
+        """
+        pp = self.playersColl.find_one({'_id': playerID})
+        return pp['gameID']
+    
+    def getNickname(self, playerID):
+        """
+        This method return the nickname of the player.
+        We assume that the playerID is a valid ObjectId.
+        """
+        pp = self.playersColl.find_one({'_id': playerID})
+        return pp['nickname']
+    
+    def getPlayers(self):
+        """
+        This method return a list of players, under the form:
+            { 'playerID': ObjectId, 'nickname': string, 'totalScore': int,
+              'gameID': ObjectId }
+        """
+        players_dict = self.playersColl.find({})
+        players =  []
+        for pp_db in players_dict:
+            pp = { 'playerID': pp_db['_id'],
+                   'nickname': pp_db['nickname'],
+                   'totalScore': pp_db['totalScore'],
+                   'gameID': pp_db['gameID'] }
+            players.append(pp)
+        return players 
+    
     def addPlayer(self, nickname):
         """
         The nickname is mandatory. It must be a unique non-empty string.
@@ -37,59 +76,60 @@ class Players:
             valid = playerID
         return valid
     
-    def getPlayerID(self, nickname):
-        playerID = None
-        pp = self.playersColl.find_one({'nickname': nickname})
-        if pp != None:
-            playerID = pp['_id']
-        return playerID
-    
-    def removePlayer(self, nickname):
+    def removePlayer(self, playerID):
         """
-        This method check that the nickname exists, and if so removes it from 
+        This method check that the playerID exists, and if so removes it from 
         both the memory and the DB.
-        Returns True if the nickname was succesfuly removed from the DB.
+        Returns True if the playerID was succesfuly removed from the DB.
         """
         valid = False
-        if self.playersColl.find_one_and_delete({'nickname': nickname}) != None:
+        if self.playersColl.find_one_and_delete({'_id': playerID}) != None:
             valid = True
         return valid
         
-    def setGameID(self, nickname, gameID):
+    def register(self, playerID, gameID):
         """
-        This method receives an ObjectId and assumes that it is a valid gameID.
+        This method receives two ObjectId and assumes that they are valid 
+        playerID and gameID.
         It stores this gameID in the players record.
         """
-        pp = self.playersColl.find_one_and_update({'nickname': nickname},
+        pp = self.playersColl.find_one_and_update({'_id': playerID},
             {'$set': {'gameID': gameID}}, return_document=ReturnDocument.AFTER)
         return pp['gameID'] == gameID
     
-    def deregister(self, gameID_str):
+    def deregisterPlayer(self, playerID):
         """
-        This method deregisters any player who was registered on the gameID.
-        The argument 'gameID' is a string: str(ObjectId)
+        This method deregisters the players from any game he would be part of(i.e. it overwrites the gameID with 'None').
+        The argument 'playerID' is assumed to be a valid ObjectId.
         """
-        gameID = ObjectId(gameID_str)
-        pp = self.playersColl.find_update({'gameID': gameID},
-            {'$set': {'gameID': None}}, return_document=ReturnDocument.AFTER)
-        return len(pp)
+        self.playersColl.update_one({'_id': playerID}, {'$set': {'gameID': None}})
+
+    def deregisterGame(self, gameID):
+        """
+        This method deregisters all the players attending the game identified by 
+        its gameID (i.e. it overwrites the gameID with 'None').
+        The argument 'gameID' is assumed to be a valid ObjectId.
+        """
+        self.playersColl.update_many({'gameID':gameID}, {"$set": {'gameID': None}})
     
     def inGame(self, gameID):
         """
         This method returns a list of player's ObjectID who are participating 
         into the game identified by gameID.
         """
-        return self.playersColl.find({'gameID': gameID})
+        list_pid = []
+        for pp in self.playersColl.find({'gameID': gameID}):
+            list_pid.append(pp['_id'])
+        return list_pid
         
-    def updateTotalScore(self, nickname, points):
+    def updateTotalScore(self, playerID, points):
         """
         This method increments the player's totalScore with 'points'.
         Return True if the increment operation was succesful.
         """
-        score_old = self.playersColl.find_one({'nickname': nickname})['totalScore']
-        self.playersColl.find_one_and_update({'nickname': nickname}, 
-            {'$inc': {'totalScore': points}}, return_document=ReturnDocument.AFTER)
-        score_new = self.playersColl.find_one({'nickname': nickname})['totalScore']
+        score_old = self.playersColl.find_one({'_id': playerID})['totalScore']
+        self.playersColl.find_one_and_update({'_id': playerID}, {'$inc': {'totalScore': points}})
+        score_new = self.playersColl.find_one({'_id': playerID})['totalScore']
         return (score_new - score_old == points)
     
     def toString(self):
@@ -99,12 +139,12 @@ class Players:
         msg = ""
         if self.playersColl.count() > 0:
             for pp in self.playersColl.find({}).sort('nickname'):
-                msg += pp['nickname'] + " - (" + str(pp['totalScore']) + ")"
+                msg += pp['nickname'] + " - (" + str(pp['_id']) + ") - "
+                msg += str(pp['totalScore']) + " points - "
                 if pp['gameID'] == None:
-                    msg += " not playing currently"
+                    msg += "no game\n"
                 else:
-                    msg += " currently playing game #" + str(pp['gameID'])
-                msg += "\n"
+                    msg += "game <" + str(pp['gameID']) + ">\n"
         return msg
         
     def serialize(self):

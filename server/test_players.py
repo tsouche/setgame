@@ -6,11 +6,53 @@ Created on Auguts 8th 2016
 import unittest
 import pymongo
 from bson.objectid import ObjectId
-import server.constants as constants
+from server.constants import mongoserver_address, mongoserver_port
 from server.players import Players
-from server.test_utilities import vprint, vbar, refPlayers
+from server.test_utilities import vprint, vbar, playersDict_equality
 
+def refPlayersDict():
+    return [
+            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald", 'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845a'},
+            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey", 'totalScore': '30', 'gameID': 'None'},
+            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri", 'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845b'},
+            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi", 'totalScore': '0', 'gameID': '57bf224df9a2f36dd206845b'},
+            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou", 'totalScore': '33', 'gameID': '57bf224df9a2f36dd206845b'},
+            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy", 'totalScore': '45', 'gameID': '57bf224df9a2f36dd206845a'}
+            ]
 
+def refPlayers(fill_none = False):
+    """
+    This methods returns populated players from the reference dictionary above.
+    Depending on the argument 'fill_none':
+      True: the 'gameID' is populated with 'None'
+      False: the 'gameID' is populated with the reference data
+    """
+    list_pp = []
+    for pp_dict in refPlayersDict():
+        gameID = pp_dict['gameID']
+        if (gameID == "None") or (fill_none == True):
+            gameID = None
+        else:
+            gameID = ObjectId(gameID)
+        list_pp.append({'playerID': ObjectId(pp_dict['playerID']),
+                        'nickname': pp_dict['nickname'], 
+                        'totalScore': int(pp_dict['totalScore']), 
+                        'gameID': gameID
+                        })
+    return list_pp
+
+def player_format_DB(p):
+    """
+    This function changes the 'playerID' field into a '_id' field in order to 
+    comply with native MongoDB field structure.
+    """
+    p_db = {}
+    p_db['_id']        = p['playerID']
+    p_db['nickname']   = p['nickname']
+    p_db['totalScore'] = p['totalScore']
+    p_db['gameID']     = p['gameID']
+    return p_db
+    
 class TestPlayers(unittest.TestCase):
     """
     This class is used to unit-test the Players class.
@@ -20,24 +62,20 @@ class TestPlayers(unittest.TestCase):
     
     def setup(self):
         # Connection to the MongoDB server
-        setDB = pymongo.MongoClient(constants.mongoDBserver, constants.mongoDBport).setgame
+        setDB = pymongo.MongoClient(mongoserver_address, mongoserver_port).setgame
         playersColl = setDB.players
         # populate db with test data about players
         playersColl.drop()
         for pp in refPlayers():
-            playersColl.insert_one({'_id': ObjectId(pp['playerID']), 
+            playersColl.insert_one({'_id': pp['playerID'], 
                                 'nickname': pp['nickname'], 
-                                'totalScore': int(pp['totalScore']), 
+                                'totalScore': pp['totalScore'], 
                                 'gameID': None})
-        return playersColl
+        return setDB
         
-    def teardown(self, playersColl):
-        playersColl.drop()
+    def teardown(self, players):
+        players.playersColl.drop()
     
-    def list_test_players(self, playersColl):
-        for pp in playersColl.find():
-            vprint("      "+str(pp))
-
     def test__init__(self):
         """
         Test players.__init__ 
@@ -47,7 +85,8 @@ class TestPlayers(unittest.TestCase):
         vbar()
         vprint("Test data creation")
         vprint("    We create 6 players in the DB:")
-        self.list_test_players(players.playersColl)
+        for pp in players.playersColl.find():
+            vprint("      " + pp['nickname'])
         vprint("    These will be used as test data for the whole test suite.")
         # self.list_test_players(players.playersColl)
         # check the number of players read from the database
@@ -65,8 +104,56 @@ class TestPlayers(unittest.TestCase):
         pp = players.playersColl.find_one({'totalScore': 45})
         self.assertEqual(pp['nickname'], "Daisy")
         # end of the test
-        self.teardown(players.playersColl)
+        self.teardown(players)
         
+    def test_getPlayerID(self):
+        """
+        Test players.getPlayerID
+        """
+        # setup the test data
+        players = Players(self.setup())
+        vbar()
+        print("Test players.getPlayerID")
+        vbar()
+        vprint("We collect the playerID of the players in the DB and compare with")
+        vprint("the reference test data:")
+        for pp in refPlayers():
+            playerID_ref = pp['playerID']
+            playerID_test = players.getPlayerID(pp['nickname'])
+            result = (playerID_ref == playerID_test)
+            vprint("    " + pp['nickname'] + ": playerID = " + str(playerID_test) 
+                   + " - " + str(result))
+            self.assertTrue(result)
+        # end of the test
+        self.teardown(players)
+
+    def test_getPlayers(self):
+        """
+        Test players.getPlayers
+        """
+        # setup the test data
+        players = Players(self.setup())
+        vbar()
+        print("Test players.getPlayers")
+        vbar()
+        vprint("We collect the players from the DB structure, and compare with the")
+        vprint("reference test data:")
+        test_players = players.getPlayers()
+        ref_players = refPlayers(True)
+        # check that there are the same number of players on DB and reference
+        lref = len(ref_players)
+        ltest = len(test_players)
+        result = (lref == ltest)
+        vprint("    - there are "+str(ltest)+" players in the DB: " + str(result))
+        self.assertTrue(result)
+        # check that the DB is the same as the reference
+        for pp_ref in ref_players:
+            result = (pp_ref in test_players)
+            vprint("        " + pp_ref['nickname'] + ": " + str(result))
+            self.assertTrue(result)
+        # end of the test
+        self.teardown(players)
+            
     def test_addPlayer(self):
         """
         Test players.addPlayer 
@@ -90,9 +177,10 @@ class TestPlayers(unittest.TestCase):
         self.assertFalse(players.addPlayer("Daisy"))
         self.assertEqual(players.playersColl.count(), 7)
         vprint("    We now have 7 players in the DB:")
-        self.list_test_players(players.playersColl)
+        for pp in players.playersColl.find():
+            vprint("      "+pp['nickname'])
         # end of the test
-        self.teardown(players.playersColl)
+        self.teardown(players)
 
     def test_removePlayer(self):
         """
@@ -104,46 +192,141 @@ class TestPlayers(unittest.TestCase):
         vbar()
         print("Test players.removePlayer")
         vbar()
-        players.removePlayer("Donald")
+        pp = players.playersColl.find_one({'nickname': "Donald"})
+        self.assertTrue(players.removePlayer(pp['_id']))
         self.assertEqual(players.playersColl.count(), 5)
         pp = players.playersColl.find_one({'nickname': "Donald"})
         self.assertEqual(pp, None)
-        vprint("We remove Donald and check that we have 5 players left.")
-        self.list_test_players(players.playersColl)
+        vprint("We removed Donald and check that we have 5 players left.")
+        for pp in players.playersColl.find():
+            vprint("      "+pp['nickname'])
         # end of the test
-        self.teardown(players.playersColl)
+        self.teardown(players)
 
-    def test_setGameID(self):
+    def test_register(self):
         """
-        Test players.setGameID 
+        Test players.register 
         """
         # setup the test data
         players = Players(self.setup())
-        gameID1 = ObjectId()
-        gameID2 = ObjectId()
+        ref_players = []
+        for pp in refPlayers():
+            ref_players.append(player_format_DB(pp))
+        gameID1 = ref_players[0]['gameID']
+        gameID2 = ref_players[2]['gameID']
         # modifies few gameID values
         vbar()
-        print("Test players.setGameID")
+        print("Test players.register")
         vbar()
-        vprint("Test setGameID by forcing the 'gameID' of several players:")
+        vprint("Test registering several players on two games:")
         vprint("    - Riri, Fifi and Loulou are part of a first game.")
         vprint("    - Daisy and Donald are part of another game.")
         vprint("    - Mickey does not play a game.")
         vprint("  Here are the players:")
-        self.assertTrue(players.setGameID("Daisy", gameID1))
-        self.assertTrue(players.setGameID("Donald", gameID1))
-        self.assertTrue(players.setGameID("Riri", gameID2))
-        self.assertTrue(players.setGameID("Fifi", gameID2))
-        self.assertTrue(players.setGameID("Loulou", gameID2))
+        self.assertTrue(players.register(players.getPlayerID("Daisy"), gameID1))
+        self.assertTrue(players.register(players.getPlayerID("Donald"), gameID1))
+        self.assertTrue(players.register(players.getPlayerID("Riri"), gameID2))
+        self.assertTrue(players.register(players.getPlayerID("Fifi"), gameID2))
+        self.assertTrue(players.register(players.getPlayerID("Loulou"), gameID2))
         # self.list_test_players(players.playersColl)
-        pp = players.playersColl.find_one({'gameID': gameID1})
-        self.assertEqual(pp['gameID'], gameID1)
-        pp = players.playersColl.find_one({'gameID': gameID2})
-        self.assertEqual(pp['gameID'], gameID2)
-        self.list_test_players(players.playersColl)
+        pp = []
+        for p in players.playersColl.find({'gameID': gameID1}):
+            pp.append(p)
+        result = (ref_players[0] in pp) and (ref_players[5] in pp) and (len(pp) == 2)
+        self.assertTrue(result)
+        pp = []
+        for p in players.playersColl.find({'gameID': gameID2}):
+            pp.append(p)
+        result = (ref_players[2] in pp) and (ref_players[3] in pp) and (ref_players[4] in pp) and (len(pp) == 3)
+        self.assertTrue(result)
+        for pp in players.playersColl.find({}):
+            vprint("      " + pp['nickname'] + " - gameID: " + str(pp['gameID']))
         # end of the test
-        self.teardown(players.playersColl)
+        self.teardown(players)
             
+    def test_deregisterPlayer(self):
+        """
+        Test players.deregisterPlayer 
+        """
+        # setup the test data
+        players = Players(self.setup())
+        ref_players = []
+        for pp in refPlayers():
+            ref_players.append(player_format_DB(pp))
+        gameID1 = ref_players[0]['gameID']
+        gameID2 = ref_players[2]['gameID']
+        players.register(players.getPlayerID("Daisy"), gameID1)
+        players.register(players.getPlayerID("Donald"), gameID1)
+        players.register(players.getPlayerID("Riri"), gameID2)
+        players.register(players.getPlayerID("Fifi"), gameID2)
+        players.register(players.getPlayerID("Loulou"), gameID2)
+        donald = players.playersColl.find_one({'nickname': "Donald"})
+        riri = players.playersColl.find_one({'nickname': "Riri"})
+        fifi = players.playersColl.find_one({'nickname': "Fifi"})
+        loulou = players.playersColl.find_one({'nickname': "Loulou"})
+        daisy = players.playersColl.find_one({'nickname': "Daisy"})
+        # will deregister few players
+        vbar()
+        print("Test players.deregisterPlayer")
+        vbar()
+        vprint("Test registering several players on two games:")
+        vprint("    - Riri, Fifi and Loulou are part of a first game.")
+        vprint("    - Daisy and Donald are part of another game.")
+        vprint("    - Mickey does not play a game.")
+        vprint("  Here are the players after we deregister them:")
+        players.deregisterPlayer(players.getPlayerID("Donald"))
+        players.deregisterPlayer(players.getPlayerID("Daisy"))
+        donald_gid = players.getGameID(donald['_id'])
+        daisy_gid =  players.getGameID(daisy['_id'])
+        self.assertTrue(donald_gid == daisy_gid == None)
+        players.deregisterPlayer(players.getPlayerID("Riri"))
+        players.deregisterPlayer(players.getPlayerID("Fifi"))
+        players.deregisterPlayer(players.getPlayerID("Loulou"))
+        riri_gid = players.getGameID(riri['_id'])
+        fifi_gid =  players.getGameID(fifi['_id'])
+        loulou_gid = players.getGameID(loulou['_id'])
+        self.assertTrue(riri_gid == fifi_gid == loulou_gid == None)
+        for pp in players.playersColl.find({}):
+            vprint("      " + pp['nickname'] + " - gameID: " + str(pp['gameID']))
+        # end of the test
+        self.teardown(players)
+    
+    def test_deregisterGame(self):
+        """
+        Test players.deregisterGame 
+        """
+        # setup the test data
+        players = Players(self.setup())
+        ref_players = []
+        for pp in refPlayers():
+            ref_players.append(player_format_DB(pp))
+        gameID1 = ref_players[0]['gameID']
+        gameID2 = ref_players[2]['gameID']
+        players.register(players.getPlayerID("Daisy"), gameID1)
+        players.register(players.getPlayerID("Donald"), gameID1)
+        players.register(players.getPlayerID("Riri"), gameID2)
+        players.register(players.getPlayerID("Fifi"), gameID2)
+        players.register(players.getPlayerID("Loulou"), gameID2)
+        # will deregister few players
+        vbar()
+        print("Test players.deregisterGame")
+        vbar()
+        vprint("Test registering several players on two games:")
+        vprint("    - Riri, Fifi and Loulou are part of a first game.")
+        vprint("    - Daisy and Donald are part of another game.")
+        vprint("    - Mickey does not play a game.")
+        vprint("  Here are the players after we deregister the second game:")
+        gid = players.getGameID(players.getPlayerID("Riri"))
+        players.deregisterGame(gid)
+        riri_gid = players.getGameID(players.getPlayerID("Riri"))
+        fifi_gid =  players.getGameID(players.getPlayerID("Fifi"))
+        loulou_gid = players.getGameID(players.getPlayerID("Loulou"))
+        self.assertTrue(riri_gid == fifi_gid == loulou_gid == None)
+        for pp in players.playersColl.find({}):
+            vprint("      " + pp['nickname'] + " - gameID: " + str(pp['gameID']))
+        # end of the test
+        self.teardown(players)
+    
     def test_inGame(self):
         """
         Test players.inGame
@@ -152,29 +335,35 @@ class TestPlayers(unittest.TestCase):
         players = Players(self.setup())
         gameID1 = ObjectId()
         gameID2 = ObjectId()
-        players.setGameID("Daisy", gameID1)
-        players.setGameID("Donald", gameID1)
-        players.setGameID("Riri", gameID2)
-        players.setGameID("Fifi", gameID2)
-        players.setGameID("Loulou", gameID2)
+        players.register(players.getPlayerID("Daisy"), gameID1)
+        players.register(players.getPlayerID("Donald"), gameID1)
+        players.register(players.getPlayerID("Riri"), gameID2)
+        players.register(players.getPlayerID("Fifi"), gameID2)
+        players.register(players.getPlayerID("Loulou"), gameID2)
         vbar()
         print("Test players.inGame")
         vbar()
-        vprint("We gather a list of the players being part of the fist game, append")
-        vprint("their names (sorted) and compare with 'DaisyDonald'.")
-        vprint("We do the same for the second game, and compare with 'FifiLoulouRiri'.")
-        self.assertEqual(players.playersColl.count({'gameID': gameID1}), 2)
-        self.assertEqual(players.playersColl.count({'gameID': gameID2}), 3)
-        msg = ""
-        for pp in players.playersColl.find({'gameID': gameID1}).sort('nickname'):
-            msg += pp['nickname']
-        self.assertEqual(msg, "DaisyDonald")
-        msg = ""
-        for pp in players.playersColl.find({'gameID': gameID2}).sort('nickname'):
-            msg += pp['nickname']
-        self.assertEqual(msg, "FifiLoulouRiri")
+        vprint("We gather a list of the players being part of the fist game and check")
+        vprint("against the reference data :")
+        list_pid1 = players.inGame(gameID1)
+        list_pid2 = players.inGame(gameID2)
+        self.assertTrue(players.getPlayerID("Donald") in list_pid1)
+        self.assertTrue(players.getPlayerID("Daisy") in list_pid1)
+        self.assertEqual(len(list_pid1), 2)
+        vprint("  > GameID 1:")
+        for pid in list_pid1:
+            name = players.getNickname(pid)
+            vprint("      " + name + " (" + str(pid) + ")")
+        self.assertTrue(players.getPlayerID("Riri") in list_pid2)
+        self.assertTrue(players.getPlayerID("Fifi") in list_pid2)
+        self.assertTrue(players.getPlayerID("Loulou") in list_pid2)
+        self.assertEqual(len(list_pid2), 3)
+        vprint("  > GameID 2:")
+        for pid in list_pid2:
+            name = players.getNickname(pid)
+            vprint("      " + name + " (" + str(pid) + ")")
         # end of the test
-        self.teardown(players.playersColl)
+        self.teardown(players)
             
     def test_updateTotalScore(self):
         """
@@ -189,11 +378,13 @@ class TestPlayers(unittest.TestCase):
         vprint("We check that we can properly update the 'totalScore' with more points")
         vprint("(typically updating the 'totalScore' after a game ended).")
         # self.list_test_players(players.playersColl)
-        self.assertTrue(players.updateTotalScore("Daisy", 5))
+        pid = players.getPlayerID("Daisy")
+        self.assertTrue(players.updateTotalScore(pid, 5))
         self.assertEqual(players.playersColl.find_one({'nickname': "Daisy"})['totalScore'], 50)
-        self.list_test_players(players.playersColl)
+        for pp in players.playersColl.find({}):
+            vprint("      " + pp['nickname'] + " - totalScore: " + str(pp['totalScore']))
         # end of the test
-        self.teardown(players.playersColl)
+        self.teardown(players)
             
     def test_toString(self):
         """
@@ -201,63 +392,57 @@ class TestPlayers(unittest.TestCase):
         """
         # setup the test data
         players = Players(self.setup())
-        gameID1 = ObjectId()
-        gameID2 = ObjectId()
-        self.assertTrue(players.setGameID("Donald", gameID1))
-        self.assertTrue(players.setGameID("Riri", gameID2))
+        playerID1 = players.getPlayerID("Donald")
+        gameID1 = refPlayers()[0]['gameID']
+        playerID2 = players.getPlayerID("Riri")
+        gameID2 = refPlayers()[2]['gameID']
+        self.assertTrue(players.register(playerID1, gameID1))
+        self.assertTrue(players.register(playerID2, gameID2))
         # runs the test
         vbar()
         print("Test players.toString")
         vbar()
         vprint("We check that 'toString' produces the expected string which is:")
         # self.list_test_players(players.playersColl)
-        target  = "Daisy - (45) not playing currently\n"
-        target += "Donald - (18) currently playing game #"+str(gameID1)+"\n"
-        target += "Fifi - (0) not playing currently\n"
-        target += "Loulou - (33) not playing currently\n"
-        target += "Mickey - (30) not playing currently\n"
-        target += "Riri - (18) currently playing game #"+str(gameID2)+"\n"
+        vprint()
+        target  = "Daisy - (57b9bffb124e9b2e056a765d) - 45 points - no game\n"
+        target += "Donald - (57b8529a124e9b6187cf6c2a) - 18 points - game <57bf224df9a2f36dd206845a>\n"
+        target += "Fifi - (57b9a003124e9b13e6759bdc) - 0 points - no game\n"
+        target += "Loulou - (57b9bffb124e9b2e056a765c) - 33 points - no game\n"
+        target += "Mickey - (57b9a003124e9b13e6759bda) - 30 points - no game\n"
+        target += "Riri - (57b9a003124e9b13e6759bdb) - 18 points - game <57bf224df9a2f36dd206845b>\n"
         vprint(target)
         self.assertEqual(target, players.toString())
         # end of the test
-        self.teardown(players.playersColl)
+        self.teardown(players)
             
     def test_serialize(self):
         """
         Test players.serialize 
         """
+        # build the reference data
+        target = {'__class__': 'SetPlayers'}
+        target['players'] = refPlayersDict()
         # setup the test data
         players = Players(self.setup())
-        gameID1 = ObjectId()
-        gameID2 = ObjectId()
-        players.setGameID("Daisy", gameID1)
-        players.setGameID("Donald", gameID1)
-        players.setGameID("Riri", gameID2)
-        players.setGameID("Fifi", gameID2)
-        players.setGameID("Loulou", gameID2)
-        donald = players.playersColl.find_one({'nickname': "Donald"})
-        mickey = players.playersColl.find_one({'nickname': "Mickey"})
-        riri = players.playersColl.find_one({'nickname': "Riri"})
-        fifi = players.playersColl.find_one({'nickname': "Fifi"})
-        loulou = players.playersColl.find_one({'nickname': "Loulou"})
-        daisy = players.playersColl.find_one({'nickname': "Daisy"})
-        target = {'__class__': 'SetPlayers', 'players': [
-            {'playerID': str(daisy['_id']), 'nickname': "Daisy", 'totalScore': '45', 'gameID': str(daisy['gameID'])},
-            {'playerID': str(donald['_id']), 'nickname': "Donald", 'totalScore': '18', 'gameID': str(donald['gameID'])},
-            {'playerID': str(fifi['_id']), 'nickname': "Fifi", 'totalScore': '0', 'gameID': str(fifi['gameID'])},
-            {'playerID': str(loulou['_id']), 'nickname': "Loulou", 'totalScore': '33', 'gameID': str(loulou['gameID'])},
-            {'playerID': str(mickey['_id']), 'nickname': "Mickey", 'totalScore': '30', 'gameID': str(mickey['gameID'])},
-            {'playerID': str(riri['_id']), 'nickname': "Riri", 'totalScore': '18', 'gameID': str(riri['gameID'])}]}
+        gameID1 = ObjectId('57bf224df9a2f36dd206845a')
+        gameID2 = ObjectId('57bf224df9a2f36dd206845b')
+        players.register(players.getPlayerID("Daisy"), gameID1)
+        players.register(players.getPlayerID("Donald"), gameID1)
+        players.register(players.getPlayerID("Riri"), gameID2)
+        players.register(players.getPlayerID("Fifi"), gameID2)
+        players.register(players.getPlayerID("Loulou"), gameID2)
         # runs the test
         vbar()
         print("Test players.serialize")
         vbar()
         vprint("We compare the result of the 'serialize' method with the target which is:")
         vprint(target)
-        Dict = players.serialize()
-        self.assertEqual(target, Dict)
+        # check that the class is equal
+        result = players.serialize()
+        self.assertTrue(playersDict_equality(target, result))
         # end of the test
-        self.teardown(players.playersColl)
+        self.teardown(players)
         
     def test_deserialize(self):
         """
@@ -265,26 +450,7 @@ class TestPlayers(unittest.TestCase):
         """
         # setup the test data
         players = Players(self.setup())
-        gameID1 = ObjectId()
-        gameID2 = ObjectId()
-        players.setGameID("Daisy", gameID1)
-        players.setGameID("Donald", gameID1)
-        players.setGameID("Riri", gameID2)
-        players.setGameID("Fifi", gameID2)
-        players.setGameID("Loulou", gameID2)
-        donald = players.playersColl.find_one({'nickname': "Donald"})
-        mickey = players.playersColl.find_one({'nickname': "Mickey"})
-        riri = players.playersColl.find_one({'nickname': "Riri"})
-        fifi = players.playersColl.find_one({'nickname': "Fifi"})
-        loulou = players.playersColl.find_one({'nickname': "Loulou"})
-        daisy = players.playersColl.find_one({'nickname': "Daisy"})
-        target = {'__class__': 'SetPlayers', 'players': [
-            {'playerID': str(daisy['_id']), 'nickname': "Daisy", 'totalScore': '45', 'gameID': str(daisy['gameID'])},
-            {'playerID': str(donald['_id']), 'nickname': "Donald", 'totalScore': '18', 'gameID': str(donald['gameID'])},
-            {'playerID': str(fifi['_id']), 'nickname': "Fifi", 'totalScore': '0', 'gameID': str(fifi['gameID'])},
-            {'playerID': str(loulou['_id']), 'nickname': "Loulou", 'totalScore': '33', 'gameID': str(loulou['gameID'])},
-            {'playerID': str(mickey['_id']), 'nickname': "Mickey", 'totalScore': '30', 'gameID': str(mickey['gameID'])},
-            {'playerID': str(riri['_id']), 'nickname': "Riri", 'totalScore': '18', 'gameID': str(riri['gameID'])}]}
+        target = {'__class__': 'SetPlayers', 'players': refPlayersDict()}
         players.deserialize(target)
         # runs the test
         vbar()
@@ -295,9 +461,9 @@ class TestPlayers(unittest.TestCase):
         vprint("which is:")
         vprint(target)
         result = players.serialize()
-        self.assertEqual(target, result)
+        self.assertTrue(playersDict_equality(target, result))
         # end of the test
-        self.teardown(players.playersColl)
+        self.teardown(players)
 
 
 

@@ -34,16 +34,6 @@ def cardsList(nb):
             lst.append(i)
     return lst
 
-def refPlayers():
-    return [
-    {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald", 'totalScore': '18', 'gameID': 'None'},
-    {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey", 'totalScore': '30', 'gameID': 'None'},
-    {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri", 'totalScore': '18', 'gameID': 'None'},
-    {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi", 'totalScore': '0', 'gameID': 'None'},
-    {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou", 'totalScore': '33', 'gameID': 'None'},
-    {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy", 'totalScore': '45', 'gameID': 'None'}
-    ]
-
 def refGames_Dict():
     # List of 2 reference Game dictionaries, used to assert the test results 
     # against these reference data.
@@ -672,63 +662,21 @@ def refSetsAndPlayers():
     'Cardset 1', to enable the test of a whole game with known reference data.
     """
     setsAndPlayers_lists = []
-    # adds 'refSet 0'
-    setsAndPlayers_lists.append([
-        {'set': [ 1, 6,11], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}},
-        {'set': [ 1, 4, 5], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 0, 5, 8], 'player': {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi"  }},
-        {'set': [ 0, 1, 9], 'player': {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy" }},
-        {'set': [ 0, 3, 4], 'player': {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou"}},
-        {'set': [ 2, 3, 8], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}},
-        {'set': [ 2, 3, 4], 'player': {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri"  }},
-        {'set': [ 5, 6,11], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 0, 6, 8], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}},
-        {'set': [ 0, 6, 8], 'player': {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi"  }},
-        {'set': [ 0, 1, 4], 'player': {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy" }},
-        {'set': [ 0, 5, 7], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 0, 1, 8], 'player': {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy" }},
-        {'set': [ 1, 4, 8], 'player': {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy" }},
-        {'set': [ 0, 4, 7], 'player': {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy" }},
-        {'set': [ 0, 3, 6], 'player': {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi"  }},
-        {'set': [ 2, 7,10], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}},
-        {'set': [ 1, 3, 7], 'player': {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi"  }},
-        {'set': [ 2, 3, 5], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 3, 7, 8], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 0, 3, 6], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}},
-        {'set': [ 0, 6, 9], 'player': {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou"}},
-        {'set': [ 0, 2, 8], 'player': {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy" }},
-        {'set': [ 0, 1, 9], 'player': {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy" }},
-        {'set': [ 3, 5, 6], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}}
-        ])
-    # adds 'refSet 0'
-    setsAndPlayers_lists.append([
-        {'set': [ 0, 3, 9], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}},
-        {'set': [ 0, 1, 9], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 0, 6,11], 'player': {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy" }},
-        {'set': [ 1, 4,11], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 1, 4, 8], 'player': {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri"  }},
-        {'set': [ 5, 6, 7], 'player': {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou"}},
-        {'set': [ 2, 5,11], 'player': {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou"}},
-        {'set': [ 0, 2, 6], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 2, 4, 8], 'player': {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri"  }},
-        {'set': [ 0, 2, 5], 'player': {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou"}},
-        {'set': [ 0, 1,10], 'player': {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi"  }},
-        {'set': [ 0, 2, 6], 'player': {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou"}},
-        {'set': [ 0, 2, 3], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}},
-        {'set': [ 1, 8,11], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 4, 5, 8], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}},
-        {'set': [ 3, 4, 6], 'player': {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy" }},
-        {'set': [ 0, 3,11], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}},
-        {'set': [ 1, 6, 9], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 1, 7, 8], 'player': {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi"  }},
-        {'set': [ 2, 5,11], 'player': {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou"}},
-        {'set': [ 1, 2, 7], 'player': {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou"}},
-        {'set': [ 1, 2, 4], 'player': {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey"}},
-        {'set': [ 3, 8,10], 'player': {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou"}},
-        {'set': [ 2, 4,10], 'player': {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald"}}
-        ])
+    for i in range(0,2):
+        source = refGames_Dict()[i]['steps']
+        setsAndPlayers_lists.append([])
+        for j in range(0,len(source)): 
+            set_int = []
+            for k in source[j]['set']:
+                set_int.append(int(k))
+            # source_playerID = ObjectId(source[j]['playerID'])
+            playerID = source[j]['playerID']
+            nickname = source[j]['nickname']
+            setsAndPlayers_lists[i].append({'set': set_int, 
+                'player': {'playerID': playerID, 'nickname': nickname}})
     return setsAndPlayers_lists
 
+    
 def stepDict_to_Step(dict_step, step):
     step.turnCounter = int(dict_step['turnCounter'])
     if dict_step['playerID'] == 'None':
@@ -892,6 +840,16 @@ def stepToString(step, cardset, tab=""):
     msg += set_msg + "\n"
     return msg
 
+def playersDict_equality(players1, players2):
+    """
+    This function returns True if teh two steps contain similar/equivalent data.
+    """
+    equal = (players1['__class__'] == players2['__class__'])
+    equal = equal and (len(players1['players']) == len(players2['players']))
+    for pp_dict in players1['players']:
+        equal = equal and (pp_dict in players2['players'])
+    return equal
+
 def cardset_equality(cardset1, cardset2):
     """
     This function return True if the two cardsets represent the cards in the 
@@ -900,6 +858,9 @@ def cardset_equality(cardset1, cardset2):
     return cardset1.cards == cardset2.cards
     
 def step_equality(step1, step2):
+    """
+    This function returns True if teh two steps contain similar/equivalent data.
+    """
     test_equal = (step1.turnCounter == step2.turnCounter)
     # print("equal1:",test_equal)
     test_equal = test_equal and (step1.playerID == step2.playerID   )

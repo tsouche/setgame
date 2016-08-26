@@ -5,9 +5,11 @@ Created on August 9th 2016
 
 import unittest
 from bson.objectid import ObjectId
+from pymongo import MongoClient
 
 from server.game import Game
-from server.test_utilities import vprint, vbar, refSetsAndPlayers
+from server.constants import mongoserver_address, mongoserver_port
+from server.test_utilities import vprint, vbar
 from server.test_utilities import cardsetToString, stepToString
 from server.test_utilities import refGames_Dict
 from server.test_utilities import cardset_equality, step_equality, game_compliant
@@ -109,14 +111,17 @@ class test_Game(unittest.TestCase):
         Initialize a game from test data: the 'test_data_index' (0 or 1) points
         at the data set to be used from 'test_utilities' for:
             - players
-            - carset
-        We then use the reference 'set proposal history' ('refSetsAndPlayers' in
-        'test_utilities' in order to go through the game and compare the 
-        progress against reference data available from 'refSteps'.
+            - cardset
+        We then use the reference 'set proposal history' (in 'test_utilities' in 
+        order to go through the game and compare the progress against reference 
+        data available from 'refSteps'.
         """
+        # Connection to the MongoDB server
+        setDB = MongoClient(mongoserver_address, mongoserver_port).setgame
+        gamesColl = setDB.games
         # read the players and initiate a game.
         playersDict = refGames_Dict()[test_data_index]['players']
-        partie = Game(playersDict)
+        partie = Game(playersDict, gamesColl)
         # overwrite the gameID with the reference test data
         partie.gameID = ObjectId(refGameHeader_start()[test_data_index]['gameID'])
         # Overwrite the cardset with reference test data
