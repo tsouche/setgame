@@ -28,7 +28,24 @@ class Players:
         if pp != None:
             playerID = pp['_id']
         return playerID
-    
+
+    def playerIDisValid(self, playerID):
+        """
+        This method checks that the playerID is valid (ie. the corresponding
+        player exists in the DB).
+        """
+        pp = self.playersColl.find_one({'_id': playerID})
+        return (pp != None)
+
+    def playerIsAvailableToPlay(self, playerID):
+        """
+        This method checks that the playerID is valid (ie. the corresponding
+        player exists in the DB) and that the player is not yet part of a
+        game (i.e. his 'gameID' in the DB is 'None'.
+        """
+        pp = self.playersColl.find_one({'_id': playerID, 'gameID': None})
+        return (pp != None)
+
     def getGameID(self, playerID):
         """
         This method return the gameID of the player.

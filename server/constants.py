@@ -7,7 +7,7 @@ This modules contains few constants which are useful to the Set gale.
 
 cardsMax = 81
 tableMax = 12
-playersMin = 2
+playersMin = 4
 playersMax = 6
 pointsPerSet = 3
 

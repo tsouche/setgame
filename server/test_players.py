@@ -127,6 +127,105 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
 
+    def test_playerIDisValid(self):
+        """
+        Test players.playerIDisValid
+        """
+        # setup the test data
+        players = Players(self.setup())
+        vbar()
+        print("Test players.playerIDisValid")
+        vbar()
+        vprint("We test the validity of several playerIDs and compare the result with")
+        vprint("the reference test data:")
+        # test with the valid IDs in the DB 
+        for pp in refPlayers():
+            playerID_ref = pp['playerID']
+            # test if the 'reference' playerID are recognized
+            result = players.playerIDisValid(playerID_ref)
+            vprint("    " + pp['nickname'] + ": playerID = " + str(playerID_ref) 
+                   + " is considered valid : " + str(result))
+            self.assertTrue(result)
+        # now test with wrong IDs
+        invalid_IDs = [ 
+            {'playerID': '57b9a303124e9b13e6759bda'}, {'playerID': '57b9a003124e9b13e6751bdb'},
+            {'playerID': '57b9a003124e9b13e6757bdc'}, {'playerID': '57b9fffb124e9b2e056a765c'},
+            {'playerID': '57b9bffb124e9b2eb56a765d'}, {'playerID': '5748529a124e9b6187cf6c2a'} ]
+        for pID in invalid_IDs:
+            result = players.playerIDisValid(pID['playerID'])
+            vprint("    playerID " + str(pID['playerID']) + 
+                   " is considered invalid : " + str(result))
+            self.assertFalse(result)
+        # end of the test
+        self.teardown(players)
+
+    def test_playerIsAvailableToPlay(self):
+        """
+        Test players.playerIsAvailableToPlay
+        """
+        # setup the test data
+        players = Players(self.setup())
+        id_Donald = players.getPlayerID("Donald")
+        id_Mickey = players.getPlayerID("Mickey")
+        id_Riri   = players.getPlayerID("Riri")
+        id_Fifi   = players.getPlayerID("Fifi")
+        id_Loulou = players.getPlayerID("Loulou")
+        id_Daisy  = players.getPlayerID("Daisy")
+        gameID1 = ObjectId()
+        gameID2 = ObjectId()
+        vbar()
+        print("Test players.playerIsAvailableToPlay")
+        vbar()
+        vprint("We check which players are available to play and compare with the")
+        vprint("reference data :")
+        # first round of test
+        players.register(id_Riri, gameID2)
+        players.register(id_Fifi, gameID2)
+        players.register(id_Loulou, gameID2)
+        vprint("  > First round, only kids are playing:")
+        result = players.playerIsAvailableToPlay(id_Donald)
+        vprint("      Donald: " + str(result))
+        self.assertTrue(result)
+        result = players.playerIsAvailableToPlay(id_Mickey)
+        vprint("      Mickey: " + str(result))
+        self.assertTrue(result)
+        result = players.playerIsAvailableToPlay(id_Riri)
+        vprint("      Riri  : " + str(result))
+        self.assertFalse(result)
+        result = players.playerIsAvailableToPlay(id_Fifi)
+        vprint("      Fifi  : " + str(result))
+        self.assertFalse(result)
+        result = players.playerIsAvailableToPlay(id_Loulou)
+        vprint("      Loulou: " + str(result))
+        self.assertFalse(result)
+        result = players.playerIsAvailableToPlay(id_Daisy)
+        vprint("      Daisy : " + str(result))
+        self.assertTrue(result)
+        # second round of test
+        players.register(id_Daisy, gameID1)
+        players.register(id_Donald, gameID1)
+        vprint("  > Second round, two parents are also playing:")
+        result = players.playerIsAvailableToPlay(id_Donald)
+        vprint("      Donald: " + str(result))
+        self.assertFalse(result)
+        result = players.playerIsAvailableToPlay(id_Mickey)
+        vprint("      Mickey: " + str(result))
+        self.assertTrue(result)
+        result = players.playerIsAvailableToPlay(id_Riri)
+        vprint("      Riri  : " + str(result))
+        self.assertFalse(result)
+        result = players.playerIsAvailableToPlay(id_Fifi)
+        vprint("      Fifi  : " + str(result))
+        self.assertFalse(result)
+        result = players.playerIsAvailableToPlay(id_Loulou)
+        vprint("      Loulou: " + str(result))
+        self.assertFalse(result)
+        result = players.playerIsAvailableToPlay(id_Daisy)
+        vprint("      Daisy : " + str(result))
+        self.assertFalse(result)
+                # end of the test
+        self.teardown(players)
+
     def test_getPlayers(self):
         """
         Test players.getPlayers
