@@ -8,38 +8,9 @@ import pymongo
 from bson.objectid import ObjectId
 from server.constants import mongoserver_address, mongoserver_port
 from server.players import Players
-from server.test_utilities import vprint, vbar, playersDict_equality
-
-def refPlayersDict():
-    return [
-            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald", 'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845a'},
-            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey", 'totalScore': '30', 'gameID': 'None'},
-            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri", 'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845b'},
-            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi", 'totalScore': '0', 'gameID': '57bf224df9a2f36dd206845b'},
-            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou", 'totalScore': '33', 'gameID': '57bf224df9a2f36dd206845b'},
-            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy", 'totalScore': '45', 'gameID': '57bf224df9a2f36dd206845a'}
-            ]
-
-def refPlayers(fill_none = False):
-    """
-    This methods returns populated players from the reference dictionary above.
-    Depending on the argument 'fill_none':
-      True: the 'gameID' is populated with 'None'
-      False: the 'gameID' is populated with the reference data
-    """
-    list_pp = []
-    for pp_dict in refPlayersDict():
-        gameID = pp_dict['gameID']
-        if (gameID == "None") or (fill_none == True):
-            gameID = None
-        else:
-            gameID = ObjectId(gameID)
-        list_pp.append({'playerID': ObjectId(pp_dict['playerID']),
-                        'nickname': pp_dict['nickname'], 
-                        'totalScore': int(pp_dict['totalScore']), 
-                        'gameID': gameID
-                        })
-    return list_pp
+from server.test_utilities import vprint, vbar
+from server.test_utilities import refPlayersDict, refPlayers
+from server.test_utilities import playersDict_equality
 
 def player_format_DB(p):
     """

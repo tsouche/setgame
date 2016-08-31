@@ -24,6 +24,37 @@ def vprint(arg="\n"):
 def vbar():
     vprint("------------------------------------------------------------------------")
     
+def refPlayersDict():
+    return [
+            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald", 'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845a'},
+            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey", 'totalScore': '30', 'gameID': 'None'},
+            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri", 'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845b'},
+            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi", 'totalScore': '0', 'gameID': '57bf224df9a2f36dd206845b'},
+            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou", 'totalScore': '33', 'gameID': '57bf224df9a2f36dd206845b'},
+            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy", 'totalScore': '45', 'gameID': '57bf224df9a2f36dd206845a'}
+            ]
+
+def refPlayers(fill_none = False):
+    """
+    This methods returns populated players from the reference dictionary above.
+    Depending on the argument 'fill_none':
+      True: the 'gameID' is populated with 'None'
+      False: the 'gameID' is populated with the reference data
+    """
+    list_pp = []
+    for pp_dict in refPlayersDict():
+        gameID = pp_dict['gameID']
+        if (gameID == "None") or (fill_none == True):
+            gameID = None
+        else:
+            gameID = ObjectId(gameID)
+        list_pp.append({'playerID': ObjectId(pp_dict['playerID']),
+                        'nickname': pp_dict['nickname'], 
+                        'totalScore': int(pp_dict['totalScore']), 
+                        'gameID': gameID
+                        })
+    return list_pp
+
 def cardsList(nb):
     """
     This function return a list of 'nb' integers, from 0  to nb-1
@@ -676,7 +707,6 @@ def refSetsAndPlayers():
                 'player': {'playerID': playerID, 'nickname': nickname}})
     return setsAndPlayers_lists
 
-    
 def stepDict_to_Step(dict_step, step):
     step.turnCounter = int(dict_step['turnCounter'])
     if dict_step['playerID'] == 'None':

@@ -4,13 +4,17 @@ Created on August 30th, 2016
 '''
 import unittest
 import requests
+from pymongo import MongoClient
 
+from constants import mongoserver_address, mongoserver_port
 from constants import setserver_address, setserver_port
+from players import Players
 from test_utilities import vbar, vprint
 from server.setserver import Setserver
+from server.test_utilities import refPlayersDict
 
 def _url(path):
-    return setserver_address + ":" + str(setserver_port) + path
+    return "http://" + setserver_address + ":" + str(setserver_port) + path
 
 
 class TestSetserver(unittest.TestCase):
@@ -44,11 +48,12 @@ class TestSetserver(unittest.TestCase):
         vprint("Test setserver.__init__")
         vbar()
         # we put a 'get' request to the server and check that it answers 'Coucou'
+        vprint("We poll " + _url('/hello'))
         result = requests.get(_url('/hello'))
-        vprint("We pust a get request to 'server/hello' and the answer is:")
-        vprint("    " + result)
-        self.assertEqual(result, "<p>Coucou</p>")
-    
+        vprint("We push a get request to '/hello' and the answer is:")
+        vprint("    " + result.text)
+        self.assertEqual(result.text, "<p>Coucou</p>")
+
     def test_registerPlayer(self):
         """
         Test Setserver.registerPlayers
@@ -59,20 +64,30 @@ class TestSetserver(unittest.TestCase):
         # Here we must register few players, and then compare the playerID sent
         # back by the server wit the values in the DB.
         # We also try to register invalid nicknames and see the server answer.
-        pass
-        """
-        # register the usual suspects, Donald, Daisy, Mickey and the kids, and
-        # check the results.
-        # A typical get request should look like:
-        # http://server/enlist?playerID='str(playerID)'&save=save
-        # so if:
-        #    - the server is on localhots and listens to port 8080
-        #    - the playerID is '57c5a88bf9a2f35a615ab92c'
-        # then the url should be:
-        # http://localhost:8080/enlist?playerID=57c5a88bf9a2f35a615ab92c&save=save
-        result = 
         
-        """
+        # connect to the 'players' collection
+        setDB = MongoClient(mongoserver_address, mongoserver_port).set_game
+        playersColl = setDB.players
+        playersColl.drop()
+        # try registering several players
+        for pp in refPlayersDict():
+            nickname = pp['nickname']
+            path = _url('/register/' + nickname)
+            vprint("We poll " + path)
+            result = requests.get(path)
+            playerid_str = result.json()['playerID']
+            vprint("    " + nickname +" is registered with gameID = '" + playerid_str + "'")
+            pdb_str = str(playersColl.find_one({'nickname': nickname})['_id'])
+            self.assertEqual(playerid_str, pdb_str)
+        # try re-registering the same players => should fail
+        for pp in refPlayersDict():
+            nickname = pp['nickname']
+            path = _url('/register/' + nickname)
+            vprint("We poll again " + path)
+            result = requests.get(path)
+            playerid_str = result.json()['playerID']
+            vprint("    registration answer is '" + playerid_str + "'")
+            self.assertEqual(playerid_str, 'Failed')
         
 
 if __name__ == "__main__":

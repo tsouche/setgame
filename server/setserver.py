@@ -102,9 +102,9 @@ class Setserver():
         #     - if the answer is False, it returns 'Failed'.
         if self.players.addPlayer(nickname):
             playerID = self.players.getPlayerID(nickname)
-            msg = "<p>" + str(playerID) + "</p>"
+            msg = {'playerID': str(playerID)}
         else:
-            msg = "<p>Failed</p>"
+            msg = {'playerID': "Failed"}
         return msg
 
     def enlistPlayers(self, playerid_str):
@@ -143,13 +143,13 @@ class Setserver():
                 if (playerID in self.playersWaitingList):
                     # the player already enlisted but the game is not yet
                     # starting (waiting for more players to enlist)
-                    result = 'wait'
+                    result = {'status': "wait"}
                 else:
                     self.playersWaitingList.append(playerID)
                     # check if the minimum number of players has been reached
                     if len(self.playersWaitingList) < playersMin:
                         # not enough player: stay in wait mode
-                        result = 'wait'
+                        result = {'status': "wait"}
                     else:
                         # there are enough player: we start a new game
                         # build the players list for the new game
@@ -167,7 +167,7 @@ class Setserver():
                         # empty the waiting list
                         self.playersWaitingList = []
                         # returns a 'gameID' result
-                        result = str(gameID)
+                        result = {'status': "ok", 'gameID': str(gameID)}
             else:
                 # the player is already part of a game and cannot enlist.
                 # the server indicates which game (i.e. gameID) the player 
@@ -175,28 +175,28 @@ class Setserver():
                 result = str(self.players.getGameID(playerID))
         else:
             # the playerID does not exist:
-            result = 'invalid'
+            result = {'status': "ko"}
         # in any case, the server returns 'result'
         return result   
         
     def listPlayers(self, playerid_str, gameid_str):
         """
         This function gives back the names of all the players which are part of
-        the same game as the player who identifies tself via his playerID.
+        the same game as the player who identifies itself via his playerID.
 
         NB: on purpose, the playerIDs of the other players are not shared 
             openly, and only nicknames are shared.
         """
         # I shoudl find a way to catch errors in case the playerID/gameID are 
         # not valid.
-        list_names = []
+        list_names = {'nicknames': []}
         playerID = ObjectId(playerid_str)
         gameID = ObjectId(gameid_str)
         if gameID == self.players.getGameID(playerID):
-            list_names = []
             list_pID = self.players.inGame(gameID)
             for pID in list_pID:
-                list_names.append(self.players.getNickname(pID))
+                nickname = self.players.getNickname(pID)
+                list_names['nicknames'].append({'nickname': nickname})
         return list_names
         
     def stopGame(self, gameid_str, hard):
@@ -282,6 +282,7 @@ if __name__ == "__main__":
 
     @set_webserver.get('/enlist')
     def enlistPlayers():
+        """
         # collects the 'playerID'
         if request.GET.get('save','').strip():
             # reads the playerID from the GET
@@ -291,10 +292,19 @@ if __name__ == "__main__":
         else:
             # need to send a form for the client to push the 'playerID' value
             return template('/data/code/setgame/server/set_enlist.tpl')
-            
+        """
+        playerid_str = request.GET.get('playerID', '').strip()
+        return server.enlistPlayers(playerid_str)
+        
+           
     @set_webserver.get('/names') # with 2 parameter: 'playerID' and 'gameid'
     def listNames():
         # it reads the gameID and playerID.
+        playerid_str = request.GET.get('playerID', '').strip()
+        gameid_str = request.GET.get('gameID', '').strip()
+        # executes the 'enlist' code in 'server'
+        return server.listPlayers(playerid_str, gameid_str)
+        """
         # collects the 'playerID'
         if request.GET.get('save','').strip():
             # reads the playerID from the GET
@@ -305,9 +315,10 @@ if __name__ == "__main__":
         else:
             # need to send a form for the client to push the 'playerID' value
             return template('/data/code/setgame/server/set_names.tpl')
-            
-            
-    @set_webserver.get('/<gameid>/details') # with 1 parameter: 'gameid'
+        """    
+    
+    """            
+    @set_webserver.get('/<gameid>/stop') # with 1 parameter: 'gameid'
     def stopGame(gameID):
         # it needs (amongst other things) to read the 'hard' flag.
         pass
@@ -327,6 +338,7 @@ if __name__ == "__main__":
     @set_webserver.post('/<gameid>/set')
     def collectSetProposal(gameid_str, set):
         pass
+    """
     
     run(set_webserver, host=setserver_address, port=setserver_port, reloader=True, debug=True)
 
