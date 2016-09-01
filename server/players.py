@@ -62,6 +62,18 @@ class Players:
         pp = self.playersColl.find_one({'_id': playerID})
         return pp['nickname']
     
+    def getPlayer(self, playerID):
+        """
+        This method return a dictionary:
+            { 'playerID': ObjectId, 'nickname': string, 'totalScore': int,
+              'gameID': ObjectId }
+        """
+        pp_db= self.playersColl.find_one({'_id': playerID})
+        return { 'playerID': pp_db['_id'],
+                'nickname': pp_db['nickname'],
+                'totalScore': pp_db['totalScore'],
+                'gameID': pp_db['gameID'] }
+        
     def getPlayers(self):
         """
         This method return a list of players, under the form:

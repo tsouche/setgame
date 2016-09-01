@@ -3,42 +3,9 @@ Created on August 11th 2016
 @author: Thierry Souche
 '''
 
-"""
-HTTP codes returned after a request :
-    200     OK
-            Votre requête a bien été comprise avec une bonne réponse du serveur.
-            Pas de soucis ! :) 
-    201     Created
-            Une ressource a bien été créée. Comme les ressources sont créées 
-            avec POST ou PUT un code 201 est l'idéal après avoir envoyé une 
-            requête avec une de ces méthodes.
-    301     Moved Permanently
-            La ressource désirée a déménagé. Pour la trouver vous pouvez 
-            peut-être lire la documentation de l’API ou regarder si le nouvel 
-            endroit est précisé dans la réponse du serveur.
-    400     Bad Request
-            La requête n’était pas correcte d’une manière ou d’une autre, 
-            souvent à cause des données mal structurées dans les corps des 
-            requêtes POST et PUT (des requêtes qui ont souvent des informations 
-            dans leurs corps).
-    401     Unauthorized
-            Le client n’est pas autorisé à avoir une réponse à la requête qu’il 
-            a envoyé. C’est une erreur que vous allez voir tout le temps quand 
-            vous travaillerez avec les API qui ont des strictes règles 
-            d’autorisation (par exemple, il faut être connecté avec un compte 
-            pour accéder au service).
-    404     Not Found
-            La ressource n’a pas été trouvée. Vous verrez cette page dans votre 
-            navigateur quand vous tentez d'aller sur une page web qui n’existe 
-            pas. Une application reçoit le même code réponse quand elle visite 
-            une ressource qui n’existe pas (et ça reste aussi frustrant).
-    500     Internal Server Error
-            Il y a un problème avec le serveur et la requête a planté. Zut ! :(
-"""
-
 from bson.objectid import ObjectId
 from pymongo import MongoClient
-from bottle import Bottle, get, post, request, template, run, debug
+from bottle import Bottle, route, request, run
 
 from server.constants import mongoserver_address, mongoserver_port
 from server.constants import setserver_address, setserver_port
@@ -79,7 +46,30 @@ class Setserver():
         # self.set_server = Bottle()
         # start the server
         # run(self.set_server, host=setserver_address, port=setserver_port, debug=True)
-        
+
+    def reset(self):
+        """
+        ths method is sued for test purposes: it enables 'test_setserver' to 
+        reset the server's variables and ensure that all tests will run in a
+        clean context.
+        It is an alternative to endlessly stopping and restarting the server.
+        """
+        # connect to the players collection, and empty it
+        playersColl = self.setDB.players
+        playersColl.drop()
+        # connect to the games collection and empty it
+        gamesColl = self.setDB.games
+        gamesColl.drop()
+        # initialize again all generic variables
+        self.gameStarted = False
+        self.gameFinished = False
+        self.games = []
+        self.players = Players(self.setDB)
+        self.playersWaitingList = []
+        self.nextGameID = None
+        # returns status update answer
+        return {'server_status': "reset"}
+                
     def registerPlayer(self, nickname):
         """
         This method registers new players so that they can play and connect 
@@ -107,9 +97,9 @@ class Setserver():
             msg = {'playerID': "Failed"}
         return msg
 
-    def enlistPlayers(self, playerid_str):
+    def enlistPlayer(self, playerid_str):
         """
-        This method enlists players on a "new-game-yet-to-start".
+        This method enlists one player on a "new-game-yet-to-start".
 
         The client places a GET with its 'playerID' and receives 3 possible 
         answers:
@@ -125,7 +115,7 @@ class Setserver():
             - the player is not recognised (because its 'playerID' is not in the
                 DN or is invalid): the answer is 'invalid'
 
-        the information needed to start a game is a list of 'players' 
+        The information needed to start a game is a list of 'players' 
         dictionaries as:
             { 'playerID': str(ObjectId), 'nickname': string }
         The list is assumed to be filled with 'valid' player's ID and we check 
@@ -143,13 +133,15 @@ class Setserver():
                 if (playerID in self.playersWaitingList):
                     # the player already enlisted but the game is not yet
                     # starting (waiting for more players to enlist)
-                    result = {'status': "wait"}
+                    result = {'status': "wait", 
+                              'nb_players': len(self.playersWaitingList)}
                 else:
                     self.playersWaitingList.append(playerID)
                     # check if the minimum number of players has been reached
                     if len(self.playersWaitingList) < playersMin:
                         # not enough player: stay in wait mode
-                        result = {'status': "wait"}
+                        result = {'status': "wait", 
+                                  'nb_players': len(self.playersWaitingList)}
                     else:
                         # there are enough player: we start a new game
                         # build the players list for the new game
@@ -172,13 +164,28 @@ class Setserver():
                 # the player is already part of a game and cannot enlist.
                 # the server indicates which game (i.e. gameID) the player 
                 # is part of.
-                result = str(self.players.getGameID(playerID))
+                result = {'status': "ok", 
+                          'gameID': str(self.players.getGameID(playerID))}
         else:
             # the playerID does not exist:
             result = {'status': "ko"}
         # in any case, the server returns 'result'
-        return result   
+        return result
         
+    def enlistTeam(self, list_playerid_str):
+        """
+        This function enable to enlist multiple players in one time into the 
+        same game. The list must contain at least 'playersMin' players (usually
+        4 players) and at max 'playersMax' players (usually 6 players).
+        The list contains dictionaries like:
+                { 'playerID': str(ObjectId) }
+        The list is assumed to be filled with 'valid' player's ID and we check 
+        that:
+            - the number of players of correct (from 4 to 6 usually),
+            - the IDs are all unique in the list.
+        """
+        pass
+    
     def listPlayers(self, playerid_str, gameid_str):
         """
         This function gives back the names of all the players which are part of
@@ -274,14 +281,19 @@ if __name__ == "__main__":
     # this route is for test purpose
     @set_webserver.route('/hello')
     def hello():
-        return "<p>Coucou</p>"
+        return "<p>Coucou les gens !!!</p>"
 
-    @set_webserver.get('/register/<nickname>')
+    # this route is for test purpose
+    @set_webserver.route('/reset')
+    def reset():
+        return server.reset()
+
+    @set_webserver.route('/register/<nickname>')
     def registerPlayer(nickname):
         return server.registerPlayer(nickname)
 
-    @set_webserver.get('/enlist')
-    def enlistPlayers():
+    @set_webserver.route('/enlist')
+    def enlistPlayer():
         """
         # collects the 'playerID'
         if request.GET.get('save','').strip():
@@ -294,10 +306,9 @@ if __name__ == "__main__":
             return template('/data/code/setgame/server/set_enlist.tpl')
         """
         playerid_str = request.GET.get('playerID', '').strip()
-        return server.enlistPlayers(playerid_str)
-        
-           
-    @set_webserver.get('/names') # with 2 parameter: 'playerID' and 'gameid'
+        return server.enlistPlayer(playerid_str)
+
+    @set_webserver.route('/names') # with 2 parameter: 'playerID' and 'gameid'
     def listNames():
         # it reads the gameID and playerID.
         playerid_str = request.GET.get('playerID', '').strip()
@@ -318,24 +329,24 @@ if __name__ == "__main__":
         """    
     
     """            
-    @set_webserver.get('/<gameid>/stop') # with 1 parameter: 'gameid'
+    @set_webserver.route('/game/<gameid>/stop') # with 1 parameter: 'gameid'
     def stopGame(gameID):
         # it needs (amongst other things) to read the 'hard' flag.
         pass
 
-    @set_webserver.get('/<gameid>/details') # with 1 parameter: 'gameid'
+    @set_webserver.route('/game/<gameid>/details') # with 1 parameter: 'gameid'
     def details(gameid_str):
         pass
 
-    @set_webserver.get('/<gameid>/step') # with 1 parameter: 'gameid'
+    @set_webserver.route('/game/<gameid>/step') # with 1 parameter: 'gameid'
     def step(gameid_str):
         pass
 
-    @set_webserver.get('/<gameid>/history') # with 1 parameter: 'gameid'
+    @set_webserver.route('/game/<gameid>/history') # with 1 parameter: 'gameid'
     def history(gameid_str):
         pass
 
-    @set_webserver.post('/<gameid>/set')
+    @set_webserver.route('/game/<gameid>/set')
     def collectSetProposal(gameid_str, set):
         pass
     """
