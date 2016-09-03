@@ -6,7 +6,7 @@ Created on Auguts 8th 2016
 import unittest
 import pymongo
 from bson.objectid import ObjectId
-from server.constants import mongoserver_address, mongoserver_port
+from server.connmongo import getPlayersColl
 from server.players import Players
 from server.test_utilities import vprint, vbar
 from server.test_utilities import refPlayersDict, refPlayers
@@ -31,10 +31,9 @@ class TestPlayers(unittest.TestCase):
     method will clean the database.
     """
     
-    def setup(self):
-        # Connection to the MongoDB server
-        setDB = pymongo.MongoClient(mongoserver_address, mongoserver_port).setgame
-        playersColl = setDB.players
+    def setUp(self):
+        # Connection to the MongoDB server / players collection
+        playersColl = getPlayersColl()
         # populate db with test data about players
         playersColl.drop()
         for pp in refPlayers():
@@ -42,7 +41,7 @@ class TestPlayers(unittest.TestCase):
                                 'nickname': pp['nickname'], 
                                 'totalScore': pp['totalScore'], 
                                 'gameID': None})
-        return setDB
+        return playersColl
         
     def teardown(self, players):
         players.playersColl.drop()
@@ -52,7 +51,8 @@ class TestPlayers(unittest.TestCase):
         Test players.__init__ 
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         vbar()
         vprint("Test data creation")
         vprint("    We create 6 players in the DB:")
@@ -82,7 +82,8 @@ class TestPlayers(unittest.TestCase):
         Test players.getPlayerID
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         vbar()
         print("Test players.getPlayerID")
         vbar()
@@ -103,7 +104,8 @@ class TestPlayers(unittest.TestCase):
         Test players.playerIDisValid
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         vbar()
         print("Test players.playerIDisValid")
         vbar()
@@ -135,7 +137,8 @@ class TestPlayers(unittest.TestCase):
         Test players.playerIsAvailableToPlay
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         id_Donald = players.getPlayerID("Donald")
         id_Mickey = players.getPlayerID("Mickey")
         id_Riri   = players.getPlayerID("Riri")
@@ -202,7 +205,8 @@ class TestPlayers(unittest.TestCase):
         Test players.getPlayers
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         vbar()
         print("Test players.getPlayers")
         vbar()
@@ -229,7 +233,8 @@ class TestPlayers(unittest.TestCase):
         Test players.addPlayer 
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         # test that the new player is actually added both in memory and in DB
         vbar()
         print("Test players.addPlayer")
@@ -257,7 +262,8 @@ class TestPlayers(unittest.TestCase):
         Test players.removePlayer 
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         # removes a player
         vbar()
         print("Test players.removePlayer")
@@ -278,7 +284,8 @@ class TestPlayers(unittest.TestCase):
         Test players.register 
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         ref_players = []
         for pp in refPlayers():
             ref_players.append(player_format_DB(pp))
@@ -319,7 +326,8 @@ class TestPlayers(unittest.TestCase):
         Test players.deregisterPlayer 
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         ref_players = []
         for pp in refPlayers():
             ref_players.append(player_format_DB(pp))
@@ -366,7 +374,8 @@ class TestPlayers(unittest.TestCase):
         Test players.deregisterGame 
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         ref_players = []
         for pp in refPlayers():
             ref_players.append(player_format_DB(pp))
@@ -402,7 +411,8 @@ class TestPlayers(unittest.TestCase):
         Test players.inGame
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         gameID1 = ObjectId()
         gameID2 = ObjectId()
         players.register(players.getPlayerID("Daisy"), gameID1)
@@ -440,7 +450,8 @@ class TestPlayers(unittest.TestCase):
         Test players.updateTotalScore 
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         # runs the test
         vbar()
         print("Test players.updateTotalScore")
@@ -461,7 +472,8 @@ class TestPlayers(unittest.TestCase):
         Test players.toString 
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         playerID1 = players.getPlayerID("Donald")
         gameID1 = refPlayers()[0]['gameID']
         playerID2 = players.getPlayerID("Riri")
@@ -494,7 +506,8 @@ class TestPlayers(unittest.TestCase):
         target = {'__class__': 'SetPlayers'}
         target['players'] = refPlayersDict()
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         gameID1 = ObjectId('57bf224df9a2f36dd206845a')
         gameID2 = ObjectId('57bf224df9a2f36dd206845b')
         players.register(players.getPlayerID("Daisy"), gameID1)
@@ -519,7 +532,8 @@ class TestPlayers(unittest.TestCase):
         Test players.deserialize 
         """
         # setup the test data
-        players = Players(self.setup())
+        self.setUp()
+        players = Players()
         target = {'__class__': 'SetPlayers', 'players': refPlayersDict()}
         players.deserialize(target)
         # runs the test

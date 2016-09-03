@@ -5,20 +5,20 @@ Created on August 30th, 2016
 import unittest
 from bson.objectid import ObjectId
 import requests
-from pymongo import MongoClient
 
-from constants import mongoserver_address, mongoserver_port
+from connmongo import getPlayersColl, getGamesColl
 from constants import setserver_address, setserver_port
 from players import Players
 from test_utilities import vbar, vprint
 from server.setserver import Setserver
 from server.test_utilities import refPlayersDict
+from server.connmongo import getPlayersColl
 
 def _url(path):
     return "http://" + setserver_address + ":" + str(setserver_port) + path
 
 
-class TestSetserver(unittest.TestCase):
+class test_Setserver(unittest.TestCase):
 
     def setUp(self):
         """
@@ -34,8 +34,7 @@ class TestSetserver(unittest.TestCase):
         result = requests.get(_url('/reset'))
         self.assertEqual(result.json()['server_status'], "reset")
         # connect to the MongoDB and create 'self.players'
-        setDB = MongoClient(mongoserver_address, mongoserver_port).set_game
-        self.players = Players(setDB)
+        self.players = Players()
 
     def registerRefPlayers(self):
         """
@@ -43,8 +42,7 @@ class TestSetserver(unittest.TestCase):
         and make them available for the tests.
         """
         # connects straight to the Mongo database
-        setDB = MongoClient(mongoserver_address, mongoserver_port).set_game
-        playersColl = setDB.players
+        playersColl = getPlayersColl()
         # now register the reference players straight to the DB (bypassing the
         # normal process = call to the setserver 'register' API)
         vprint("We register the reference test players:")
@@ -62,14 +60,10 @@ class TestSetserver(unittest.TestCase):
         """
         # Ici, il faudrait terminer le process du server web... (shell script?)
         """ How do we stop the bottle webserver ? """
-        # connect to the MongoDB
-        setDB = MongoClient(mongoserver_address, mongoserver_port).set_game
         # connect to the players collection, and empty it
-        playersColl = setDB.players
-        playersColl.drop()
+        getPlayersColl().drop()
         # connect to the games base and empty it
-        gamesColl = setDB.games
-        gamesColl.drop()
+        getGamesColl().drop()
 
     def test__init__(self):
         """
@@ -229,8 +223,40 @@ class TestSetserver(unittest.TestCase):
         # build test data and context
         self.setUp()
         self.registerRefPlayers()
+        # enlist various players and check answers
+        vprint("We will enlist several teams and capture the server's answers:")
+        path = _url('/enlist_team')
+        vprint("    path = '" + path + "'")
         # We enlist a team of 3 players: it should fail.
-        
+        list_ref = [self.players.getPlayerID("Donald"),
+                    self.players.getPlayerID("Mickey"), 
+                    self.players.getPlayerID("Daisy") ]
+        result = requests.get(path, params={'playerIDList': list_ref})
+        status = result.json()['status']
+        vprint("    enlist Donald+Mickey+Daisy : " + status)
+        self.assertEqual(status, "ko")
+        # We enlist a team of 5 players: it should fail.
+        list_ref = [str(self.players.getPlayerID("Donald")),
+                str(self.players.getPlayerID("Mickey")), 
+                str(self.players.getPlayerID("Daisy")),
+                str(self.players.getPlayerID("Riri")),
+                str(self.players.getPlayerID("Fifi")) ]
+        result = requests.get(path, params={'playerIDlist': list_ref})
+        vprint(result)
+        vprint(result.url)
+        vprint(self.players.getPlayers())
+        #status = result.json()['status']
+        #gameid_str = result.json()['gameID']
+        #collect equivalent information from the DB
+        gameID_db = self.players.getGameID(ObjectId(list_ref[0]))
+        list_db = self.players.inGame(gameID_db)
+        for pid in list_db:
+            pid = str(pid)
+        # compare with the result of the 'get'
+        vprint("    enlist Donald+Mickey+Daisy+Riri+Fifi : " + status)
+        self.assertEqual(status, "ok")
+        self.assertEqual(gameid_str, "ko")
+        self.assertEqual(list_db, list)
         # removes residual test data
         self.tearDown()
 

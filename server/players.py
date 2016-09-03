@@ -5,6 +5,7 @@ Created on August 8th 2016
 
 from bson.objectid import ObjectId
 from pymongo import ReturnDocument
+from server.connmongo import getPlayersColl
 
 class Players:
     """
@@ -15,12 +16,12 @@ class Players:
     The data are stored in a MongoDB.  
     """
         
-    def __init__(self, setDB):
+    def __init__(self):
         """
         Links with the relevant collection in the Mongo database.
         """
         # initiates the players collections and the 'in memory' list
-        self.playersColl = setDB.players
+        self.playersColl = getPlayersColl()
         
     def getPlayerID(self, nickname):
         playerID = None
@@ -88,8 +89,8 @@ class Players:
                    'totalScore': pp_db['totalScore'],
                    'gameID': pp_db['gameID'] }
             players.append(pp)
-        return players 
-    
+        return players
+
     def addPlayer(self, nickname):
         """
         The nickname is mandatory. It must be a unique non-empty string.

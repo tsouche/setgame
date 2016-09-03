@@ -3,9 +3,9 @@ Created on August 8th 2016
 @author: Thierry Souche
 '''
 
-from pymongo import MongoClient
 from bson.objectid import ObjectId
 
+from server.connmongo import getGamesColl
 import server.constants as constants
 from server.cardset import CardSet
 from server.step import Step
@@ -27,11 +27,11 @@ class Game:
         - save the game history in a JSON file with all 
     """
     
-    def __init__(self, players, setDB):
+    def __init__(self, players):
         """
         Initializes the cards set, the first Step and the players list.
         - players is a Dictionary passed as argument, listing the players, each
-            player being like: { '_id': str('ObjectID'), 'nickname: string }
+            player being like: { 'playerID': str('ObjectID'), 'nickname: string }
         Game will:
         - connect to the mongo server and its 'setGames' collection, and
             retrieve a gameID which will enable the server to handle exchanges
@@ -39,7 +39,7 @@ class Game:
         - initialize a card set (randomized)
         - initialize the first step of a list.
         """
-        self.gamesColl = setDB.games
+        self.gamesColl = getGamesColl()
         # populate the DB with generic details and retrieve the gameID
         self.turnCounter = 0
         self.gameFinished = False
@@ -52,8 +52,9 @@ class Game:
         #     level.
         self.players = []
         for pp in players:
-            self.players.append({'playerID': ObjectId(pp['playerID']), 'nickname': pp['nickname'],
-                'points': 0})
+            self.players.append({'playerID': ObjectId(pp['playerID']), 
+                                 'nickname': pp['nickname'],
+                                 'points': 0})
         # populate and randomize the cards
         self.cards = CardSet()
         self.cards.randomize()
@@ -154,7 +155,7 @@ class Game:
     def deserialize(self, objDict):
         """
         We assume here that the object passed in argument is a valid dictionary
-        for a cardset.
+        for a Game.
         If the "__class__" does not correspond, then it returns False.
         """
         resultOk = False

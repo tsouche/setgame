@@ -5,16 +5,13 @@ Created on August 9th 2016
 
 import unittest
 from bson.objectid import ObjectId
-from pymongo import MongoClient
 
 from server.game import Game
-from server.constants import mongoserver_address, mongoserver_port
 from server.test_utilities import vprint, vbar
 from server.test_utilities import cardsetToString, stepToString
 from server.test_utilities import refGames_Dict
 from server.test_utilities import cardset_equality, step_equality, game_compliant
-from server.test_utilities import refCardsets
-from server.test_utilities import refSteps
+from server.test_utilities import refCardsets, refSteps
 from server.test_utilities import refGameHeader_start, refGameHeader_Finished
 
 def gameToString_header(game):
@@ -106,7 +103,7 @@ class test_Game(unittest.TestCase):
     method will clean the database.
     """
     
-    def setup(self, test_data_index):
+    def setUp(self, test_data_index):
         """
         Initialize a game from test data: the 'test_data_index' (0 or 1) points
         at the data set to be used from 'test_utilities' for:
@@ -117,11 +114,9 @@ class test_Game(unittest.TestCase):
         data available from 'refSteps'.
         """
         # Connection to the MongoDB server
-        setDB = MongoClient(mongoserver_address, mongoserver_port).setgame
-        gamesColl = setDB.games
         # read the players and initiate a game.
         playersDict = refGames_Dict()[test_data_index]['players']
-        partie = Game(playersDict, gamesColl)
+        partie = Game(playersDict)
         # overwrite the gameID with the reference test data
         partie.gameID = ObjectId(refGameHeader_start()[test_data_index]['gameID'])
         # Overwrite the cardset with reference test data
@@ -154,14 +149,14 @@ class test_Game(unittest.TestCase):
                 next_playerID = ObjectId(step_dict['playerID'])
             game.receiveSetProposal(next_playerID, next_set)
         
-    def setupAndProgress(self, test_data_index, nbTurns):
+    def setUpAndProgress(self, test_data_index, nbTurns):
         """
         Initialize a game from test data, using the 'setup' method, and
         then progresses with n turns by proposing sets from the reference
         test data.
         """
         # initiate the game
-        partie = self.setup(test_data_index)
+        partie = self.setUp(test_data_index)
         # start iteration until the nb of turns request
         for i in range(0, nbTurns):
             self.progress(partie, test_data_index)
@@ -180,7 +175,7 @@ class test_Game(unittest.TestCase):
         vbar()
         # build the reference starting for the game from the test data
         test_data_index = 0
-        partie = self.setup(test_data_index)
+        partie = self.setUp(test_data_index)
         cards_ref = refCardsets()[test_data_index]
         steps_ref = refSteps()[test_data_index]
         vprint("We start with a first iteration: we push one set and compare the")
@@ -227,7 +222,7 @@ class test_Game(unittest.TestCase):
         vbar()
         # retrieve gameID (as a string) and check compliance'
         test_data_index = 0
-        partie = self.setup(test_data_index)
+        partie = self.setUp(test_data_index)
         test_gameID = partie.getGameID() # the result must be a string
         ref_gameID = refGameHeader_start()[test_data_index]['gameID']
         result = (ref_gameID == test_gameID)
@@ -245,7 +240,7 @@ class test_Game(unittest.TestCase):
         # for both Game 0 and Game 1.
         for test_data_index in range(0,2):
             # test at the beginning of the game
-            partie = self.setup(test_data_index)
+            partie = self.setUp(test_data_index)
             # get the test flag
             test_gameFinished = partie.getGameFinished()
             # get the reference flag as a string, and convert it as a boolean
@@ -273,7 +268,7 @@ class test_Game(unittest.TestCase):
         # run a full game with the '0 data series' starting point, and then
         # compare the steps with reference test data (series 0)
         vprint("  > Cardset 0: we start rolling through the game")
-        partie = self.setupAndProgress(0, 30)   # a game can never go beyond 27 turns
+        partie = self.setUpAndProgress(0, 30)   # a game can never go beyond 27 turns
         vprint("    Game over: we now compare the outcome with reference data")
         vprint("    turn = " + str(partie.turnCounter+1)
                        + ": set = [--,--,--], here is the final status:")
@@ -285,7 +280,7 @@ class test_Game(unittest.TestCase):
         # run a full game with the '0 data series' starting point, and then
         # compare the steps with reference test data (series 0)
         vprint("  > Cardset 1: we start rolling through the game")
-        partie = self.setupAndProgress(1, 30)   # a game can never go beyond 27 turns
+        partie = self.setUpAndProgress(1, 30)   # a game can never go beyond 27 turns
         vprint("    Game over: we now compare the outcome with reference data")
         vprint("    turn = " + str(partie.turnCounter+1)
                        + ": set = [--,--,--], here is the final status:")
@@ -307,7 +302,7 @@ class test_Game(unittest.TestCase):
             ref_playerPoints = refGames_Dict()[test_data_index]['players']
             vprint("  Cardset " + str(test_data_index) + ":")
             # check that all points are set at 0 at the start
-            partie = self.setup(test_data_index)
+            partie = self.setUp(test_data_index)
             test_playerPoints = partie.getPoints()
             valid = True
             for pp in ref_playerPoints:
@@ -316,7 +311,7 @@ class test_Game(unittest.TestCase):
             vprint("    > start of game: result is compliant: " + str(valid))
             self.assertTrue(valid)
             # run the game to the end and check the points
-            partie = self.setupAndProgress(test_data_index, 30)
+            partie = self.setUpAndProgress(test_data_index, 30)
             test_playerPoints = partie.getPoints()
             valid = True
             for pp in ref_playerPoints:
@@ -337,7 +332,7 @@ class test_Game(unittest.TestCase):
         vprint("dictionaries.")
         for test_data_index in range(0,2):
             # build the data
-            partie = self.setupAndProgress(test_data_index,30)
+            partie = self.setUpAndProgress(test_data_index,30)
             test_dict = partie.serialize()
             ref_dict = refGames_Dict()[test_data_index]
             # compare various sections of the dictionaries
@@ -374,7 +369,7 @@ class test_Game(unittest.TestCase):
         for test_data_index in range(0,2):
             # build test data
             ref_dict = refGames_Dict()[test_data_index]
-            test_game = self.setup(test_data_index)
+            test_game = self.setUp(test_data_index)
             test_game.deserialize(ref_dict)
             test_dict = test_game.serialize()
             # compare various sections of the dictionaries
