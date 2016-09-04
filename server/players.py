@@ -6,6 +6,7 @@ Created on August 8th 2016
 from bson.objectid import ObjectId
 from pymongo import ReturnDocument
 from server.connmongo import getPlayersColl
+from constants import oidIsValid
 
 class Players:
     """
@@ -32,52 +33,76 @@ class Players:
 
     def playerIDisValid(self, playerID):
         """
-        This method checks that the playerID is valid (ie. the corresponding
-        player exists in the DB).
+        This method checks that the playerID is valid (ie. it is a valid 
+        ObjectId and the corresponding player exists in the DB).
+        It return 'True' in this case, or 'False' in any other case.
         """
-        pp = self.playersColl.find_one({'_id': playerID})
-        return (pp != None)
+        result = False
+        if oidIsValid(playerID):
+            pp = self.playersColl.find_one({'_id': playerID})
+            result = (pp != None)
+        return result
 
     def playerIsAvailableToPlay(self, playerID):
         """
-        This method checks that the playerID is valid (ie. the corresponding
-        player exists in the DB) and that the player is not yet part of a
-        game (i.e. his 'gameID' in the DB is 'None'.
+        This method checks that the playerID is valid (ie. it is a valid 
+        ObjectId and the corresponding player exists in the DB) and that the 
+        player is not already part of a game (i.e. his 'gameID' in the DB is 
+        'None').
         """
-        pp = self.playersColl.find_one({'_id': playerID, 'gameID': None})
+        if oidIsValid(playerID):
+            pp = self.playersColl.find_one({'_id': playerID, 'gameID': None})
+        else:
+            pp = None
         return (pp != None)
 
     def getGameID(self, playerID):
         """
-        This method return the gameID of the player.
-        We assume that the playerID is a valid ObjectId.
+        This method returns:
+            - the gameID if the player exist and is part of a game,
+            - None if the playerID is invalid, or does not exist in the DB, 
+                or is not attending a game.
         """
-        pp = self.playersColl.find_one({'_id': playerID})
-        return pp['gameID']
-    
+        result = None
+        if oidIsValid(playerID):
+            pp = self.playersColl.find_one({'_id': playerID})
+            if pp != None:
+                return pp['gameID']
+        return result
+            
     def getNickname(self, playerID):
         """
         This method return the nickname of the player.
         We assume that the playerID is a valid ObjectId.
         """
-        pp = self.playersColl.find_one({'_id': playerID})
-        return pp['nickname']
+        result = None
+        if oidIsValid(playerID):
+            pp = self.playersColl.find_one({'_id': playerID})
+            if pp != None:
+                result = pp['nickname']
+        return result
     
     def getPlayer(self, playerID):
         """
-        This method return a dictionary:
+        If playerID is valid, this method return a dictionary with all player's 
+        details:
             { 'playerID': ObjectId, 'nickname': string, 'totalScore': int,
               'gameID': ObjectId }
+        Else it will return 'None'.
         """
-        pp_db= self.playersColl.find_one({'_id': playerID})
-        return { 'playerID': pp_db['_id'],
-                'nickname': pp_db['nickname'],
-                'totalScore': pp_db['totalScore'],
-                'gameID': pp_db['gameID'] }
-        
+        result = None
+        if oidIsValid(playerID):
+            pp_db= self.playersColl.find_one({'_id': playerID})
+            if pp_db != None:
+                result = { 'playerID': pp_db['_id'],
+                    'nickname': pp_db['nickname'], 
+                    'totalScore': pp_db['totalScore'],
+                    'gameID': pp_db['gameID'] }
+        return result
+    
     def getPlayers(self):
         """
-        This method return a list of players, under the form:
+        This method return the whole list of players, under the form:
             { 'playerID': ObjectId, 'nickname': string, 'totalScore': int,
               'gameID': ObjectId }
         """
@@ -91,7 +116,7 @@ class Players:
             players.append(pp)
         return players
 
-    def addPlayer(self, nickname):
+    def register(self, nickname):
         """
         The nickname is mandatory. It must be a unique non-empty string.
         Returns True if the nickname was succesfuly added to the DB.
@@ -101,88 +126,109 @@ class Players:
         valid = False
         if self.playersColl.find_one({'nickname': nickname}) == None:
             # creates the players in the DB
-            playerID = self.playersColl.insert_one({'nickname': nickname, 'totalScore': 0, 
-                                         'gameID': None}).inserted_id
+            playerID = self.playersColl.insert_one({'nickname': nickname, 
+                'totalScore': 0, 'gameID': None}).inserted_id
             valid = playerID
         return valid
     
-    def removePlayer(self, playerID):
+    def deregister(self, playerID):
         """
         This method check that the playerID exists, and if so removes it from 
         both the memory and the DB.
         Returns True if the playerID was succesfuly removed from the DB.
         """
         valid = False
-        if self.playersColl.find_one_and_delete({'_id': playerID}) != None:
-            valid = True
+        if oidIsValid(playerID):
+            if self.playersColl.find_one_and_delete({'_id': playerID}) != None:
+                valid = True
         return valid
         
-    def register(self, playerID, gameID):
+    def enlist(self, playerID, gameID):
         """
-        This method receives two ObjectId and assumes that they are valid 
-        playerID and gameID.
-        It stores this gameID in the players record.
+        This method receives two ObjectId. If they are valid playerID and 
+        gameID, it will store this gameID in the players record, and return
+        this gameID:  te player is enlist on the game.
+        If it is not possible (for instance, the player is already part of a 
+        game), it will return None.
         """
-        pp = self.playersColl.find_one_and_update({'_id': playerID},
-            {'$set': {'gameID': gameID}}, return_document=ReturnDocument.AFTER)
-        return pp['gameID'] == gameID
+        result = None
+        if oidIsValid(playerID) and oidIsValid(gameID):
+            pp = self.playersColl.find_one_and_update(
+                {'_id': playerID, 'gameID': None},
+                {'$set': {'gameID': gameID}}, 
+                return_document=ReturnDocument.AFTER)
+            if pp != None:
+                result = pp['gameID'] == gameID
+        return result
     
-    def deregisterPlayer(self, playerID):
+    def delist(self, playerID):
         """
-        This method deregisters the players from any game he would be part of(i.e. it overwrites the gameID with 'None').
-        The argument 'playerID' is assumed to be a valid ObjectId.
+        This method de-enlist the player from any game he would be part of
+        (i.e. it overwrites the gameID with 'None').
+        It return:
+            - the former gameID in case of success (which may be None if the 
+                player was not already part of a game)
+            - None in other cases
         """
-        self.playersColl.update_one({'_id': playerID}, {'$set': {'gameID': None}})
+        result = None
+        if oidIsValid(playerID):
+            pp = self.playersColl.update_one({'_id': playerID}, 
+                {'$set': {'gameID': None}})
+            result = (pp.modified_count == 1)
+        return result
 
-    def deregisterGame(self, gameID):
+    def delistGame(self, gameID):
         """
-        This method deregisters all the players attending the game identified by 
+        This method de-enlists all the players playing the game identified by 
         its gameID (i.e. it overwrites the gameID with 'None').
         The argument 'gameID' is assumed to be a valid ObjectId.
+        It will return:
+            - the number of modified players if successful
+            - None in case of problem (gameID  is invalid or does not exist in 
+                the DB).
         """
-        self.playersColl.update_many({'gameID':gameID}, {"$set": {'gameID': None}})
+        result = None
+        if oidIsValid(gameID):
+            modified = self.playersColl.update_many({'gameID':gameID}, 
+                {"$set": {'gameID': None}})
+            result = modified.modified_count
+        return result
     
     def inGame(self, gameID):
         """
-        This method returns a list of player's ObjectID who are participating 
-        into the game identified by gameID.
+        This method returns a list of player's playerIDs (ObjectID) who are part 
+        of the game identified by gameID.
+        It return:
+            - None if the gameID is invalid
+            - an empty list if the gameID is valid but does not appear in the DB
+            - a list of playerIDs (ObjectId) of all players part of the game if
+                gameID exists in the DB
         """
-        list_pid = []
-        for pp in self.playersColl.find({'gameID': gameID}):
-            list_pid.append(pp['_id'])
-        return list_pid
+        result = None
+        if oidIsValid(gameID):
+            list_pid = []
+            for pp in self.playersColl.find({'gameID': gameID}):
+                list_pid.append(pp['_id'])
+            result = list_pid
+        return result
         
     def updateTotalScore(self, playerID, points):
         """
         This method increments the player's totalScore with 'points'.
-        Return True if the increment operation was succesful.
+        Return True if the increment operation was successful.
         """
-        score_old = self.playersColl.find_one({'_id': playerID})['totalScore']
-        self.playersColl.find_one_and_update({'_id': playerID}, {'$inc': {'totalScore': points}})
-        score_new = self.playersColl.find_one({'_id': playerID})['totalScore']
-        return (score_new - score_old == points)
+        result = False
+        if self.playerIDisValid(playerID):
+            modified = self.playersColl.update_one({'_id': playerID}, 
+                {'$inc': {'totalScore': points}})
+            result = (modified.modified_count == 1)
+        return result
     
-    def toString(self):
-        """
-        This method returns a string representing the Players.
-        """
-        msg = ""
-        if self.playersColl.count() > 0:
-            for pp in self.playersColl.find({}).sort('nickname'):
-                msg += pp['nickname'] + " - (" + str(pp['_id']) + ") - "
-                msg += str(pp['totalScore']) + " points - "
-                if pp['gameID'] == None:
-                    msg += "no game\n"
-                else:
-                    msg += "game <" + str(pp['gameID']) + ">\n"
-        return msg
-        
     def serialize(self):
         """
-        This method returns a Dictionary representing the players who registered
-        (up to this moment in time) to play Set games.
-        This will be used for exchanges of information
-        over the network between the server and clients.
+        This method returns a dictionary representing the registered players.
+        This will be used for exchanges of information over the network between 
+        the server and clients.
         """
         playersDict = {}
         playersDict["__class__"] = "SetPlayers"
@@ -218,6 +264,5 @@ class Players:
                     self.playersColl.insert_one(temp)
                 resultOk = True
         return resultOk
-        
     
     

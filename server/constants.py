@@ -20,3 +20,13 @@ mongoserver_test_port = 27017
 
 setserver_address = 'localhost'
 setserver_port = 8080
+
+from bson.objectid import ObjectId
+
+def oidIsValid(oid):
+    try:
+        ObjectId(oid)
+        return True
+    except:
+        return False
+    

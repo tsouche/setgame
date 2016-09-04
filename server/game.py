@@ -7,9 +7,14 @@ from bson.objectid import ObjectId
 
 from server.connmongo import getGamesColl
 import server.constants as constants
+from server.players import Players
 from server.cardset import CardSet
 from server.step import Step
 
+class invalidPlayerID(Exception):
+    """Base class for exceptions in this module."""
+    pass
+    
 class Game:
     """
     This class runs a complete game:
@@ -31,7 +36,7 @@ class Game:
         """
         Initializes the cards set, the first Step and the players list.
         - players is a Dictionary passed as argument, listing the players, each
-            player being like: { 'playerID': str('ObjectID'), 'nickname: string }
+            player being like: { 'playerID': ObjectId, 'nickname: string }
         Game will:
         - connect to the mongo server and its 'setGames' collection, and
             retrieve a gameID which will enable the server to handle exchanges
@@ -39,36 +44,45 @@ class Game:
         - initialize a card set (randomized)
         - initialize the first step of a list.
         """
+        # connects to the DB
         self.gamesColl = getGamesColl()
-        # populate the DB with generic details and retrieve the gameID
-        self.turnCounter = 0
-        self.gameFinished = False
-        self.gameID = self.gamesColl.insert_one({'turncounter': self.turnCounter,
-                'gameFinished': self.gameFinished}).inserted_id
-        # populate the players from the argument passed
-        # NB: the field 'points' counts for teh points gained during the 
+        # check that 'players' contain valid playerIDs and filters the list to
+        # populate the 'local' players list from the argument passed
+        # NB: the field 'points' counts for the points gained during the 
         #     current game, and does not link with the 'totalScore' field in
         #     the DB (which is a global information, not managed at the 'Game' 
         #     level.
         self.players = []
+        valid = True
+        temp_players = Players()
         for pp in players:
-            self.players.append({'playerID': ObjectId(pp['playerID']), 
-                                 'nickname': pp['nickname'],
-                                 'points': 0})
-        # populate and randomize the cards
-        self.cards = CardSet()
-        self.cards.randomize()
-        # populate the first step 
-        self.steps = []
-        self.steps.append(Step())
-        self.steps[0].start(self.cards)
-        # return self.gameID
+            valid = valid and temp_players.playerIDisValid(pp['playerID'])
+        del(temp_players)
+        if valid:
+            for pp in players:
+                self.players.append({'playerID': pp['playerID'], 
+                    'nickname': pp['nickname'], 'points': 0})
+            # populate the DB with generic details and retrieve the gameID
+            self.turnCounter = 0
+            self.gameFinished = False
+            self.gameID = self.gamesColl.insert_one(
+                {'turncounter': self.turnCounter,
+                'gameFinished': self.gameFinished}).inserted_id
+            # populate and randomize the cards
+            self.cards = CardSet()
+            self.cards.randomize()
+            # populate the first step 
+            self.steps = []
+            self.steps.append(Step())
+            self.steps[0].start(self.cards)
+        else:
+            # return an empty structure
+            del(self.players)
+            raise invalidPlayerID('invalid playerIDs passed to init')
 
     def getGameID(self):
         """
-        This method returns the 'string-ified' gameID.
-        This is important because only the 'Game' class will ever exchange
-        'real' gameID with the DB.
+        This method returns the gameID.
         """
         return str(self.gameID)
     
@@ -83,15 +97,15 @@ class Game:
         This method is useful to give the points collected during the game back
         to the 'program' who called the Game class (typically: the 'setserver'. 
         The results are given as a list of dictionaries:
-               [ { 'playerID': str(ObjectId), 'points': str(points) },
-                 { 'playerID': str(ObjectId), 'points': str(points) },
+               [ { 'playerID': ObjectId, 'points': points },
+                 { 'playerID': ObjectId, 'points': points },
                                        ...,
-                 { 'playerID': str(ObjectId), 'points': str(points) }  ]
+                 { 'playerID': ObjectId, 'points': points }  ]
         """
         dict_players = []
         for pp in self.players:
-            dict_players.append( { 'playerID': str(pp['playerID']),
-                             'points': str(pp['points']  )  })
+            dict_players.append( { 'playerID': pp['playerID'],
+                'points': pp['points'] })
         return dict_players
 
     def receiveSetProposal(self, playerID, positionsOnTable):

@@ -3,7 +3,6 @@ Created on Sep 2, 2016
 @author: Thierry Souche
 '''
 from bson.objectid import ObjectId
-from bottle import Bottle, route, request, run
 
 from server.connmongo import getPlayersColl, getGamesColl
 from server.constants import playersMin, playersMax
@@ -91,7 +90,7 @@ class Backend():
             result = {'playerID': "Failed"}
         return result
 
-    def enlistPlayer(self, playerid_str):
+    def enlistPlayer(self, playerID):
         """
         This method enlists one player on a "new-game-yet-to-start".
 
@@ -111,14 +110,13 @@ class Backend():
 
         The information needed to start a game is a list of 'players' 
         dictionaries as:
-            { 'playerID': str(ObjectId), 'nickname': string }
+            { 'playerID': ObjectId, 'nickname': string }
         The list is assumed to be filled with 'valid' player's ID and we check 
         that there are enough players to start a game (and is so, actually start 
         it).
         """
         # We assume here that the client will push a value named 'playerID' 
         # which is a valid player's ID, or will go through the form 'enlist_tpl'
-        playerID = ObjectId(playerid_str)
         # check if the playerID is valid
         if self.players.playerIDisValid(playerID):
             # check if the player is available to take part into a new game
@@ -153,52 +151,73 @@ class Backend():
                         # empty the waiting list
                         self.playersWaitingList = []
                         # returns a 'gameID' result
-                        result = {'status': "ok", 'gameID': str(gameID)}
+                        result = {'status': "ok", 'gameID': gameID}
             else:
                 # the player is already part of a game and cannot enlist.
                 # the server indicates which game (i.e. gameID) the player 
                 # is part of.
                 result = {'status': "ok", 
-                          'gameID': str(self.players.getGameID(playerID))}
+                          'gameID': self.players.getGameID(playerID)}
         else:
             # the playerID does not exist:
             result = {'status': "ko"}
         # in any case, the server returns 'result'
         return result
         
-    def enlistTeam(self, list_playerid_str):
+    def enlistTeam(self, list_playerID):
         """
         This function enable to enlist multiple players in one time into the 
         same game. The list must contain at least 'playersMin' players (usually
         4 players) and at max 'playersMax' players (usually 6 players).
         The list contains dictionaries like:
-                { 'playerID': str(ObjectId) }
+                { 'playerID': ObjectId }
         The list is assumed to be filled with 'valid' player's ID and we check 
         that:
             - the number of players of correct (from 4 to 6 usually),
             - the IDs are all unique in the list.
         """
-        # we check the playerID list (numbers, all unique)
-        l = len(list_playerid_str)
-        valid = (l >= playersMin) and (l <= playersMax)
-        for i in range(0,l-1):
-            for j in range (i+1, l):
-                valid = valid and (list_playerid_str[i] != list_playerid_str[j])
-        if valid:
-            # the players's list is ok (number ok and all are unique)
+        # remove the duplicates
+        pID_list = []
+        for pp in list_playerID:
+            pID_list.append(pp['playerID'])
+        pID_list = list(set(pID_list))
+        list_playerID = []
+        for pID in pID_list:
+            list_playerID.append({'playerID': pID})
+        # check the playerID : should be registered and be available to play
+        j = len(list_playerID)-1
+        while j >= 0:
+            pID = list_playerID[j]['playerID']
+            if self.players.playerIDisValid(pID):
+                if not self.players.playerIsAvailableToPlay(pID):
+                    del(list_playerID[j])
+            else:
+                del(list_playerID[j])
+            j -= 1
+        # check the 'real' number of players
+        l = len(list_playerID)
+        if (l >= playersMin) and (l <= playersMax):
+            # the players's list is ok (number ok and all are valid, unique and 
+            # available)
             game_players = []
-            for pp in list_playerid_str:
-                game_players.append(pp, self.players.getNickname(ObjectId(pp)))
+            for pp in list_playerID:
+                pID = pp['playerID']
+                game_players.append({'playerID': pID, 
+                    'nickname': self.players.getNickname(pID)})
             #initiate a game
             game = Game(game_players)
             gameID = game.getGameID()
             self.games.append(game)
+            # registers the players in the DB
+            for pp in list_playerID:
+                pID = pp['playerID']
+                self.players.register(pID, gameID)
             # returns the game info
-            return {'status': "ok", 'gameID': str(gameID)}
+            return {'status': "ok", 'gameID': gameID}
         else:
             return {'status': "ko"}
     
-    def getNicknames(self, playerid_str, gameid_str):
+    def getNicknames(self, playerID):
         """
         This function gives back the names of all the players which are part of
         the same game as the player who identifies itself via his playerID.
@@ -208,17 +227,17 @@ class Backend():
         """
         # I should find a way to catch errors in case the playerID/gameID are 
         # not valid ObjectId.
-        list_names = {'nicknames': []}
-        playerID = ObjectId(playerid_str)
-        gameID = ObjectId(gameid_str)
-        if gameID == self.players.getGameID(playerID):
-            list_pID = self.players.inGame(gameID)
-            for pID in list_pID:
-                nickname = self.players.getNickname(pID)
-                list_names['nicknames'].append({'nickname': nickname})
+        list_names = []
+        if self.players.playerIDisValid(playerID):
+            gameID = self.players.getGameID(playerID)
+            if gameID != None:
+                list_pID = self.players.inGame(gameID)
+                for pID in list_pID:
+                    nickname = self.players.getNickname(pID)
+                    list_names.append({'nickname': nickname})
         return list_names
         
-    def stopGame(self, gameid_str, hard):
+    def stopGame(self, gameID, hard = False):
         """
         This function stops a game and de-registers the players who were part of this
         game.
@@ -226,17 +245,34 @@ class Backend():
            - hard == False: it first checks that the game is finished. 
         """
         # identify the right game and check that it is finished
-        gameID = ObjectId(gameid_str)
         i = 0
         while i < len(self.games):
+            print("BOGUS: i=", i, "gameID=", self.games[i].getGameID(), "gid=", gameID)
             if self.games[i].getGameID() == gameID:
+                print("BOGUS: gameID = gid")
                 if self.games[i].getGameFinished() or hard:
+                    print("BOGUS: stop the game")
                     # stops the game
-                    del(self.game[i])
+                    del(self.games[i])
                     i = len(self.games)
                     # deregister the players
-                    self.players.deregisterGame(gameID)
-        
+                    pColl = getPlayersColl()
+                    print("BOGUS: avant:")
+                    for pp in pColl.find({}):
+                        print("BOGUS: ", str(pp))
+                    # self.players.deregisterGame(gID)
+                    print("BOGUS: pendant - gid = ", gameID)
+                    pColl.update_many({'gameID': gameID}, {"$set": {'gameID': None}})
+                    print("BOGUS: après:")
+                    for pp in pColl.find({}):
+                        print("BOGUS: ", str(pp))
+                else:
+                    print("BOGUS: don't stop the game")
+            else:
+                print("BOGUS: gameID != gid")
+
+            i += 1
+    
     def details(self,gameid_str):
         """
         The server will answer the clients when they ask about the generic 

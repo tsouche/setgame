@@ -6,10 +6,12 @@ Created on August 9th 2016
 import unittest
 from bson.objectid import ObjectId
 
-from server.game import Game
+from server.game import Game, invalidPlayerID
+from server.connmongo import getPlayersColl
+from server.players import Players
 from server.test_utilities import vprint, vbar
 from server.test_utilities import cardsetToString, stepToString
-from server.test_utilities import refGames_Dict
+from server.test_utilities import refGames_Dict, refPlayers
 from server.test_utilities import cardset_equality, step_equality, game_compliant
 from server.test_utilities import refCardsets, refSteps
 from server.test_utilities import refGameHeader_start, refGameHeader_Finished
@@ -103,7 +105,7 @@ class test_Game(unittest.TestCase):
     method will clean the database.
     """
     
-    def setUp(self, test_data_index):
+    def setup(self, test_data_index):
         """
         Initialize a game from test data: the 'test_data_index' (0 or 1) points
         at the data set to be used from 'test_utilities' for:
@@ -114,9 +116,13 @@ class test_Game(unittest.TestCase):
         data available from 'refSteps'.
         """
         # Connection to the MongoDB server
-        # read the players and initiate a game.
-        playersDict = refGames_Dict()[test_data_index]['players']
-        partie = Game(playersDict)
+        # read the players, register them and initiate a game.
+        players = refPlayers(True)
+        temp_playersColl = getPlayersColl()
+        temp_players = Players()
+        for pp in players:
+            temp_players.register(pp['nickname'])
+        partie = Game(players)
         # overwrite the gameID with the reference test data
         partie.gameID = ObjectId(refGameHeader_start()[test_data_index]['gameID'])
         # Overwrite the cardset with reference test data
@@ -173,6 +179,31 @@ class test_Game(unittest.TestCase):
         vbar()
         print("Test game.__init__")
         vbar()
+        # first try to initialize a game with wrong playerIDs
+        # populate the DB with reference players
+        playersColl = getPlayersColl()
+        playersColl.drop()
+        for pp in refPlayers():
+            playersColl.insert_one({'_id': pp['playerID'], 
+                                'nickname': pp['nickname'], 
+                                'totalScore': pp['totalScore'], 
+                                'gameID': None})
+        # try to initiate a game with different players + 1 wrong player
+        players = []
+        pp = refPlayers()[0]
+        players.append({ 'playerID': pp['playerID'], 'nickname': pp['nickname']})
+        pp = refPlayers()[2]
+        players.append({ 'playerID': pp['playerID'], 'nickname': pp['nickname']})
+        pp = refPlayers()[3]
+        players.append({ 'playerID': pp['playerID'], 'nickname': pp['nickname']})
+        pp = refPlayers()[4]
+        players.append({ 'playerID': pp['playerID'], 'nickname': pp['nickname']})
+        players.append({ 'playerID': ObjectId(), 'nickname': "batman"})
+        try:
+            partie = Game(players)
+        except invalidPlayerID:
+            vprint("    - could not initialize a game: playerIDs are invadid.")
+        # second initialize successfully a game and test various values
         # build the reference starting for the game from the test data
         test_data_index = 0
         partie = self.setUp(test_data_index)

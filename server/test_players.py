@@ -4,7 +4,7 @@ Created on Auguts 8th 2016
 """
 
 import unittest
-import pymongo
+
 from bson.objectid import ObjectId
 from server.connmongo import getPlayersColl
 from server.players import Players
@@ -153,9 +153,9 @@ class TestPlayers(unittest.TestCase):
         vprint("We check which players are available to play and compare with the")
         vprint("reference data :")
         # first round of test
-        players.register(id_Riri, gameID2)
-        players.register(id_Fifi, gameID2)
-        players.register(id_Loulou, gameID2)
+        players.enlist(id_Riri, gameID2)
+        players.enlist(id_Fifi, gameID2)
+        players.enlist(id_Loulou, gameID2)
         vprint("  > First round, only kids are playing:")
         result = players.playerIsAvailableToPlay(id_Donald)
         vprint("      Donald: " + str(result))
@@ -176,8 +176,8 @@ class TestPlayers(unittest.TestCase):
         vprint("      Daisy : " + str(result))
         self.assertTrue(result)
         # second round of test
-        players.register(id_Daisy, gameID1)
-        players.register(id_Donald, gameID1)
+        players.enlist(id_Daisy, gameID1)
+        players.enlist(id_Donald, gameID1)
         vprint("  > Second round, two parents are also playing:")
         result = players.playerIsAvailableToPlay(id_Donald)
         vprint("      Donald: " + str(result))
@@ -228,20 +228,20 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
             
-    def test_addPlayer(self):
+    def test_register(self):
         """
-        Test players.addPlayer 
+        Test players.register
         """
         # setup the test data
         self.setUp()
         players = Players()
         # test that the new player is actually added both in memory and in DB
         vbar()
-        print("Test players.addPlayer")
+        print("Test players.register")
         vbar()
         vprint("We add a player and check that it is properly registered to the DB.")
         vprint("We also check that querying a non-existing player will not work.")
-        playerID = players.addPlayer("Dingo")
+        playerID = players.register("Dingo")
         read_id = players.playersColl.find_one({'nickname': "Dingo"})['_id']
         self.assertEqual(playerID, read_id)
         self.assertEqual(players.playersColl.count(), 7)
@@ -249,7 +249,7 @@ class TestPlayers(unittest.TestCase):
         pp = players.playersColl.find_one({'nickname': "Dingo"})
         self.assertEqual(pp['totalScore'], 0)
         # check that it is impossible to register a duplicate nickname
-        self.assertFalse(players.addPlayer("Daisy"))
+        self.assertFalse(players.register("Daisy"))
         self.assertEqual(players.playersColl.count(), 7)
         vprint("    We now have 7 players in the DB:")
         for pp in players.playersColl.find():
@@ -257,19 +257,19 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
 
-    def test_removePlayer(self):
+    def test_deregister(self):
         """
-        Test players.removePlayer 
+        Test players.deregister
         """
         # setup the test data
         self.setUp()
         players = Players()
         # removes a player
         vbar()
-        print("Test players.removePlayer")
+        print("Test players.deregister")
         vbar()
         pp = players.playersColl.find_one({'nickname': "Donald"})
-        self.assertTrue(players.removePlayer(pp['_id']))
+        self.assertTrue(players.deregister(pp['_id']))
         self.assertEqual(players.playersColl.count(), 5)
         pp = players.playersColl.find_one({'nickname': "Donald"})
         self.assertEqual(pp, None)
@@ -279,9 +279,9 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
 
-    def test_register(self):
+    def test_enlist(self):
         """
-        Test players.register 
+        Test players.enlist 
         """
         # setup the test data
         self.setUp()
@@ -293,18 +293,18 @@ class TestPlayers(unittest.TestCase):
         gameID2 = ref_players[2]['gameID']
         # modifies few gameID values
         vbar()
-        print("Test players.register")
+        print("Test players.enlist")
         vbar()
         vprint("Test registering several players on two games:")
         vprint("    - Riri, Fifi and Loulou are part of a first game.")
         vprint("    - Daisy and Donald are part of another game.")
         vprint("    - Mickey does not play a game.")
         vprint("  Here are the players:")
-        self.assertTrue(players.register(players.getPlayerID("Daisy"), gameID1))
-        self.assertTrue(players.register(players.getPlayerID("Donald"), gameID1))
-        self.assertTrue(players.register(players.getPlayerID("Riri"), gameID2))
-        self.assertTrue(players.register(players.getPlayerID("Fifi"), gameID2))
-        self.assertTrue(players.register(players.getPlayerID("Loulou"), gameID2))
+        self.assertTrue(players.enlist(players.getPlayerID("Daisy"), gameID1))
+        self.assertTrue(players.enlist(players.getPlayerID("Donald"), gameID1))
+        self.assertTrue(players.enlist(players.getPlayerID("Riri"), gameID2))
+        self.assertTrue(players.enlist(players.getPlayerID("Fifi"), gameID2))
+        self.assertTrue(players.enlist(players.getPlayerID("Loulou"), gameID2))
         # self.list_test_players(players.playersColl)
         pp = []
         for p in players.playersColl.find({'gameID': gameID1}):
@@ -321,9 +321,9 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
             
-    def test_deregisterPlayer(self):
+    def test_delistPlayer(self):
         """
-        Test players.deregisterPlayer 
+        Test players.delistPlayer 
         """
         # setup the test data
         self.setUp()
@@ -333,11 +333,11 @@ class TestPlayers(unittest.TestCase):
             ref_players.append(player_format_DB(pp))
         gameID1 = ref_players[0]['gameID']
         gameID2 = ref_players[2]['gameID']
-        players.register(players.getPlayerID("Daisy"), gameID1)
-        players.register(players.getPlayerID("Donald"), gameID1)
-        players.register(players.getPlayerID("Riri"), gameID2)
-        players.register(players.getPlayerID("Fifi"), gameID2)
-        players.register(players.getPlayerID("Loulou"), gameID2)
+        players.enlist(players.getPlayerID("Daisy"), gameID1)
+        players.enlist(players.getPlayerID("Donald"), gameID1)
+        players.enlist(players.getPlayerID("Riri"), gameID2)
+        players.enlist(players.getPlayerID("Fifi"), gameID2)
+        players.enlist(players.getPlayerID("Loulou"), gameID2)
         donald = players.playersColl.find_one({'nickname': "Donald"})
         riri = players.playersColl.find_one({'nickname': "Riri"})
         fifi = players.playersColl.find_one({'nickname': "Fifi"})
@@ -345,21 +345,21 @@ class TestPlayers(unittest.TestCase):
         daisy = players.playersColl.find_one({'nickname': "Daisy"})
         # will deregister few players
         vbar()
-        print("Test players.deregisterPlayer")
+        print("Test players.delistPlayer")
         vbar()
         vprint("Test registering several players on two games:")
         vprint("    - Riri, Fifi and Loulou are part of a first game.")
         vprint("    - Daisy and Donald are part of another game.")
         vprint("    - Mickey does not play a game.")
         vprint("  Here are the players after we deregister them:")
-        players.deregisterPlayer(players.getPlayerID("Donald"))
-        players.deregisterPlayer(players.getPlayerID("Daisy"))
+        players.delist(players.getPlayerID("Donald"))
+        players.delist(players.getPlayerID("Daisy"))
         donald_gid = players.getGameID(donald['_id'])
         daisy_gid =  players.getGameID(daisy['_id'])
         self.assertTrue(donald_gid == daisy_gid == None)
-        players.deregisterPlayer(players.getPlayerID("Riri"))
-        players.deregisterPlayer(players.getPlayerID("Fifi"))
-        players.deregisterPlayer(players.getPlayerID("Loulou"))
+        players.delist(players.getPlayerID("Riri"))
+        players.delist(players.getPlayerID("Fifi"))
+        players.delist(players.getPlayerID("Loulou"))
         riri_gid = players.getGameID(riri['_id'])
         fifi_gid =  players.getGameID(fifi['_id'])
         loulou_gid = players.getGameID(loulou['_id'])
@@ -369,9 +369,9 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
     
-    def test_deregisterGame(self):
+    def test_delistGame(self):
         """
-        Test players.deregisterGame 
+        Test players.delistGame 
         """
         # setup the test data
         self.setUp()
@@ -381,14 +381,14 @@ class TestPlayers(unittest.TestCase):
             ref_players.append(player_format_DB(pp))
         gameID1 = ref_players[0]['gameID']
         gameID2 = ref_players[2]['gameID']
-        players.register(players.getPlayerID("Daisy"), gameID1)
-        players.register(players.getPlayerID("Donald"), gameID1)
-        players.register(players.getPlayerID("Riri"), gameID2)
-        players.register(players.getPlayerID("Fifi"), gameID2)
-        players.register(players.getPlayerID("Loulou"), gameID2)
-        # will deregister few players
+        players.enlist(players.getPlayerID("Daisy"), gameID1)
+        players.enlist(players.getPlayerID("Donald"), gameID1)
+        players.enlist(players.getPlayerID("Riri"), gameID2)
+        players.enlist(players.getPlayerID("Fifi"), gameID2)
+        players.enlist(players.getPlayerID("Loulou"), gameID2)
+        # will delist few players
         vbar()
-        print("Test players.deregisterGame")
+        print("Test players.delistGame")
         vbar()
         vprint("Test registering several players on two games:")
         vprint("    - Riri, Fifi and Loulou are part of a first game.")
@@ -396,7 +396,7 @@ class TestPlayers(unittest.TestCase):
         vprint("    - Mickey does not play a game.")
         vprint("  Here are the players after we deregister the second game:")
         gid = players.getGameID(players.getPlayerID("Riri"))
-        players.deregisterGame(gid)
+        players.delistGame(gid)
         riri_gid = players.getGameID(players.getPlayerID("Riri"))
         fifi_gid =  players.getGameID(players.getPlayerID("Fifi"))
         loulou_gid = players.getGameID(players.getPlayerID("Loulou"))
@@ -415,11 +415,11 @@ class TestPlayers(unittest.TestCase):
         players = Players()
         gameID1 = ObjectId()
         gameID2 = ObjectId()
-        players.register(players.getPlayerID("Daisy"), gameID1)
-        players.register(players.getPlayerID("Donald"), gameID1)
-        players.register(players.getPlayerID("Riri"), gameID2)
-        players.register(players.getPlayerID("Fifi"), gameID2)
-        players.register(players.getPlayerID("Loulou"), gameID2)
+        players.enlist(players.getPlayerID("Daisy"), gameID1)
+        players.enlist(players.getPlayerID("Donald"), gameID1)
+        players.enlist(players.getPlayerID("Riri"), gameID2)
+        players.enlist(players.getPlayerID("Fifi"), gameID2)
+        players.enlist(players.getPlayerID("Loulou"), gameID2)
         vbar()
         print("Test players.inGame")
         vbar()
@@ -467,37 +467,6 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
             
-    def test_toString(self):
-        """
-        Test players.toString 
-        """
-        # setup the test data
-        self.setUp()
-        players = Players()
-        playerID1 = players.getPlayerID("Donald")
-        gameID1 = refPlayers()[0]['gameID']
-        playerID2 = players.getPlayerID("Riri")
-        gameID2 = refPlayers()[2]['gameID']
-        self.assertTrue(players.register(playerID1, gameID1))
-        self.assertTrue(players.register(playerID2, gameID2))
-        # runs the test
-        vbar()
-        print("Test players.toString")
-        vbar()
-        vprint("We check that 'toString' produces the expected string which is:")
-        # self.list_test_players(players.playersColl)
-        vprint()
-        target  = "Daisy - (57b9bffb124e9b2e056a765d) - 45 points - no game\n"
-        target += "Donald - (57b8529a124e9b6187cf6c2a) - 18 points - game <57bf224df9a2f36dd206845a>\n"
-        target += "Fifi - (57b9a003124e9b13e6759bdc) - 0 points - no game\n"
-        target += "Loulou - (57b9bffb124e9b2e056a765c) - 33 points - no game\n"
-        target += "Mickey - (57b9a003124e9b13e6759bda) - 30 points - no game\n"
-        target += "Riri - (57b9a003124e9b13e6759bdb) - 18 points - game <57bf224df9a2f36dd206845b>\n"
-        vprint(target)
-        self.assertEqual(target, players.toString())
-        # end of the test
-        self.teardown(players)
-            
     def test_serialize(self):
         """
         Test players.serialize 
@@ -510,11 +479,11 @@ class TestPlayers(unittest.TestCase):
         players = Players()
         gameID1 = ObjectId('57bf224df9a2f36dd206845a')
         gameID2 = ObjectId('57bf224df9a2f36dd206845b')
-        players.register(players.getPlayerID("Daisy"), gameID1)
-        players.register(players.getPlayerID("Donald"), gameID1)
-        players.register(players.getPlayerID("Riri"), gameID2)
-        players.register(players.getPlayerID("Fifi"), gameID2)
-        players.register(players.getPlayerID("Loulou"), gameID2)
+        players.enlist(players.getPlayerID("Daisy"), gameID1)
+        players.enlist(players.getPlayerID("Donald"), gameID1)
+        players.enlist(players.getPlayerID("Riri"), gameID2)
+        players.enlist(players.getPlayerID("Fifi"), gameID2)
+        players.enlist(players.getPlayerID("Loulou"), gameID2)
         # runs the test
         vbar()
         print("Test players.serialize")

@@ -10,7 +10,7 @@ from server.connmongo import getGamesColl, getPlayersColl
 from server.players import Players
 from server.game import Game 
 from server.test_utilities import vbar, vprint
-from server.test_utilities import refPlayersDict, refGames_Dict
+from server.test_utilities import refPlayers, refGames_Dict
 from server.backend import Backend
 
 class test_Backend(unittest.TestCase):
@@ -36,10 +36,10 @@ class test_Backend(unittest.TestCase):
         # now register the reference players straight to the DB (bypassing the
         # normal process = call to the setserver 'register' API)
         vprint("We register the reference test players:")
-        for pp in refPlayersDict():
-            playersColl.insert_one( {'_id': ObjectId(pp['playerID']), 
+        for pp in refPlayers(True):
+            playersColl.insert_one( {'_id': pp['playerID'], 
                 'nickname': pp['nickname'], 
-                'totalScore': int(pp['totalScore']),
+                'totalScore': pp['totalScore'],
                 'gameID': None } )
             vprint("    Registered " + pp['nickname'] 
                    + " (" + pp['playerID'] + ")")
@@ -69,7 +69,7 @@ class test_Backend(unittest.TestCase):
         backend.players.addPlayer("Spiderman")
         backend.players.addPlayer("Batman")
         vprint("    - players:" + str(backend.players.getPlayers()))
-        gg = Game(refPlayersDict())
+        gg = Game(refPlayers(True))
         gg.deserialize(refGames_Dict()[0])
         backend.games.append(gg)
         # reset the backend
@@ -102,14 +102,14 @@ class test_Backend(unittest.TestCase):
         backend = self.setUp()
         # register reference players
         vprint("Initiate a backend and register reference players:")
-        for pp in refPlayersDict():
+        for pp in refPlayers(True):
             result = backend.registerPlayer(pp['nickname'])
             vprint("    - register " + pp['nickname'] + ": " + result['playerID'])
             pp_db = getPlayersColl().find_one({'nickname': pp['nickname']})
             self.assertEqual(result['playerID'], str(pp_db['_id']))
         # re-register the same players => should fail
         vprint("Re-register the same players: it should fail")
-        for pp in refPlayersDict():
+        for pp in refPlayers(True):
             result = backend.registerPlayer(pp['nickname'])
             vprint("    - register " + pp['nickname'] + ": " + result['playerID'])
             self.assertEqual(result['playerID'], "Failed")
@@ -124,7 +124,7 @@ class test_Backend(unittest.TestCase):
         # initiate a backend and register reference players
         backend = self.setUp()
         self.registerRefPlayers(backend)
-        pp_test = refPlayersDict()
+        pp_test = refPlayers(True)
         # enlist Donald and test the 'enlist' answer "wait"
         donald = pp_test[0]
         result = backend.enlistPlayer(donald['playerID'])
@@ -191,8 +191,148 @@ class test_Backend(unittest.TestCase):
         self.assertEqual(status, "ko")
         # removes residual test data
         self.tearDown()
-        
 
+    def test_enlistTeam(self):
+        """
+        Test backend.enlistTeam
+        """
+        vbar()
+        print("test backend.enlistTeam")
+        vbar()
+        # initiate a backend and register reference players
+        backend = self.setUp()
+        self.registerRefPlayers(backend)
+        pp_test = refPlayers(True)
+        # enlist a team of 3 players: it should fail
+        list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                    {'playerID': pp_test[1]['playerID']},
+                    {'playerID': pp_test[2]['playerID']}]
+        result = backend.enlistTeam(list_pid)
+        vprint("Enlist 3 valid players: " + str(result['status']))
+        self.assertEqual(result['status'], "ko")
+        # enlist a team of 5 players out of which 2 are duplicates: it should fail
+        list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                    {'playerID': pp_test[1]['playerID']},
+                    {'playerID': pp_test[2]['playerID']},
+                    {'playerID': pp_test[1]['playerID']},
+                    {'playerID': pp_test[0]['playerID']}]
+        result = backend.enlistTeam(list_pid)
+        vprint("Enlist 5 players (with 2 duplicates): " + str(result['status']))
+        self.assertEqual(result['status'], "ko")
+        
+        # enlist a team of 7 players out of which 2 unknown and 2 duplicate: it should fail
+        list_pid.append({'playerID': str(ObjectId())})
+        list_pid.append({'playerID': str(ObjectId())})
+        result = backend.enlistTeam(list_pid)
+        vprint("Enlist 3 valid + 2 unknown + 2 duplicate players: " + str(result['status']))
+        self.assertEqual(result['status'], "ko")
+        # enlist a team of 6 players (in which 1 duplicate): it should succeed
+        list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                    {'playerID': pp_test[1]['playerID']},
+                    {'playerID': pp_test[2]['playerID']},
+                    {'playerID': pp_test[3]['playerID']},
+                    {'playerID': pp_test[2]['playerID']},
+                    {'playerID': pp_test[4]['playerID']}]
+        result = backend.enlistTeam(list_pid)
+        vprint("Enlist 6 players (including 1 duplicate): " + str(result['status']) 
+               + " (" + str(result['gameID']) + ")")
+        self.assertEqual(result['status'], "ok")
+        gid_db = backend.players.getGameID(ObjectId(list_pid[0]['playerID']))
+        self.assertEqual(result['gameID'], str(gid_db))
+        # enlist another team of 4 players, out of which 3 are already playing
+        # it should fail
+        list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                    {'playerID': pp_test[2]['playerID']},
+                    {'playerID': pp_test[3]['playerID']},
+                    {'playerID': pp_test[5]['playerID']}]
+        result = backend.enlistTeam(list_pid)
+        vprint("Enlist 4 valid, only 1 available: " + str(result['status']))
+        self.assertEqual(result['status'], "ko")
+        
+    def test_getNicknames(self):
+        """
+        Test backend.getNicknames
+        """
+        vbar()
+        print("test backend.getNicknames")
+        vbar()
+        # initiate a backend and register reference players
+        backend = self.setUp()
+        self.registerRefPlayers(backend)
+        pp_test = refPlayers(True)
+        list_nicknames_ref = []
+        for pp in pp_test:
+            list_nicknames_ref.append(pp['nickname'])
+        list_nicknames_ref.remove('Daisy')
+        # enlist a team of 5 players 
+        list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                    {'playerID': pp_test[1]['playerID']},
+                    {'playerID': pp_test[2]['playerID']},
+                    {'playerID': pp_test[3]['playerID']},
+                    {'playerID': pp_test[4]['playerID']}]
+        result = backend.enlistTeam(list_pid)
+        vprint("Enlist a team of 5 player: " + str(result['status']) 
+               + " (" + str(result['gameID']) + ")")
+        # ask for the nicknames of the players
+        pid_str = pp_test[0]['playerID']
+        result = backend.getNicknames(pid_str)
+        # build the test list of nicknames
+        vprint("Ask for the nickname of Donald's team:") 
+        list_nicknames_test = []
+        for pp in result:
+            list_nicknames_test.append(pp['nickname'])
+        
+        vprint("    Collect the nicknames (" + str(len(list_nicknames_test)) + "):")
+        for nn in list_nicknames_test:
+            vprint("    - " + nn)
+        valid = (list_nicknames_test == list_nicknames_ref)
+        # all nicknames should appear in the list
+        vprint("    All names are returned: " + str(valid))
+        self.assertTrue(valid)
+        # Do the same request with Daisy who is not enlisted
+        vprint("Ask for the nickname of Daisy's team:") 
+        pid_str = pp_test[5]['playerID']
+        result = backend.getNicknames(pid_str)
+        empty = (result == [])
+        vprint("    Collect the nicknames (0): " + str(empty))
+        self.assertTrue(empty)
+
+    def test_stopGame(self):
+        """
+        Test backend.stopGame
+        """
+        vbar()
+        print("test backend.stopGame")
+        vbar()
+        # initiate a backend and register reference players
+        backend = self.setUp()
+        self.registerRefPlayers(backend)
+        pp_test = refPlayers(True)
+        # enlist a team of 5 players 
+        list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                    {'playerID': pp_test[1]['playerID']},
+                    {'playerID': pp_test[2]['playerID']},
+                    {'playerID': pp_test[3]['playerID']},
+                    {'playerID': pp_test[4]['playerID']}]
+        result = backend.enlistTeam(list_pid)
+        vprint("Enlist a team of 5 player: " + str(result['status']) 
+               + " (" + str(result['gameID']) + ")")
+        vprint("    - games list is: " + str(backend.games))
+        gid_str = result['gameID']
+        print("BOGUS: ", result['gameID'])
+        # stops the game
+        vprint("We stop the game:")
+        backend.stopGame(gid_str, True)
+        # check that the game has been killed and the players available again.
+        vprint("    - games list is:" + str(backend.games))
+        self.assertEqual(backend.games, [])
+        for pp in backend.players.getPlayers():
+            nn = pp['nickname']
+            gid_str = str(pp['gameID'])
+            vprint("    - " + nn + ": gameID = " + gid_str)
+            self.assertEqual(gid_str, None)
+        
+                
 if __name__ == "__main__":
 
-    unittest.main()
+    unittest.main() 
