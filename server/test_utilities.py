@@ -701,7 +701,7 @@ def refSetsAndPlayers():
             for k in source[j]['set']:
                 set_int.append(int(k))
             # source_playerID = ObjectId(source[j]['playerID'])
-            playerID = source[j]['playerID']
+            playerID = ObjectId(source[j]['playerID'])
             nickname = source[j]['nickname']
             setsAndPlayers_lists[i].append({'set': set_int, 
                 'player': {'playerID': playerID, 'nickname': nickname}})
@@ -872,9 +872,10 @@ def stepToString(step, cardset, tab=""):
 
 def playersDict_equality(players1, players2):
     """
-    This function returns True if teh two steps contain similar/equivalent data.
+    This function returns True if the two steps contain similar/equivalent data.
     """
-    equal = (players1['__class__'] == players2['__class__'])
+    equal = True
+    equal = equal and (players1['__class__'] == players2['__class__'])
     equal = equal and (len(players1['players']) == len(players2['players']))
     for pp_dict in players1['players']:
         equal = equal and (pp_dict in players2['players'])
@@ -886,6 +887,17 @@ def cardset_equality(cardset1, cardset2):
     same order.
     """
     return cardset1.cards == cardset2.cards
+
+def cardsetDict_equality(cardsetDict1, cardsetDict2):
+    """
+    This function return True if the two cardsets dictionaries represent the
+    same cardset (in the same order).
+    """
+    equal = (cardsetDict1['__class__'] == cardsetDict2['__class__'])
+    equal = equal and (len(cardsetDict1['cards']) == len(cardsetDict2['cards']))
+    for cc_dict in cardsetDict1['cards']:
+        equal = equal and (cc_dict in cardsetDict2['cards'])
+    return equal
     
 def step_equality(step1, step2):
     """

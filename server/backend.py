@@ -5,9 +5,10 @@ Created on Sep 2, 2016
 from bson.objectid import ObjectId
 
 from server.connmongo import getPlayersColl, getGamesColl
-from server.constants import playersMin, playersMax
+from server.constants import playersMin, playersMax, oidIsValid
 from server.players import Players
 from server.game import Game
+from pyasn1.type.constraint import InnerTypeConstraint
 
 
 class Backend():
@@ -83,7 +84,7 @@ class Backend():
         # It will try to register a new player via 'players.addPlayer'.
         #     - If the answer is True, it returns the playerID 
         #     - if the answer is False, it returns 'Failed'.
-        if self.players.addPlayer(nickname):
+        if self.players.register(nickname):
             playerID = self.players.getPlayerID(nickname)
             result = {'playerID': str(playerID)}
         else:
@@ -139,7 +140,7 @@ class Backend():
                         # build the players list for the new game
                         game_players = []
                         for pID in self.playersWaitingList:
-                            game_players.append({'playerID': str(pID), 
+                            game_players.append({'playerID': pID, 
                                 'nickname': self.players.getNickname(pID)})
                         # initiate the new game
                         game = Game(game_players)
@@ -147,7 +148,7 @@ class Backend():
                         self.games.append(game)
                         # registers the players in the DB
                         for pID in self.playersWaitingList:
-                            self.players.register(pID, gameID)
+                            self.players.enlist(pID, gameID)
                         # empty the waiting list
                         self.playersWaitingList = []
                         # returns a 'gameID' result
@@ -211,7 +212,7 @@ class Backend():
             # registers the players in the DB
             for pp in list_playerID:
                 pID = pp['playerID']
-                self.players.register(pID, gameID)
+                self.players.enlist(pID, gameID)
             # returns the game info
             return {'status': "ok", 'gameID': gameID}
         else:
@@ -244,57 +245,92 @@ class Backend():
            - hard == True: it will kill the game irrespective of its status.
            - hard == False: it first checks that the game is finished. 
         """
-        # identify the right game and check that it is finished
-        i = 0
-        while i < len(self.games):
-            print("BOGUS: i=", i, "gameID=", self.games[i].getGameID(), "gid=", gameID)
-            if self.games[i].getGameID() == gameID:
-                print("BOGUS: gameID = gid")
-                if self.games[i].getGameFinished() or hard:
-                    print("BOGUS: stop the game")
-                    # stops the game
-                    del(self.games[i])
-                    i = len(self.games)
-                    # deregister the players
-                    pColl = getPlayersColl()
-                    print("BOGUS: avant:")
-                    for pp in pColl.find({}):
-                        print("BOGUS: ", str(pp))
-                    # self.players.deregisterGame(gID)
-                    print("BOGUS: pendant - gid = ", gameID)
-                    pColl.update_many({'gameID': gameID}, {"$set": {'gameID': None}})
-                    print("BOGUS: après:")
-                    for pp in pColl.find({}):
-                        print("BOGUS: ", str(pp))
-                else:
-                    print("BOGUS: don't stop the game")
+        # check that gameID is valid and the corresponding game exists
+        if oidIsValid(gameID):
+            good_game = None
+            for i in range(0, len(self.games)):
+                if self.games[i].getGameID() == gameID:
+                    good_game = self.games[i]
+                    break
+            if good_game == None:
+                # gameID is valid but there is no corresponding game
+                result = {'status': "ko", 'reason': "game does not exist"}
             else:
-                print("BOGUS: gameID != gid")
-
-            i += 1
-    
-    def details(self,gameid_str):
+                if self.games[i].getGameFinished() or hard:
+                    # gameID is valid and correspond to the game 'good_game'
+                    # kill the game and delist the corresponding players
+                    del(self.games[i])
+                    self.players.delistGame(gameID)
+                    result = {'status': "ok"}
+                else:
+                    # gameID is ok, but the game is not finished and the 'hard'
+                    # flag is not set
+                    print("BOGUS: we found the game: => no stop - unfinished")
+                    result = {'status': "ko", 'reason': "game not finished"}
+        else:
+            # gameID is not a valid ObjectId
+            result = {'status': "ko", 'reason': "invalid GameID"}
+        # end of the 'stop' method
+        return result
+            
+    def details(self,gameID):
         """
         The server will answer the clients when they ask about the generic 
         details of the game: cardset, turncounter...
         It will answer with the data description (JSON):
-        - GET https://server.org/Set/gameid/step
-            post { }
-            answer { "gameID": str(ObjectId), cardset.serialize, turnCounter }
+            { "gameID": str(ObjectId), cardset.serialize, turnCounter }
         """
-        pass        
+        result = None
+        if oidIsValid(gameID):
+            good_game = None
+            for gg in self.games:
+                if str(gg.gameID) == str(gameID):
+                    good_game = gg
+                    break
+            if good_game != None:
+                result = {'__class__': 'SetGameDetails', 
+                    'gameID': str(gameID),
+                    'turnCounter': str(good_game.turnCounter),
+                    'gameFinished': str(good_game.gameFinished),
+                    'cardset': good_game.cards.serialize()}
+                # add the players (local vision from within the game)
+                result["players"] = []
+                for pp in good_game.players:
+                    result["players"].append( { 'playerID': str(pp['playerID']), 
+                        'nickname': pp['nickname'], 'points': str(pp['points'])})
+                
+        return result
 
-    def step(self,gameid_str):
+    def step(self,gameID):
         """
         The server will answer the clients when they ask about the status of the 
-        game: it will answer with the latest step description (JSON):
-        - GET https://server.org/Set/gameid/step
-            post { }
-            answer { "gameID": str(ObjectId), step.serialize }
+        game:
+        - if the request is successful, it returns:
+                { 'status': "ok", 'step': step.serialize }
+        - if gameID is not a valid ObjectId, it return:
+                {'status': "ko", 'reason': "invalid gameID" }
+        - if gameID is a valid ObjectId but the game does not exist, it returns:
+                {'status': "ko", 'reason': "game does not exist"}
         """
-        pass
-            
-    def history(self,gameid_str):
+        # check that the gameID is a valid ID
+        if oidIsValid(gameID):
+            # check if the gameID exist
+            good_game = None
+            for gg in self.games:
+                if str(gg.gameID) == str(gameID):
+                    good_game = gg
+                    break
+            if good_game != None:
+                # gameID is valid and the game exist
+                step = good_game.steps[good_game.turnCounter]
+                result = {'status': "ok", 'step': step.serialize()}
+            else:
+                result = {'status': "ko", 'reason': "game does not exist"}
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
+        return result
+    
+    def history(self,gameID):
         """
         The server will answer the clients when they ask about the full history
         of a game (active or finished): it will answer with the full description 
@@ -304,14 +340,103 @@ class Backend():
             post { }
             answer { serialized Game }
         """
-        pass
+        # check that the gameID is a valid ID
+        if oidIsValid(gameID):
+            # check if the gameID exist
+            good_game = None
+            for gg in self.games:
+                if str(gg.gameID) == str(gameID):
+                    good_game = gg
+                    break
+            if good_game != None:
+                # gameID is valid and the game exist
+                result = {'status': "ok", 'game': good_game.serialize()}
+            else:
+                result = {'status': "ko", 'reason': "game does not exist"}
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
+        return result
 
-    def collectSetProposal(self):
+
+    def proposeSet(self, playerID, setlist):
         """
-        - propose a Set on the Table:
-            POST https://server.org/gameID/set/
-            post {"playerID": "playerID", "set": {i,j,k} }
-            answer {"SetIsValid": True or False, "turncounter": turncounter}
+        The method collects a Set proposal to be checked and played:
+            - playerID (ObjectId) indicates the player
+            - setlist ([int0, int1, int2] indicates the positions of the 3 cards
+                on the table for the current step.
+        If the setlist is valid, it is played and the game continues:
+            - the 3 cards are moved to the 'used'
+            - 3 new cards are taken from the 'pick' and put on the 'table'
+            - turnCounter and points are incremented...
+        the method returns:
+            - if PlayerID is an invalid OnjectId:
+                { 'status': "ko", 'reason': "invalid playerID"}
+            - else if playerID is valid but the player does not exist:
+                { 'status': "ko", 'reason': "unknown player" }
+            - else if PlayerID is valid but the setlist syntax is invalid:
+                { 'status': "ko", 'reason': "invalid set" }
+            - else if the okayerID is valid, the setlist syntax is valid but 
+                does not form a valid set of 3 cards:
+                { 'status': "ko", 'reason': "wrong set" }
+            - else the setlist is valid:
+                { 'status': "ok" }
         """
-        pass
+        
+        def setSyntax(setlist):
+            """
+            Check that the syntax of the proposed set is ok:
+            - list of integers (not sure we can test this efficiently
+            """
+            valid = (type(setlist) == list)
+            valid = valid and (len(setlist) == 3)
+            if valid:
+                for i in range(0,3):
+                    valid = valid and (type(setlist[i]) == int)
+                if valid:
+                    for i in range(0,3):
+                        valid = valid and (setlist[i] >= 0) and (setlist[i] < 12)
+                        valid = valid and (setlist[i] != setlist[(i+1)%3])
+            return valid
+            
+        if oidIsValid(playerID):
+            #check if playerID exist 
+            if self.players.playerIDisValid(playerID):
+                # check if the set syntax is valid (3 integers between 0 and 11)
+                if setSyntax(setlist):
+                    # find the game
+                    gameID = self.players.getGameID(playerID)
+                    print("BOGUS: playerID=", playerID, "gameID=", gameID)
+                    if gameID != None:
+                        good_game = None
+                        for gg in self.games:
+                            print("    BOGUS: good_gameID=", gameID, "gg=", gg.getGameID())
+                            if (str(gg.getGameID()) == str(gameID)):
+                                good_game = gg
+                                break
+                        if good_game != None: 
+                            # push the set to the game
+                            valid = good_game.receiveSetProposal(playerID, setlist)
+                            if valid:
+                                # the set is valid and was already processed
+                                result = {'status': "ok"}
+                            else:
+                                result = {'status': "ko",
+                                          'reason': "wrong set"}
+                        else:
+                            # this case should never happen, unless the DB is 
+                            # corrupted and playerID are enlisted to wrong games
+                            result = {'status': "ko", 
+                                      'reason': "player not in game"}
+                    else:
+                        # the player is not enlisted: this should never happen
+                        # unless the DB is corrupted.
+                        result = {'status': "ko", 
+                                  'reason': "player not in game"}
+                else:
+                    result = {'status': "ko", 'reason': "invalid set"}
+            else:
+                result = {'status': "ko", 'reason': "unknown playerID"}
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
+        return result
 
