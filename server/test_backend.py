@@ -7,10 +7,9 @@ import unittest
 from bson.objectid import ObjectId
 
 from server.connmongo import getGamesColl, getPlayersColl
-from server.players import Players
 from server.game import Game 
 from server.test_utilities import vbar, vprint
-from server.test_utilities import refPlayers, refGames_Dict, refSetsAndPlayers
+from server.test_utilities import refPlayers, refGames_Dict
 from server.test_utilities import cardsetDict_equality, stepDict_equality
 from server.test_utilities import game_compliant
 from server.backend import Backend

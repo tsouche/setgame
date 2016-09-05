@@ -966,7 +966,12 @@ def game_compliant(game, index, tab):
     if valid_generic:
         valid_players = (len(game.players) == len(players2))
         for p1 in game.players:
-            valid_players = valid_players and (p1 in players2)
+            # find the same player in the reference data
+            for p2 in players2:
+                if (str(p1['playerID']) == str(p2['playerID'])):
+                    valid_players = valid_players and (p1['nickname'] == p2['nickname'])
+                    valid_players = valid_players and (int(p1['points']) == p2['points'])
+                    break
         vprint(tab + "players: " + str(valid_players))
     # compare the cardsets
     if valid_players:

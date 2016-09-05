@@ -2,13 +2,11 @@
 Created on Sep 2, 2016
 @author: Thierry Souche
 '''
-from bson.objectid import ObjectId
 
 from server.connmongo import getPlayersColl, getGamesColl
 from server.constants import playersMin, playersMax, oidIsValid
 from server.players import Players
 from server.game import Game
-from pyasn1.type.constraint import InnerTypeConstraint
 
 
 class Backend():
@@ -356,7 +354,6 @@ class Backend():
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
-
 
     def proposeSet(self, playerID, setlist):
         """
