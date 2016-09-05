@@ -970,7 +970,7 @@ def game_compliant(game, index, tab):
             for p2 in players2:
                 if (str(p1['playerID']) == str(p2['playerID'])):
                     valid_players = valid_players and (p1['nickname'] == p2['nickname'])
-                    valid_players = valid_players and (int(p1['points']) == p2['points'])
+                    valid_players = valid_players and (int(p1['points']) == int(p2['points']))
                     break
         vprint(tab + "players: " + str(valid_players))
     # compare the cardsets

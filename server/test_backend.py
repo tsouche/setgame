@@ -591,6 +591,8 @@ class test_Backend(unittest.TestCase):
             del(backend.games[i].steps[j])
             j -= 1
         backend.games[i].steps[0].set = []
+        for pp in backend.games[i].players:
+            pp['points'] = 0
         # the game is now ready for the test case
         j = 0
         while (backend.games[i].getGameFinished() == False):
@@ -599,7 +601,6 @@ class test_Backend(unittest.TestCase):
             setlist = refGames_Dict()[0]['steps'][j]['set']
             for k in range(0,3):
                 setlist[k] = int(setlist[k])
-            print("BOGUS: pID= ",pID,"nn=",pnn,"set=",setlist)
             result = backend.proposeSet(pID, setlist)
             vprint("    - turn " + str(backend.games[i].turnCounter) 
                    + ": " + pnn + " propose " + str(setlist) + " => "
@@ -609,7 +610,7 @@ class test_Backend(unittest.TestCase):
         self.assertTrue(backend.games[i].gameFinished)
         self.assertTrue(game_compliant(backend.games[i], 0, "     "))
         # At this point, the game should be finished.
-        
+
 if __name__ == "__main__":
 
     unittest.main() 

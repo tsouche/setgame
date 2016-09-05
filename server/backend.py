@@ -263,7 +263,6 @@ class Backend():
                 else:
                     # gameID is ok, but the game is not finished and the 'hard'
                     # flag is not set
-                    print("BOGUS: we found the game: => no stop - unfinished")
                     result = {'status': "ko", 'reason': "game not finished"}
         else:
             # gameID is not a valid ObjectId
@@ -402,11 +401,9 @@ class Backend():
                 if setSyntax(setlist):
                     # find the game
                     gameID = self.players.getGameID(playerID)
-                    print("BOGUS: playerID=", playerID, "gameID=", gameID)
                     if gameID != None:
                         good_game = None
                         for gg in self.games:
-                            print("    BOGUS: good_gameID=", gameID, "gg=", gg.getGameID())
                             if (str(gg.getGameID()) == str(gameID)):
                                 good_game = gg
                                 break
