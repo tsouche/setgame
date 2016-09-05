@@ -700,8 +700,11 @@ def refSetsAndPlayers():
             set_int = []
             for k in source[j]['set']:
                 set_int.append(int(k))
-            # source_playerID = ObjectId(source[j]['playerID'])
-            playerID = ObjectId(source[j]['playerID'])
+            playerID = source[j]['playerID']
+            if playerID == 'None':
+                playerID = None
+            else:
+                playerID = ObjectId(playerID)
             nickname = source[j]['nickname']
             setsAndPlayers_lists[i].append({'set': set_int, 
                 'player': {'playerID': playerID, 'nickname': nickname}})
