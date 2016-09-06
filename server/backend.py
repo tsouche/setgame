@@ -84,9 +84,9 @@ class Backend():
         #     - if the answer is False, it returns 'Failed'.
         if self.players.register(nickname):
             playerID = self.players.getPlayerID(nickname)
-            result = {'playerID': str(playerID)}
+            result = {'status': "ok", 'playerID': str(playerID)}
         else:
-            result = {'playerID': "Failed"}
+            result = {'status': "ko"}
         return result
 
     def enlistPlayer(self, playerID):

@@ -10,8 +10,7 @@ from connmongo import getPlayersColl, getGamesColl
 from constants import setserver_address, setserver_port
 from players import Players
 from test_utilities import vbar, vprint
-from server.setserver import Setserver
-from server.test_utilities import refPlayersDict
+from server.test_utilities import refPlayersDict, refPlayers
 from server.connmongo import getPlayersColl
 
 def _url(path):
@@ -20,21 +19,26 @@ def _url(path):
 
 class test_Setserver(unittest.TestCase):
 
-    def setUp(self):
+    def setup(self):
         """
         Sets up the test data by launching a server
         """
         # Start the bottle server
         """ How do we start the bottle webserver ?
-        maybe simply run the command:
-            'python setsetver.py' ?
+        maybe simply run the shell command:
+            'python /data/code/setgame/server/setsetver.py' ?
+        import subprocess
+        subprocess.run('python /data/code/setgame/server/setserver.py',
+            shell=True, check=True)
         """
         # reset the server data
         vprint("We clean the test databases.")
         result = requests.get(_url('/reset'))
-        self.assertEqual(result.json()['server_status'], "reset")
+        self.assertEqual(result.json()['status'], "reset")
         # connect to the MongoDB and create 'self.players'
         self.players = Players()
+        # populate the reference players in memory
+        self.refPlayers = refPlayers()
 
     def registerRefPlayers(self):
         """
@@ -46,13 +50,13 @@ class test_Setserver(unittest.TestCase):
         # now register the reference players straight to the DB (bypassing the
         # normal process = call to the setserver 'register' API)
         vprint("We register the reference test players:")
-        for pp in refPlayersDict():
-            playersColl.insert_one( {'_id': ObjectId(pp['playerID']), 
+        for pp in self.players:
+            playersColl.insert_one( {'_id': pp['playerID'], 
                 'nickname': pp['nickname'], 
-                'totalScore': int(pp['totalScore']),
+                'totalScore': pp['totalScore'],
                 'gameID': None } )
             vprint("    Registered " + pp['nickname'] 
-                   + " (" + pp['playerID'] + ")")
+                   + " (" + str(pp['playerID']) + ")")
 
     def tearDown(self):
         """
@@ -69,14 +73,15 @@ class test_Setserver(unittest.TestCase):
         """
         Test Setserver.registerPlayers
         
-        Nothing much to test: we poll the URL with the 'hello' route, and we 
-        check that the server is alive.
+        Nothing much to test (except the ability to launch the web server: we 
+        poll the URL with the 'hello' route, and we check that the server is 
+        alive.
         """
         vbar()
         vprint("Test setserver.__init__")
         vbar()
         # build test data and context
-        self.setUp()
+        self.setup()
         # we put a 'get' request to the server and check that it answers 'Coucou'
         vprint("BEWARE: if this test does not pass, it probably means that the setserver")
         vprint("        did not start.")
@@ -97,37 +102,49 @@ class test_Setserver(unittest.TestCase):
         print("Test setserver.registerPlayer")
         vbar()
         # build test data and context
-        self.setUp()
+        self.setup()
         # Here we must register few players, and then compare the playerID sent
         # back by the server wit the values in the DB.
         # We also try to register invalid nicknames and see the server answer.
         # register several players
-        for pp in refPlayersDict():
+        for pp in self.refPlayers:
             nickname = pp['nickname']
             path = _url('/register/' + nickname)
             vprint("We poll " + path)
             result = requests.get(path)
-            playerid_str = result.json()['playerID']
-            vprint("    " + nickname +" is registered with gameID = '" 
+            status = result.json()['status']
+            if status == "ok":
+                playerid_str = result.json()['playerID']
+                vprint("    " + nickname +" is registered with playerID = '" 
                    + playerid_str + "'")
-            pp_db = self.players.getPlayer(ObjectId(playerid_str))
-            self.assertFalse(pp_db == False)
+                pp_db = self.players.getPlayer(ObjectId(playerid_str))
+                self.assertEqual(status, "ok")
+                self.assertEqual(pp_db['nickname'], nickname)
+                self.assertEqual(playerid_str, str(pp_db['playerID']))
+            if status == "ko":
+                # the test has failed.
+                self.assertTrue(False)
         # re-register the same players => should fail
         for pp in refPlayersDict():
             nickname = pp['nickname']
             path = _url('/register/' + nickname)
             vprint("We poll again " + path)
             result = requests.get(path)
-            playerid_str = result.json()['playerID']
-            vprint("    registration answer is '" + playerid_str + "'")
-            self.assertEqual(playerid_str, 'Failed')
+            status = result.json()['status']
+            if status == "ko":
+                vprint("    registration answer is " + status)
+                self.assertEqual(status, "ko")
+            else:
+                # test has failed
+                self.assertTrue(False)
         # removes residual test data
         self.tearDown()
         
+    """
     def test_enlistPlayer(self):
-        """
+        """ """
         Test Setserver.enlistPlayer
-        """
+        """ """
         vbar()
         print("Test setserver.enlistPlayer")
         vbar()
@@ -135,7 +152,7 @@ class test_Setserver(unittest.TestCase):
         # started and that the 4 first players are assigned to this game.
         
         # build test data and context
-        self.setUp()
+        self.setup()
         self.registerRefPlayers()
         # load  reference test players
         pp_test = refPlayersDict()
@@ -209,11 +226,12 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "ko")
         # removes residual test data
         self.tearDown()
-        
+    """
+    """
     def test_enlistTeam(self):
-        """
+        """ """
         Test Setserver.enlistTeam
-        """
+        """ """
         vbar()
         print("Test setserver.enlistTeam")
         vbar()
@@ -221,7 +239,7 @@ class test_Setserver(unittest.TestCase):
         # started and that the 4 first players are assigned to this game.
         
         # build test data and context
-        self.setUp()
+        self.setup()
         self.registerRefPlayers()
         # enlist various players and check answers
         vprint("We will enlist several teams and capture the server's answers:")
@@ -259,7 +277,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(list_db, list)
         # removes residual test data
         self.tearDown()
-
+    """
 
 if __name__ == "__main__":
 
