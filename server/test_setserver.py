@@ -164,25 +164,25 @@ class test_Setserver(unittest.TestCase):
         print("BOGUS: ", result.json())
         status = result.json()['status']
         nbp = result.json()['nb_players']
-        vprint("    enlist Donald : " + donald['playerID'] + " - " + status 
+        vprint("    enlist Donald : " + str(donald['playerID']) + " - " + status 
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 1)
         # enlist Mickey and test the 'enlist' answer "wait"
-        mickey = pp_test[1]
+        mickey = self.refPlayers[1]
         result = requests.get(path, params={'playerID': mickey['playerID']})
         status = result.json()['status']
         nbp = result.json()['nb_players']
-        vprint("    enlist Mickey : " + mickey['playerID'] + " - " + status 
+        vprint("    enlist Mickey : " + str(mickey['playerID']) + " - " + status 
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 2)
         # enlist Daisy and test the 'enlist' answer == "wait"
-        daisy  = pp_test[5]
+        daisy  = self.refPlayers[5]
         result = requests.get(path, params={'playerID': daisy['playerID']})
         status = result.json()['status']
         nbp = result.json()['nb_players']
-        vprint("    enlist Daisy  : " + daisy['playerID'] + " - " + status 
+        vprint("    enlist Daisy  : " + str(daisy['playerID']) + " - " + status 
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 3)
@@ -190,31 +190,31 @@ class test_Setserver(unittest.TestCase):
         result = requests.get(path, params={'playerID': donald['playerID']})
         status = result.json()['status']
         nbp = result.json()['nb_players']
-        vprint("    enlist Donald : " + donald['playerID'] + " - " + status 
+        vprint("    enlist Donald : " + str(donald['playerID']) + " - " + status 
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 3)
         # enlist Riri and test the 'enlist' answer == gameID
         # i.e. this fourth player enlisting should start a new game
-        riri   = pp_test[2]
+        riri   = self.refPlayers[2]
         result = requests.get(path, params={'playerID': riri['playerID']})
         status = result.json()['status']
         riri_db = self.players.getPlayer(ObjectId(riri['playerID']))
         gameid_str = riri_db['gameID']
-        vprint("    enlist Riri   : " + riri['playerID'] + " - " + status 
+        vprint("    enlist Riri   : " + str(riri['playerID']) + " - " + status 
                + " (" + gameid_str + ")")
         self.assertEqual(status, "ok")
         self.assertEqual(result.json()['gameID'], gameid_str)
         # enlist Fifi and test the 'enlist' answer == "wait"
-        fifi   = pp_test[3]
+        fifi   = self.refPlayers[3]
         result = requests.get(path, params={'playerID': fifi['playerID']})
         status = result.json()['status']
-        vprint("    enlist Fifi   : " + fifi['playerID'] + " - " + status)
+        vprint("    enlist Fifi   : " + str(fifi['playerID']) + " - " + status)
         self.assertEqual(status, "wait")
         # enlist AGAIN Mickey and test the 'enlist' answer gameID
         result = requests.get(path, params={'playerID': mickey['playerID']})
         status = result.json()['status']
-        vprint("    enlist again Mickey : " + mickey['playerID'] + " - " 
+        vprint("    enlist again Mickey : " + str(mickey['playerID']) + " - " 
                + status + " (" + gameid_str + ")")
         self.assertEqual(status, "ok")
         self.assertEqual(result.json()['gameID'], gameid_str)

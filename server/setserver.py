@@ -3,8 +3,8 @@ Created on August 11th 2016
 @author: Thierry Souche
 '''
 
-from bson.objectid import ObjectId
 from bottle import Bottle, route, request, run
+from bson.objectid import ObjectId
 
 from server.constants import setserver_address, setserver_port
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     @webserver.route('/enlist')
     def enlistPlayer():
         playerid_str = request.GET.get('playerID', '').strip()
-        return backend.enlistPlayer(playerid_str)
+        return backend.enlistPlayer(ObjectId(playerid_str))
 
     """
     @webserver.route('/enlist_team')
