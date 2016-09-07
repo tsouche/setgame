@@ -50,7 +50,8 @@ class test_Setserver(unittest.TestCase):
         # now register the reference players straight to the DB (bypassing the
         # normal process = call to the setserver 'register' API)
         vprint("We register the reference test players:")
-        for pp in self.players:
+        playersColl.drop()
+        for pp in self.refPlayers:
             playersColl.insert_one( {'_id': pp['playerID'], 
                 'nickname': pp['nickname'], 
                 'totalScore': pp['totalScore'],
@@ -140,11 +141,10 @@ class test_Setserver(unittest.TestCase):
         # removes residual test data
         self.tearDown()
         
-    """
     def test_enlistPlayer(self):
-        """ """
+        """
         Test Setserver.enlistPlayer
-        """ """
+        """
         vbar()
         print("Test setserver.enlistPlayer")
         vbar()
@@ -154,15 +154,14 @@ class test_Setserver(unittest.TestCase):
         # build test data and context
         self.setup()
         self.registerRefPlayers()
-        # load  reference test players
-        pp_test = refPlayersDict()
         # enlist various players and check answers
         vprint("We now enlist players and capture the server's answers:")
         path = _url('/enlist')
         vprint("    path = '" + path + "'")
         # enlist Donald and test the 'enlist' answer "wait"
-        donald = pp_test[0]
+        donald = self.refPlayers[0]
         result = requests.get(path, params={'playerID': donald['playerID']})
+        print("BOGUS: ", result.json())
         status = result.json()['status']
         nbp = result.json()['nb_players']
         vprint("    enlist Donald : " + donald['playerID'] + " - " + status 
@@ -226,7 +225,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "ko")
         # removes residual test data
         self.tearDown()
-    """
+
     """
     def test_enlistTeam(self):
         """ """

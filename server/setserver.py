@@ -35,12 +35,11 @@ if __name__ == "__main__":
     def registerPlayer(nickname):
         return backend.registerPlayer(nickname)
 
-    """
     @webserver.route('/enlist')
     def enlistPlayer():
         playerid_str = request.GET.get('playerID', '').strip()
         return backend.enlistPlayer(playerid_str)
-    """
+
     """
     @webserver.route('/enlist_team')
     def enlistTeam():

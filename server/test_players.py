@@ -1,5 +1,5 @@
 """
-Created on Auguts 8th 2016
+Created on August 8th 2016
 @author: Thierry Souche
 """
 

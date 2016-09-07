@@ -108,6 +108,7 @@ class test_Backend(unittest.TestCase):
         vprint("Initiate a backend and register reference players:")
         for pp in refPlayers(True):
             result = backend.registerPlayer(pp['nickname'])
+            self.assertEqual(result['status'], "ok")
             vprint("    - register " + pp['nickname'] + ": " + result['playerID'])
             pp_db = getPlayersColl().find_one({'nickname': pp['nickname']})
             self.assertEqual(result['playerID'], str(pp_db['_id']))
@@ -115,8 +116,8 @@ class test_Backend(unittest.TestCase):
         vprint("Re-register the same players: it should fail")
         for pp in refPlayers(True):
             result = backend.registerPlayer(pp['nickname'])
-            vprint("    - register " + pp['nickname'] + ": " + result['playerID'])
-            self.assertEqual(result['playerID'], "Failed")
+            vprint("    - register " + pp['nickname'] + ": " + result['status'])
+            self.assertEqual(result['status'], "ko")
         
     def test_enlistPlayer(self):
         """
