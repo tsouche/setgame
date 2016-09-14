@@ -64,14 +64,15 @@ class test_Setserver(unittest.TestCase):
         This method enlists 4 players on a game and returns the gameID
         """
         vprint("We enlist the reference test players:")
-        playersColl = getPlayersColl()
-        for pp in self.refPlayers:
-            playersColl.update_one( {'_id': pp['playerID']}, 
-                {'$set': {'gameID': None }})
-            vprint("    Registered " + pp['nickname'] 
-                + " (" + str(pp['playerID']) + ")")
-        
-
+        path = _url('/enlist')
+        for i in range(0,4):
+            pp = self.refPlayers[i]
+            result = requests.get(path, params={'playerID': pp['playerID']})
+            status = result.json()['status']
+            vprint("    Enlisted " + pp['nickname'] + " (" + 
+                str(pp['playerID']) + "): " + status)
+        return result.json()['gameID']
+    
     def tearDown(self):
         """
         Tears down the server and clean the mongo data.
@@ -173,8 +174,7 @@ class test_Setserver(unittest.TestCase):
         vprint("    path = '" + path + "'")
         # enlist Donald and test the 'enlist' answer "wait"
         donald = self.refPlayers[0]
-        result = requests.post(path, params={'playerID': donald['playerID']})
-        print("BOGUS: ", result.json())
+        result = requests.get(path, params={'playerID': donald['playerID']})
         status = result.json()['status']
         nbp = result.json()['nb_players']
         vprint("    enlist Donald : " + str(donald['playerID']) + " - " + status 
@@ -239,11 +239,11 @@ class test_Setserver(unittest.TestCase):
         # removes residual test data
         self.tearDown()
 
-    """
+    
     def test_enlistTeam(self):
-        """ """
+        """
         Test Setserver.enlistTeam
-        """ """
+        """
         vbar()
         print("Test setserver.enlistTeam")
         vbar()
@@ -257,6 +257,7 @@ class test_Setserver(unittest.TestCase):
         vprint("We will enlist several teams and capture the server's answers:")
         path = _url('/enlist_team')
         vprint("    path = '" + path + "'")
+        """
         # We enlist a team of 3 players: it should fail.
         list_ref = [self.players.getPlayerID("Donald"),
                     self.players.getPlayerID("Mickey"), 
@@ -267,7 +268,8 @@ class test_Setserver(unittest.TestCase):
         status = result.json()['status']
         vprint("    enlist Donald+Mickey+Daisy : " + status)
         self.assertEqual(status, "ko")
-        # We enlist a team of 5 players: it should fail.
+        """
+        # We enlist a team of 5 players: it should succeed.
         list_ref = [str(self.players.getPlayerID("Donald")),
                 str(self.players.getPlayerID("Mickey")), 
                 str(self.players.getPlayerID("Daisy")),
@@ -289,16 +291,16 @@ class test_Setserver(unittest.TestCase):
         # compare with the result of the 'get'
         vprint("    enlist Donald+Mickey+Daisy+Riri+Fifi : " + status)
         self.assertEqual(status, "ok")
-        self.assertEqual(gameid_str, "ko")
+        self.assertEqual(gameid_str, str(gameID_db))
         self.assertEqual(list_db, list)
         # removes residual test data
         self.tearDown()
+    
     """
-
     def test_getNicknames(self):
-        """
+        """ """
         Test setserver.getNicknames
-        """
+        """ """
         vbar()
         print("Test setserver.getNicknames")
         vbar()
@@ -306,7 +308,7 @@ class test_Setserver(unittest.TestCase):
         self.setup()
         self.registerRefPlayers()
         # enlist various players and check answers
-        
+    """    
 
 if __name__ == "__main__":
 

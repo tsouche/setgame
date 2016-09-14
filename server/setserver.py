@@ -45,13 +45,12 @@ if __name__ == "__main__":
         pid_list = []
         result = request.query.getall('playerIDlist')
         print("BOGUS01: ", result)
-        # for playerid_str in result:
-        #     pid_list.append(ObjectId(playerid_str))
-        # print("BOGUS03: ", pid_list)
-        # result backend.enlistTeam(pid_list)
-        result2 = backend.enlistTeam(result)
+        for playerid_str in result:
+            pid_list.append({'playerID': ObjectId(playerid_str)})
+        print("BOGUS03: ", pid_list)
+        result2 = backend.enlistTeam(pid_list)
         print("BOGUS04: ", result2)
-        return result
+        return result2
 
     """
     @webserver.route('/game/<gameid>/nicknames') # with 2 parameter: 'playerID' and 'gameid'
