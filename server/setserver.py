@@ -37,24 +37,32 @@ if __name__ == "__main__":
 
     @webserver.route('/enlist')
     def enlistPlayer():
-        playerid_str = request.GET.get('playerID', '').strip()
+        playerid_str = request.query.get('playerID')
         return backend.enlistPlayer(ObjectId(playerid_str))
 
-    """
     @webserver.route('/enlist_team')
     def enlistTeam():
-        playeridstr_list = request.GET.get('playerIDlist', '').strip()
-        return backend.enlistTeam(playeridstr_list)
-    """
+        pid_list = []
+        result = request.query.getall('playerIDlist')
+        print("BOGUS01: ", result)
+        # for playerid_str in result:
+        #     pid_list.append(ObjectId(playerid_str))
+        # print("BOGUS03: ", pid_list)
+        # result backend.enlistTeam(pid_list)
+        result2 = backend.enlistTeam(result)
+        print("BOGUS04: ", result2)
+        return result
+
     """
     @webserver.route('/game/<gameid>/nicknames') # with 2 parameter: 'playerID' and 'gameid'
     def getNicknames(gameid_str):
         # it reads the gameID and playerID.
-        playerid_str = request.GET.get('playerID', '').strip()
+        playerid_str = request.query.get('playerID')
         # executes the 'enlist' code in 'server'
         return backend.getNicknames(playerid_str, gameid_str)
-    """
+
     """            
+    """
     @webserver.route('/game/<gameid>/stop') # with 1 parameter: 'gameid'
     def stopGame(gameID):
         # it needs (amongst other things) to read the 'hard' flag.

@@ -59,6 +59,19 @@ class test_Setserver(unittest.TestCase):
             vprint("    Registered " + pp['nickname'] 
                    + " (" + str(pp['playerID']) + ")")
 
+    def enlistRefPlayers(self):
+        """
+        This method enlists 4 players on a game and returns the gameID
+        """
+        vprint("We enlist the reference test players:")
+        playersColl = getPlayersColl()
+        for pp in self.refPlayers:
+            playersColl.update_one( {'_id': pp['playerID']}, 
+                {'$set': {'gameID': None }})
+            vprint("    Registered " + pp['nickname'] 
+                + " (" + str(pp['playerID']) + ")")
+        
+
     def tearDown(self):
         """
         Tears down the server and clean the mongo data.
@@ -160,7 +173,7 @@ class test_Setserver(unittest.TestCase):
         vprint("    path = '" + path + "'")
         # enlist Donald and test the 'enlist' answer "wait"
         donald = self.refPlayers[0]
-        result = requests.get(path, params={'playerID': donald['playerID']})
+        result = requests.post(path, params={'playerID': donald['playerID']})
         print("BOGUS: ", result.json())
         status = result.json()['status']
         nbp = result.json()['nb_players']
@@ -249,6 +262,8 @@ class test_Setserver(unittest.TestCase):
                     self.players.getPlayerID("Mickey"), 
                     self.players.getPlayerID("Daisy") ]
         result = requests.get(path, params={'playerIDList': list_ref})
+        print("BOGUS06: ", result)
+        print("BOGUS07: ", result.json())
         status = result.json()['status']
         vprint("    enlist Donald+Mickey+Daisy : " + status)
         self.assertEqual(status, "ko")
@@ -261,9 +276,11 @@ class test_Setserver(unittest.TestCase):
         result = requests.get(path, params={'playerIDlist': list_ref})
         vprint(result)
         vprint(result.url)
+        result = result.json()
+        vprint(result)
         vprint(self.players.getPlayers())
-        #status = result.json()['status']
-        #gameid_str = result.json()['gameID']
+        status = result['status']
+        gameid_str = result['gameID']
         #collect equivalent information from the DB
         gameID_db = self.players.getGameID(ObjectId(list_ref[0]))
         list_db = self.players.inGame(gameID_db)
@@ -277,6 +294,19 @@ class test_Setserver(unittest.TestCase):
         # removes residual test data
         self.tearDown()
     """
+
+    def test_getNicknames(self):
+        """
+        Test setserver.getNicknames
+        """
+        vbar()
+        print("Test setserver.getNicknames")
+        vbar()
+        # build test data and context
+        self.setup()
+        self.registerRefPlayers()
+        # enlist various players and check answers
+        
 
 if __name__ == "__main__":
 
