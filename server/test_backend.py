@@ -231,7 +231,6 @@ class test_Backend(unittest.TestCase):
         result = backend.enlistTeam(list_pid)
         vprint("Enlist 5 players (with 2 duplicates): " + str(result['status']))
         self.assertEqual(result['status'], "ko")
-        
         # enlist a team of 7 players out of which 2 unknown and 2 duplicate: it should fail
         list_pid.append({'playerID': str(ObjectId())})
         list_pid.append({'playerID': str(ObjectId())})

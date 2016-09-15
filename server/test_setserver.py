@@ -6,16 +6,14 @@ import unittest
 from bson.objectid import ObjectId
 import requests
 
-from connmongo import getPlayersColl, getGamesColl
-from constants import setserver_address, setserver_port
-from players import Players
-from test_utilities import vbar, vprint
+from server.connmongo import getPlayersColl, getGamesColl
+from server.constants import setserver_address, setserver_port
+from server.players import Players
+from server.test_utilities import vbar, vprint
 from server.test_utilities import refPlayersDict, refPlayers
-from server.connmongo import getPlayersColl
 
 def _url(path):
     return "http://" + setserver_address + ":" + str(setserver_port) + path
-
 
 class test_Setserver(unittest.TestCase):
 
@@ -61,17 +59,24 @@ class test_Setserver(unittest.TestCase):
 
     def enlistRefPlayers(self):
         """
-        This method enlists 4 players on a game and returns the gameID
+        This method enlists the 6 reference players on a game and returns the 
+        gameID
         """
-        vprint("We enlist the reference test players:")
-        path = _url('/enlist')
-        for i in range(0,4):
-            pp = self.refPlayers[i]
-            result = requests.get(path, params={'playerID': pp['playerID']})
-            status = result.json()['status']
-            vprint("    Enlisted " + pp['nickname'] + " (" + 
-                str(pp['playerID']) + "): " + status)
-        return result.json()['gameID']
+        path = _url('/enlist_team')
+        # delist all players
+        playersColl = getPlayersColl()
+        playersColl.update_many({}, {'$set': {'gameID': None }} )
+        # enlist reference players
+        list_ref = [str(self.players.getPlayerID("Donald")),
+                str(self.players.getPlayerID("Mickey")), 
+                str(self.players.getPlayerID("Riri")),
+                str(self.players.getPlayerID("Fifi")),
+                str(self.players.getPlayerID("Loulou")),
+                str(self.players.getPlayerID("Daisy")) ]
+        result = requests.get(path, params={'playerIDlist': list_ref})
+        gameID = result.json()['gameID']
+        vprint("We enlist the reference test players: gameID = " + str(gameID))
+        return gameID
     
     def tearDown(self):
         """
@@ -154,7 +159,7 @@ class test_Setserver(unittest.TestCase):
                 self.assertTrue(False)
         # removes residual test data
         self.tearDown()
-        
+
     def test_enlistPlayer(self):
         """
         Test Setserver.enlistPlayer
@@ -239,7 +244,6 @@ class test_Setserver(unittest.TestCase):
         # removes residual test data
         self.tearDown()
 
-    
     def test_enlistTeam(self):
         """
         Test Setserver.enlistTeam
@@ -253,62 +257,183 @@ class test_Setserver(unittest.TestCase):
         # build test data and context
         self.setup()
         self.registerRefPlayers()
+        playersColl = getPlayersColl()
         # enlist various players and check answers
         vprint("We will enlist several teams and capture the server's answers:")
         path = _url('/enlist_team')
         vprint("    path = '" + path + "'")
-        """
         # We enlist a team of 3 players: it should fail.
+        vprint("    We enlist a team of 3 players: it should fail.")
         list_ref = [self.players.getPlayerID("Donald"),
                     self.players.getPlayerID("Mickey"), 
                     self.players.getPlayerID("Daisy") ]
         result = requests.get(path, params={'playerIDList': list_ref})
-        print("BOGUS06: ", result)
-        print("BOGUS07: ", result.json())
         status = result.json()['status']
-        vprint("    enlist Donald+Mickey+Daisy : " + status)
+        vprint("    -> Donald + Mickey + Daisy : " + status)
         self.assertEqual(status, "ko")
-        """
+        # delist all players
+        playersColl.update_many({}, {'$set': {'gameID': None }} )
+        
+        # We enlist a team of 5 players with 2 duplicates: it should fail.
+        vprint("    We enlist a team of 5 players including 2 duplicates: it should fail.")
+        list_ref = [self.players.getPlayerID("Donald"),
+                    self.players.getPlayerID("Mickey"), 
+                    self.players.getPlayerID("Donald"), 
+                    self.players.getPlayerID("Mickey"), 
+                    self.players.getPlayerID("Daisy") ]
+        result = requests.get(path, params={'playerIDList': list_ref})
+        status = result.json()['status']
+        vprint("    -> Donald x2 + Mickey x2 + Daisy: " + status)
+        self.assertEqual(status, "ko")
+        # delist all players
+        playersColl.update_many({}, {'$set': {'gameID': None }} )
+        
+        # We enlist a team of 5 players with 2 unkown players: it should fail.
+        vprint("    We enlist a team of 5 players including 2 unknown players: it should fail.")
+        list_ref = [self.players.getPlayerID("Donald"),
+                    self.players.getPlayerID("Mickey"), 
+                    ObjectId(), 
+                    ObjectId(), 
+                    self.players.getPlayerID("Daisy") ]
+        result = requests.get(path, params={'playerIDList': list_ref})
+        status = result.json()['status']
+        vprint("    -> Donald + Mickey + Daisy + X + Y: " + status)
+        self.assertEqual(status, "ko")
+        # delist all players
+        playersColl.update_many({}, {'$set': {'gameID': None }} )
+        
         # We enlist a team of 5 players: it should succeed.
+        vprint("    We enlist a team of 5 players: it should succeed.")
         list_ref = [str(self.players.getPlayerID("Donald")),
                 str(self.players.getPlayerID("Mickey")), 
                 str(self.players.getPlayerID("Daisy")),
                 str(self.players.getPlayerID("Riri")),
                 str(self.players.getPlayerID("Fifi")) ]
         result = requests.get(path, params={'playerIDlist': list_ref})
-        vprint(result)
-        vprint(result.url)
         result = result.json()
-        vprint(result)
-        vprint(self.players.getPlayers())
         status = result['status']
         gameid_str = result['gameID']
         #collect equivalent information from the DB
         gameID_db = self.players.getGameID(ObjectId(list_ref[0]))
         list_db = self.players.inGame(gameID_db)
+        list_db_str = []
         for pid in list_db:
+            list_db_str.append(str(pid))
             pid = str(pid)
         # compare with the result of the 'get'
-        vprint("    enlist Donald+Mickey+Daisy+Riri+Fifi : " + status)
+        vprint("    -> Donald + Mickey + Daisy + Riri + Fifi : " + status)
         self.assertEqual(status, "ok")
         self.assertEqual(gameid_str, str(gameID_db))
-        self.assertEqual(list_db, list)
+        self.assertEqual(len(list_db_str), len(list_ref))
+        for pid_str in list_ref:
+            self.assertTrue(pid_str in list_db_str)
+        # delist all players
+        playersColl.update_many({}, {'$set': {'gameID': None }} )
+        
+        # We enlist a team of 7 players with 2 duplicates: it should succeed.
+        vprint("    We enlist a team of 7 players with 2 duplicates: it should succeed.")
+        list_ref = [str(self.players.getPlayerID("Donald")),
+                str(self.players.getPlayerID("Mickey")), 
+                str(self.players.getPlayerID("Daisy")),
+                str(self.players.getPlayerID("Mickey")), 
+                str(self.players.getPlayerID("Daisy")),
+                str(self.players.getPlayerID("Riri")),
+                str(self.players.getPlayerID("Fifi")) ]
+        result = requests.get(path, params={'playerIDlist': list_ref})
+        result = result.json()
+        status = result['status']
+        gameid_str = result['gameID']
+        #collect equivalent information from the DB
+        gameID_db = self.players.getGameID(ObjectId(list_ref[0]))
+        list_db = self.players.inGame(gameID_db)
+        list_db_str = []
+        for pid in list_db:
+            list_db_str.append(str(pid))
+            pid = str(pid)
+        # compare with the result of the 'get'
+        vprint("    -> Donald + Mickey + Daisy + Riri + Fifi : " + status)
+        self.assertEqual(status, "ok")
+        self.assertEqual(gameid_str, str(gameID_db))
+        self.assertEqual(len(list_db_str), 5)
+        for pid_str in list_ref:
+            self.assertTrue(pid_str in list_db_str)
+        # delist all players
+        playersColl.update_many({}, {'$set': {'gameID': None }} )
+        
+        # We enlist a team of 4 players outof which only 1 is available: it should fail.
+        vprint("    We enlist a team of 4 players out of which only 1 is available: it should fail.")
+        list_ref = [str(self.players.getPlayerID("Donald")),
+                str(self.players.getPlayerID("Mickey")), 
+                str(self.players.getPlayerID("Daisy")),
+                str(self.players.getPlayerID("Fifi")) ]
+        requests.get(path, params={'playerIDlist': list_ref})
+        list_ref = [self.players.getPlayerID("Donald"),
+                    self.players.getPlayerID("Mickey"), 
+                    self.players.getPlayerID("Daisy"), 
+                    self.players.getPlayerID("Riri") ]
+        result = requests.get(path, params={'playerIDList': list_ref})
+        status = result.json()['status']
+        vprint("    -> Donald (X) + Mickey (X) + Daisy (X) + Riri (ok): " + status)
+        self.assertEqual(status, "ko")
+        # delist all players
+        playersColl.update_many({}, {'$set': {'gameID': None }} )
+        
         # removes residual test data
         self.tearDown()
     
-    """
     def test_getNicknames(self):
-        """ """
+        """ 
         Test setserver.getNicknames
-        """ """
+        """
         vbar()
         print("Test setserver.getNicknames")
         vbar()
         # build test data and context
         self.setup()
         self.registerRefPlayers()
-        # enlist various players and check answers
-    """    
+        self.enlistRefPlayers()
+        # delist Daisy
+        playersColl = getPlayersColl()
+        playersColl.update_one({'nickname': "Daisy"}, 
+            {'$set': {'gameID': None }} )
+        vprint("We have enlisted 5 players on a game, excluding Daisy")
+        path = _url('/game/nicknames')
+        vprint("    path = '" + path + "'")
+
+        # Donald collects the nicknames of other players
+        vprint("    We ask for Donald's team-mates nicknames:")
+        donald = self.refPlayers[0]
+        result = requests.get(path, params={'playerID': donald['playerID']})
+        status = result.json()['status']
+        list_nicknames = result.json()['nicknames']
+        vprint("    -> team mates: " + str(list_nicknames))
+        self.assertEqual(status, "ok")
+        self.assertEqual(len(list_nicknames), 5)
+        self.assertTrue({'nickname': "Donald"})
+        self.assertTrue({'nickname': "Mickey"})
+        self.assertTrue({'nickname': "Riri"})
+        self.assertTrue({'nickname': "Fifi"})
+        self.assertTrue({'nickname': "Loulou"})
+
+        # Daisy collects the nicknames of other players
+        vprint("    We ask for Daisy's team-mates nicknames:")
+        daisy = self.refPlayers[5]
+        result = requests.get(path, params={'playerID': daisy['playerID']})
+        status = result.json()['status']
+        list_nicknames = result.json()['nicknames']
+        vprint("    -> team mates: " + str(list_nicknames))
+        self.assertEqual(status, "ok")
+        self.assertEqual(len(list_nicknames), 0)
+
+        # collects the team-mates nicknames for an unknown player
+        vprint("    We ask for X's (unknow ID) team-mates nicknames:")
+        result = requests.get(path, params={'playerID': str(ObjectId())})
+        list_nicknames = result.json()['nicknames']
+        vprint("    -> team mates: " + str(list_nicknames))
+        self.assertEqual(status, "ok")
+        self.assertEqual(len(list_nicknames), 0)
+
+        
 
 if __name__ == "__main__":
 
