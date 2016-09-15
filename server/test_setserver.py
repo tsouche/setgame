@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 import requests
 
 from server.connmongo import getPlayersColl, getGamesColl
-from server.constants import setserver_address, setserver_port
+from server.constants import setserver_address, setserver_port, oidIsValid
 from server.players import Players
 from server.test_utilities import vbar, vprint
 from server.test_utilities import refPlayersDict, refPlayers
@@ -433,6 +433,43 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "ok")
         self.assertEqual(len(list_nicknames), 0)
 
+        # collects the team-mates nicknames for an invalid string
+        vprint("    We ask for X's (invalid string) team-mates nicknames:")
+        result = requests.get(path, params={'playerID': "badstring"})
+        status = result.json()['status']
+        vprint("    -> team mates: " + str(status))
+        self.assertEqual(status, "ko")
+
+    def test_stopGame(self):
+        """ 
+        Test setserver.getNicknames
+        """
+        vbar()
+        print("Test setserver.stopGame")
+        vbar()
+        # build test data and context
+        self.setup()
+        self.registerRefPlayers()
+        playersColl = getPlayersColl()
+        # try soft-stopping a unfinished game
+        gameID = self.enlistRefPlayers()
+        if oidIsValid(gameID):
+            gameID = ObjectId(gameID)
+        print("Bogus 01: gameID =", gameID)
+        path = _url('/game/stop')
+        vprint("    path = '" + path + "'")
+        vprint("    We try to soft-stop the game:")
+        result = requests.get(path, params={'gameID': gameID})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        for pp in playersColl.find({}):
+            print("Bogus 01: ", pp)
+        vprint("    -> status: " + status)
+        vprint("    -> reason: " + reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "game not finished")
+
+        
         
 
 if __name__ == "__main__":

@@ -78,12 +78,29 @@ if __name__ == "__main__":
             result = {'status': "ko"}
         return result
 
-    """
-    @webserver.route('/game/<gameid>/stop') # with 1 parameter: 'gameid'
-    def stopGame(gameID):
+    # this route enable to soft-stop a game
+    @webserver.route('/game/stop')
+    def stopGame():
         # it needs (amongst other things) to read the 'hard' flag.
-        pass
-    """
+        gameid_str = request.query.get('gameID')
+        if oidIsValid(gameid_str):
+            gameID = ObjectId(gameid_str)
+            result = backend.stopGame(gameID)
+        else:
+            result = {'status': "ko", 'reason': "invalid GameID"}
+        return result
+    
+    # this route enable to hard-stop a game
+    @webserver.route('/game/hardstop')
+    def stopGame():
+        # it needs (amongst other things) to read the 'hard' flag.
+        gameid_str = request.query.get('gameID')
+        if oidIsValid(gameid_str):
+            result = backend.stopGame(ObjectId(gameid_str), True)
+        else:
+            result = {'status': "ko", 'reason': "invalid GameID"}
+        return result
+    
     """
     @webserver.route('/game/<gameid>/details') # with 1 parameter: 'gameid'
     def details(gameid_str):
