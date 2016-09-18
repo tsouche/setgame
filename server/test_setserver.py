@@ -216,6 +216,8 @@ class test_Setserver(unittest.TestCase):
         # i.e. this fourth player enlisting should start a new game
         riri   = self.refPlayers[2]
         result = requests.get(path, params={'playerID': riri['playerID']})
+        print("Bogus 01: ", result)
+        print("Bogus 02: ", result.json())
         status = result.json()['status']
         riri_db = self.players.getPlayer(ObjectId(riri['playerID']))
         gameid_str = riri_db['gameID']

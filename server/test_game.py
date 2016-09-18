@@ -254,9 +254,9 @@ class test_Game(unittest.TestCase):
         # retrieve gameID (as a string) and check compliance'
         test_data_index = 0
         partie = self.setup(test_data_index)
-        test_gameID = partie.getGameID() # the result must be a string
-        ref_gameID = refGameHeader_start()[test_data_index]['gameID']
-        result = (ref_gameID == test_gameID)
+        test_gameID_str = str(partie.getGameID()) # the result must be a string
+        ref_gameID_str = refGameHeader_start()[test_data_index]['gameID']
+        result = (ref_gameID_str == test_gameID_str)
         self.assertTrue(result)
         vprint("  > returned gameID is compliant: " + str(result))
 

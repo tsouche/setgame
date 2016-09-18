@@ -84,7 +84,7 @@ class Game:
         """
         This method returns the gameID.
         """
-        return str(self.gameID)
+        return self.gameID
     
     def getGameFinished(self):
         """

@@ -249,7 +249,7 @@ class test_Backend(unittest.TestCase):
                + " (" + str(result['gameID']) + ")")
         self.assertEqual(result['status'], "ok")
         gid_db = backend.players.getGameID(ObjectId(list_pid[0]['playerID']))
-        self.assertEqual(result['gameID'], str(gid_db))
+        self.assertEqual(str(result['gameID']), str(gid_db))
         # enlist another team of 4 players, out of which 3 are already playing
         # it should fail
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
