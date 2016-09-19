@@ -5,8 +5,8 @@ Created on Sep 2, 2016
 
 from server.connmongo import getPlayersColl, getGamesColl
 from server.constants import playersMin, playersMax, oidIsValid
-from server.players import Players
 from server.game import Game
+from server.players import Players
 
 
 class Backend():

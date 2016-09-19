@@ -2,18 +2,24 @@
 Created on August 30th, 2016
 @author: Thierry Souche
 '''
-import unittest
 from bson.objectid import ObjectId
 import requests
+import unittest
 
 from server.connmongo import getPlayersColl, getGamesColl
 from server.constants import setserver_address, setserver_port, oidIsValid
 from server.players import Players
-from server.test_utilities import vbar, vprint
 from server.test_utilities import refPlayersDict, refPlayers
+from server.test_utilities import vbar, vprint
+
 
 def _url(path):
     return "http://" + setserver_address + ":" + str(setserver_port) + path
+
+def printRefPlayer():
+    playersColl = getPlayersColl()
+    for pp in playersColl.find({}):
+        print("BOGUS 99:", pp)
 
 class test_Setserver(unittest.TestCase):
 
@@ -73,6 +79,8 @@ class test_Setserver(unittest.TestCase):
                 str(self.players.getPlayerID("Fifi")),
                 str(self.players.getPlayerID("Loulou")),
                 str(self.players.getPlayerID("Daisy")) ]
+        print("BOGUS 31: list_ref =", list_ref)
+        print("BOGUS 32: list_ref =", {'playerIDlist': list_ref})
         result = requests.get(path, params={'playerIDlist': list_ref})
         gameID = result.json()['gameID']
         vprint("We enlist the reference test players: gameID = " + str(gameID))
@@ -179,7 +187,7 @@ class test_Setserver(unittest.TestCase):
         vprint("    path = '" + path + "'")
         # enlist Donald and test the 'enlist' answer "wait"
         donald = self.refPlayers[0]
-        result = requests.get(path, params={'playerID': donald['playerID']})
+        result = requests.get(path, params={'playerID': str(donald['playerID'])})
         status = result.json()['status']
         nbp = result.json()['nb_players']
         vprint("    enlist Donald : " + str(donald['playerID']) + " - " + status 
@@ -188,7 +196,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(nbp, 1)
         # enlist Mickey and test the 'enlist' answer "wait"
         mickey = self.refPlayers[1]
-        result = requests.get(path, params={'playerID': mickey['playerID']})
+        result = requests.get(path, params={'playerID': str(mickey['playerID'])})
         status = result.json()['status']
         nbp = result.json()['nb_players']
         vprint("    enlist Mickey : " + str(mickey['playerID']) + " - " + status 
@@ -197,7 +205,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(nbp, 2)
         # enlist Daisy and test the 'enlist' answer == "wait"
         daisy  = self.refPlayers[5]
-        result = requests.get(path, params={'playerID': daisy['playerID']})
+        result = requests.get(path, params={'playerID': str(daisy['playerID'])})
         status = result.json()['status']
         nbp = result.json()['nb_players']
         vprint("    enlist Daisy  : " + str(daisy['playerID']) + " - " + status 
@@ -205,22 +213,24 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 3)
         # enlist AGAIN Donald and test the 'enlist' answer "wait"
-        result = requests.get(path, params={'playerID': donald['playerID']})
+        result = requests.get(path, params={'playerID': str(donald['playerID'])})
         status = result.json()['status']
         nbp = result.json()['nb_players']
         vprint("    enlist Donald : " + str(donald['playerID']) + " - " + status 
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 3)
+        printRefPlayer()
         # enlist Riri and test the 'enlist' answer == gameID
         # i.e. this fourth player enlisting should start a new game
         riri   = self.refPlayers[2]
-        result = requests.get(path, params={'playerID': riri['playerID']})
+        result = requests.get(path, params={'playerID': str(riri['playerID'])})
+        printRefPlayer()
         print("Bogus 01: ", result)
         print("Bogus 02: ", result.json())
         status = result.json()['status']
         riri_db = self.players.getPlayer(ObjectId(riri['playerID']))
-        gameid_str = riri_db['gameID']
+        gameid_str = str(riri_db['gameID'])
         vprint("    enlist Riri   : " + str(riri['playerID']) + " - " + status 
                + " (" + gameid_str + ")")
         self.assertEqual(status, "ok")

@@ -5,11 +5,12 @@ Created on August 8th 2016
 
 from bson.objectid import ObjectId
 
+from server.cardset import CardSet
 from server.connmongo import getGamesColl
 import server.constants as constants
 from server.players import Players
-from server.cardset import CardSet
 from server.step import Step
+
 
 class invalidPlayerID(Exception):
     """Base class for exceptions in this module."""

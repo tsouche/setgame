@@ -6,11 +6,12 @@ Created on August 5th 2016
 import unittest
 
 from server.step import Step
-from server.test_utilities import vprint, vbar, stepToString, stepDict_to_Step
 from server.test_utilities import refCardsets
-from server.test_utilities import refSetsAndPlayers
 from server.test_utilities import refGames_Dict, refSteps
+from server.test_utilities import refSetsAndPlayers
 from server.test_utilities import step_equality, stepDict_equality
+from server.test_utilities import vprint, vbar, stepToString, stepDict_to_Step
+
 
 class test_Step(unittest.TestCase):
     """

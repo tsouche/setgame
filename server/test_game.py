@@ -3,18 +3,19 @@ Created on August 9th 2016
 @author: Thierry Souche
 '''
 
-import unittest
 from bson.objectid import ObjectId
+import unittest
 
-from server.game import Game, invalidPlayerID
 from server.connmongo import getPlayersColl
+from server.game import Game, invalidPlayerID
 from server.players import Players
-from server.test_utilities import vprint, vbar
 from server.test_utilities import cardsetToString, stepToString
-from server.test_utilities import refGames_Dict, refPlayers
 from server.test_utilities import cardset_equality, step_equality, game_compliant
 from server.test_utilities import refCardsets, refSteps
 from server.test_utilities import refGameHeader_start, refGameHeader_Finished
+from server.test_utilities import refGames_Dict, refPlayers
+from server.test_utilities import vprint, vbar
+
 
 def gameToString_header(game):
     """
@@ -118,7 +119,6 @@ class test_Game(unittest.TestCase):
         # Connection to the MongoDB server
         # read the players, register them and initiate a game.
         players = refPlayers(True)
-        temp_playersColl = getPlayersColl()
         temp_players = Players()
         for pp in players:
             temp_players.register(pp['nickname'])

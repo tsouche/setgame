@@ -3,16 +3,22 @@ Created on Sep 2, 2016
 @author: Thierry Souche
 '''
 
-import unittest
 from bson.objectid import ObjectId
+import unittest
 
+from server.backend import Backend
 from server.connmongo import getGamesColl, getPlayersColl
 from server.game import Game 
-from server.test_utilities import vbar, vprint
-from server.test_utilities import refPlayers, refGames_Dict
 from server.test_utilities import cardsetDict_equality, stepDict_equality
 from server.test_utilities import game_compliant
-from server.backend import Backend
+from server.test_utilities import refPlayers, refGames_Dict
+from server.test_utilities import vbar, vprint
+
+def printRefPlayer():
+    playersColl = getPlayersColl()
+    for pp in playersColl.find({}):
+        print("BOGUS 99:", pp)
+
 
 class test_Backend(unittest.TestCase):
 
@@ -169,9 +175,13 @@ class test_Backend(unittest.TestCase):
         # i.e. this fourth player enlisting should start a new game
         riri   = pp_test[2]
         pID = riri['playerID']
+        printRefPlayer()
         result = backend.enlistPlayer(pID)
         status = result['status']
+        print("BOGUS 21: status =", status)
         gameID = result['gameID']
+        print("BOGUS 22: gameID =", gameID)
+        printRefPlayer()
         riri_db = backend.players.getPlayer(pID)
         gameID_db = riri_db['gameID']
         vprint("    enlist Riri   : " + str(pID) + " - " + status 
@@ -613,4 +623,4 @@ class test_Backend(unittest.TestCase):
 
 if __name__ == "__main__":
 
-    unittest.main() 
+    unittest.main()

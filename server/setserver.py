@@ -6,9 +6,9 @@ Created on August 11th 2016
 from bottle import Bottle, route, request, run
 from bson.objectid import ObjectId
 
-from server.constants import setserver_address, setserver_port
-from server.constants import oidIsValid
 from server.backend import Backend
+from server.constants import oidIsValid
+from server.constants import setserver_address, setserver_port
 
 
 if __name__ == "__main__":
@@ -44,6 +44,9 @@ if __name__ == "__main__":
         playerid_str = request.query.get('playerID')
         if oidIsValid(playerid_str):
             result = backend.enlistPlayer(ObjectId(playerid_str))
+            if result['status'] == "ok":
+                gameid_str = str(result['gameID'])
+                result = {'status': "ok", 'gameID': gameid_str}
         else:
             result = {'status': "ko"}
         return result
@@ -60,6 +63,9 @@ if __name__ == "__main__":
             if oidIsValid(playerid_str):
                 pid_list.append({'playerID': ObjectId(playerid_str)})
         result2 = backend.enlistTeam(pid_list)
+        if result2['status'] == "ok":
+            gameid_str = str(result2['gameID'])
+            result2 = {'status': "ok", 'gameID': gameid_str}
         return result2
 
     # this route enable to collect the nicknames of the team-mates

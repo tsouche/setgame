@@ -4,11 +4,13 @@ Created on August 2nd 2016
 '''
 
 import unittest
-from server.constants import cardsMax
+
 from server.cardset import CardSet
-from server.test_utilities import displayCardList, vprint, vbar
+from server.constants import cardsMax
 from server.test_utilities import cardsList
+from server.test_utilities import displayCardList, vprint, vbar
 from server.test_utilities import refGames_Dict, refCardsets
+
 
 class test_CardSet(unittest.TestCase):
     """

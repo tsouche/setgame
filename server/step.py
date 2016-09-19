@@ -3,10 +3,11 @@ Created on August 5th 2016
 @author: Thierry Souche
 '''
 
-from operator import itemgetter
 from bson.objectid import ObjectId
+from operator import itemgetter
 
 import server.constants as constants
+
 
 class Step:
     """

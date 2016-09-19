@@ -8,8 +8,9 @@ This modules contains few constants which are useful to the Set gale.
 from bson.objectid import ObjectId
 
 from server.cardset import CardSet
-from server.step import Step
 from server.constants import cardsMax
+from server.step import Step
+
 
 verbose = True
 """

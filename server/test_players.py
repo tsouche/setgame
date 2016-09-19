@@ -3,14 +3,15 @@ Created on August 8th 2016
 @author: Thierry Souche
 """
 
+from bson.objectid import ObjectId
 import unittest
 
-from bson.objectid import ObjectId
 from server.connmongo import getPlayersColl
 from server.players import Players
-from server.test_utilities import vprint, vbar
-from server.test_utilities import refPlayersDict, refPlayers
 from server.test_utilities import playersDict_equality
+from server.test_utilities import refPlayersDict, refPlayers
+from server.test_utilities import vprint, vbar
+
 
 def player_format_DB(p):
     """
