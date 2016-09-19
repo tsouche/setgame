@@ -16,7 +16,7 @@ from server.test_utilities import vbar, vprint
 def _url(path):
     return "http://" + setserver_address + ":" + str(setserver_port) + path
 
-def printRefPlayer():
+def printRefPlayers():
     playersColl = getPlayersColl()
     for pp in playersColl.find({}):
         print("BOGUS 99:", pp)
@@ -79,8 +79,6 @@ class test_Setserver(unittest.TestCase):
                 str(self.players.getPlayerID("Fifi")),
                 str(self.players.getPlayerID("Loulou")),
                 str(self.players.getPlayerID("Daisy")) ]
-        print("BOGUS 31: list_ref =", list_ref)
-        print("BOGUS 32: list_ref =", {'playerIDlist': list_ref})
         result = requests.get(path, params={'playerIDlist': list_ref})
         gameID = result.json()['gameID']
         vprint("We enlist the reference test players: gameID = " + str(gameID))
@@ -220,14 +218,12 @@ class test_Setserver(unittest.TestCase):
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 3)
-        printRefPlayer()
+        printRefPlayers()
         # enlist Riri and test the 'enlist' answer == gameID
         # i.e. this fourth player enlisting should start a new game
         riri   = self.refPlayers[2]
         result = requests.get(path, params={'playerID': str(riri['playerID'])})
-        printRefPlayer()
-        print("Bogus 01: ", result)
-        print("Bogus 02: ", result.json())
+        printRefPlayers()
         status = result.json()['status']
         riri_db = self.players.getPlayer(ObjectId(riri['playerID']))
         gameid_str = str(riri_db['gameID'])
@@ -421,11 +417,11 @@ class test_Setserver(unittest.TestCase):
         vprint("    -> team mates: " + str(list_nicknames))
         self.assertEqual(status, "ok")
         self.assertEqual(len(list_nicknames), 5)
-        self.assertTrue({'nickname': "Donald"})
-        self.assertTrue({'nickname': "Mickey"})
-        self.assertTrue({'nickname': "Riri"})
-        self.assertTrue({'nickname': "Fifi"})
-        self.assertTrue({'nickname': "Loulou"})
+        self.assertTrue({'nickname': "Donald"} in  list_nicknames)
+        self.assertTrue({'nickname': "Mickey"} in  list_nicknames)
+        self.assertTrue({'nickname': "Riri"} in  list_nicknames)
+        self.assertTrue({'nickname': "Fifi"} in  list_nicknames)
+        self.assertTrue({'nickname': "Loulou"} in  list_nicknames)
 
         # Daisy collects the nicknames of other players
         vprint("    We ask for Daisy's team-mates nicknames:")
@@ -462,20 +458,17 @@ class test_Setserver(unittest.TestCase):
         # build test data and context
         self.setup()
         self.registerRefPlayers()
-        playersColl = getPlayersColl()
         # try soft-stopping a unfinished game
         gameID = self.enlistRefPlayers()
         if oidIsValid(gameID):
             gameID = ObjectId(gameID)
-        print("Bogus 01: gameID =", gameID)
         path = _url('/game/stop')
         vprint("    path = '" + path + "'")
         vprint("    We try to soft-stop the game:")
         result = requests.get(path, params={'gameID': gameID})
         status = result.json()['status']
         reason = result.json()['reason']
-        for pp in playersColl.find({}):
-            print("Bogus 01: ", pp)
+        printRefPlayers()
         vprint("    -> status: " + status)
         vprint("    -> reason: " + reason)
         self.assertEqual(status, "ko")
