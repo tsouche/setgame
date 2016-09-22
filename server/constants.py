@@ -9,7 +9,7 @@ cardsMax = 81
 tableMax = 12
 playersMin = 4
 playersMax = 6
-pointsPerSet = 3
+pointsPerStep = 3
 
 production = False
 mongoserver_prod_address = 'localhost'

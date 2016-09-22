@@ -136,7 +136,7 @@ class Game:
                 #    list in the 'previous' Step.
                 valid = True
                 # add points to the player
-                good_player['points'] += constants.pointsPerSet
+                good_player['points'] += constants.pointsPerStep
                 self.steps.append(Step())
                 self.turnCounter += 1
                 # Populate this new Step from the previous one

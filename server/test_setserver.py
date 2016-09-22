@@ -8,15 +8,17 @@ import unittest
 
 from server.connmongo import getPlayersColl, getGamesColl
 from server.constants import setserver_address, setserver_port, oidIsValid
+from server.game import Game
 from server.players import Players
-from server.test_utilities import refPlayersDict, refPlayers
+from server.test_utilities import cardsetDict_equality
+from server.test_utilities import refPlayersDict, refPlayers, refGames_Dict
 from server.test_utilities import vbar, vprint
 
 
 def _url(path):
     return "http://" + setserver_address + ":" + str(setserver_port) + path
 
-def printRefPlayers():
+def printRefPlayer():
     playersColl = getPlayersColl()
     for pp in playersColl.find({}):
         print("BOGUS 99:", pp)
@@ -49,19 +51,28 @@ class test_Setserver(unittest.TestCase):
         This method registers the 6 reference players straight to the Mongo DB, 
         and make them available for the tests.
         """
-        # connects straight to the Mongo database
-        playersColl = getPlayersColl()
-        # now register the reference players straight to the DB (bypassing the
-        # normal process = call to the setserver 'register' API)
+        # register the reference players vai the test routine of the server
         vprint("We register the reference test players:")
-        playersColl.drop()
+        path = _url('/test/register_ref_players')
+        requests.get(path)
+
+    def test_testRegisterRefPlayers(self):
+        """
+        Unit test for the method enabling to load reference test data.
+        """
+        vbar()
+        print("Test setserver.testRegisterRefPlayers")
+        vbar()
+        # setup test data and environment
+        self.setup()
+        # test the 'reference players' provisioning
+        self.registerRefPlayers()
+        playersColl = getPlayersColl()
         for pp in self.refPlayers:
-            playersColl.insert_one( {'_id': pp['playerID'], 
-                'nickname': pp['nickname'], 
-                'totalScore': pp['totalScore'],
-                'gameID': None } )
+            p_db = playersColl.find_one({'_id': pp['playerID']})
             vprint("    Registered " + pp['nickname'] 
                    + " (" + str(pp['playerID']) + ")")
+            self.assertTrue(p_db != None)
 
     def enlistRefPlayers(self):
         """
@@ -84,7 +95,92 @@ class test_Setserver(unittest.TestCase):
         vprint("We enlist the reference test players: gameID = " + str(gameID))
         return gameID
     
-    def tearDown(self):
+    def loadRefGame(self, test_data_index):
+        """
+        This method first remove any data in the DB and then loads a reference
+        game, enlisting all players on it and enabling testing few functions 
+        against the reference test data.
+        We assume that 'test_data_index' is either 0 or 1 (integer value).
+        """
+        # delist all players and games
+        playersColl = getPlayersColl()
+        playersColl.drop()
+        gamesColl = getGamesColl()
+        gamesColl.drop()
+        # register reference test players
+        self.registerRefPlayers()
+        # create the game and load reference data
+        path = _url('/test/load_ref_game')
+        vprint("    path = '" + path + "'")
+        result = requests.get(path, params={'test_data_index': str(test_data_index)})
+        return result.json()
+
+    def test_testLoadRefGame(self):
+        """
+        Test setserver.testLoadRefGame
+        """
+        vbar()
+        print("Test setserver.testLoadRefGame")
+        vbar()
+        # build test data and context
+        self.setup()
+        vprint("We order loading reference games with various parameter value and")
+        vprint("check the answer:")
+        # load with a proper index
+        result = self.loadRefGame(0)
+        vprint("    index = 0: should succeed")
+        status = result['status']
+        gid_str = result['gameID']
+        vprint("      -> status: " + status)
+        self.assertEqual(status, "ok")
+        vprint("      -> gameID: " + gid_str)
+        self.assertEqual(gid_str, '57b9bec5124e9b2d2503b72b')
+        # load with a wrong index value
+        result = self.loadRefGame(2)
+        vprint("    index = 2: should fail")
+        status = result['status']
+        reason = result['reason']
+        vprint("      -> status: " + status)
+        self.assertEqual(status, "ko")
+        vprint("      -> reason: " + reason)
+        self.assertEqual(reason, "wrong index value")
+        # load with an invalid index type
+        result = self.loadRefGame("E")
+        vprint("    index = 'E': should fail")
+        status = result['status']
+        reason = result['reason']
+        vprint("      -> status: " + status)
+        self.assertEqual(status, "ko")
+        vprint("      -> reason: " + reason)
+        self.assertEqual(reason, "invalid index")
+                
+    def getBackToTurn(self, index, turn):
+        """
+        This method must be used together with 'loadRefGame': it assumes that
+        a reference test game was properly loaded.
+        """
+        path = _url('/test/back_to_turn/'+str(index)+'/'+str(turn))
+        vprint("    path = '" + path + "'")
+        print("BOGUS 15: ", index)
+        print("BOGUS 16: ", turn)
+        result = requests.get(path)
+        return result.json()
+    
+    def test_testGetBackToTurn(self):
+        """
+        Test setserver.testGetBackToTurn
+        """
+        vbar()
+        print("Test setserver.testGetBackToTurn")
+        vbar()
+        # build test data and context
+        self.setup()
+        # now get back in time to step 10
+        self.loadRefGame(0)
+        result = self.getBackToTurn(0, 10)
+        print("BOGUS XX: ", result)
+    
+    def teardown(self):
         """
         Tears down the server and clean the mongo data.
         """
@@ -118,7 +214,7 @@ class test_Setserver(unittest.TestCase):
         vprint("    " + result.text)
         self.assertEqual(result.text, "<p>Coucou les gens !!!</p>")
         # removes residual test data
-        self.tearDown()
+        self.teardown()
 
     def test_registerPlayer(self):
         """
@@ -164,7 +260,7 @@ class test_Setserver(unittest.TestCase):
                 # test has failed
                 self.assertTrue(False)
         # removes residual test data
-        self.tearDown()
+        self.teardown()
 
     def test_enlistPlayer(self):
         """
@@ -218,12 +314,14 @@ class test_Setserver(unittest.TestCase):
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 3)
-        printRefPlayers()
+        #printRefPlayer()
         # enlist Riri and test the 'enlist' answer == gameID
         # i.e. this fourth player enlisting should start a new game
         riri   = self.refPlayers[2]
         result = requests.get(path, params={'playerID': str(riri['playerID'])})
-        printRefPlayers()
+        #printRefPlayer()
+        #print("Bogus 01: ", result)
+        #print("Bogus 02: ", result.json())
         status = result.json()['status']
         riri_db = self.players.getPlayer(ObjectId(riri['playerID']))
         gameid_str = str(riri_db['gameID'])
@@ -250,7 +348,7 @@ class test_Setserver(unittest.TestCase):
         vprint("    enlist M. X (unknown to the server): " + status)
         self.assertEqual(status, "ko")
         # removes residual test data
-        self.tearDown()
+        self.teardown()
 
     def test_enlistTeam(self):
         """
@@ -387,7 +485,7 @@ class test_Setserver(unittest.TestCase):
         playersColl.update_many({}, {'$set': {'gameID': None }} )
         
         # removes residual test data
-        self.tearDown()
+        self.teardown()
     
     def test_getNicknames(self):
         """ 
@@ -417,11 +515,11 @@ class test_Setserver(unittest.TestCase):
         vprint("    -> team mates: " + str(list_nicknames))
         self.assertEqual(status, "ok")
         self.assertEqual(len(list_nicknames), 5)
-        self.assertTrue({'nickname': "Donald"} in  list_nicknames)
-        self.assertTrue({'nickname': "Mickey"} in  list_nicknames)
-        self.assertTrue({'nickname': "Riri"} in  list_nicknames)
-        self.assertTrue({'nickname': "Fifi"} in  list_nicknames)
-        self.assertTrue({'nickname': "Loulou"} in  list_nicknames)
+        self.assertTrue({'nickname': "Donald"})
+        self.assertTrue({'nickname': "Mickey"})
+        self.assertTrue({'nickname': "Riri"})
+        self.assertTrue({'nickname': "Fifi"})
+        self.assertTrue({'nickname': "Loulou"})
 
         # Daisy collects the nicknames of other players
         vprint("    We ask for Daisy's team-mates nicknames:")
@@ -448,9 +546,16 @@ class test_Setserver(unittest.TestCase):
         vprint("    -> team mates: " + str(status))
         self.assertEqual(status, "ko")
 
+    def test_proposeSet(self):
+
+        # removes residual test data
+        self.teardown()
+
+        pass
+
     def test_stopGame(self):
         """ 
-        Test setserver.getNicknames
+        Test setserver.stopGames
         """
         vbar()
         print("Test setserver.stopGame")
@@ -458,24 +563,115 @@ class test_Setserver(unittest.TestCase):
         # build test data and context
         self.setup()
         self.registerRefPlayers()
+        playersColl = getPlayersColl()
         # try soft-stopping a unfinished game
         gameID = self.enlistRefPlayers()
         if oidIsValid(gameID):
             gameID = ObjectId(gameID)
         path = _url('/game/stop')
         vprint("    path = '" + path + "'")
-        vprint("    We try to soft-stop the game:")
+        vprint("    We try to soft-stop the game: it should fail")
         result = requests.get(path, params={'gameID': gameID})
         status = result.json()['status']
         reason = result.json()['reason']
-        printRefPlayers()
         vprint("    -> status: " + status)
         vprint("    -> reason: " + reason)
         self.assertEqual(status, "ko")
         self.assertEqual(reason, "game not finished")
+        # try hard-stopping a unfinished game
+        path = _url('/game/hardstop')
+        vprint("    path = '" + path + "'")
+        vprint("    We try to hard-stop the game: it should succeed")
+        result = requests.get(path, params={'gameID': gameID})
+        status = result.json()['status']
+        vprint("    -> status: " + status)
+        self.assertEqual(status, "ok")
+        # try stopping an unknown game
+        gameID = ObjectId()
+        path = _url('/game/stop')
+        vprint("    path = '" + path + "'")
+        vprint("    We try to soft-stop an unknow game: it should fail")
+        result = requests.get(path, params={'gameID': gameID})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("    -> status: " + status)
+        vprint("    -> reason: " + reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "game does not exist")
+        # try soft-stopping an invalid gameID
+        gameID = "AZEQ3FQEFVWr"
+        path = _url('/game/stop')
+        vprint("    path = '" + path + "'")
+        vprint("    We try to soft-stop the game with invalid gameID: it should fail")
+        result = requests.get(path, params={'gameID': gameID})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("    -> status: " + status)
+        vprint("    -> reason: " + reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "invalid gameID")
+        # try hard-stopping an invalid gameID
+        gameID = "AZEQ3FQEFVWr"
+        path = _url('/game/hardstop')
+        vprint("    path = '" + path + "'")
+        vprint("    We try to hard-stop the game with invalid gameID: it should fail")
+        result = requests.get(path, params={'gameID': gameID})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("    -> status: " + status)
+        vprint("    -> reason: " + reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "invalid gameID")
+        # try soft-stopping a finished game
+        result = self.loadRefGame(0)
+        gameID = ObjectId(result['gameID'])
+        path = _url('/game/stop')
+        vprint("    path = '" + path + "'")
+        vprint("    We try to soft-stop a finished game: it should succeed")
+        result = requests.get(path, params={'gameID': gameID})
+        status = result.json()['status']
+        vprint("    -> status: " + status)
+        self.assertEqual(status, "ok")
+        # removes residual test data
+        self.teardown()
 
-        
-        
+    def test_details(self):
+        """ 
+        Test setserver.details
+        """
+        vbar()
+        print("Test setserver.details")
+        vbar()
+        # build test data and context
+        self.setup()
+        self.registerRefPlayers()
+        self.loadRefGame(0)
+        # start a game and retrieve the game details
+        gameID = self.refGame.getGameID()
+        print("Bogus 01: gameID =", gameID)
+        path = _url('/game/details')
+        vprint("    path = '" + path + "'")
+        vprint("    We retrieve the details of the game: it should succeed")
+        result = requests.get(path, params={'gameID': gameID})
+        print("BOGUS 02: ", result)
+        status = result.json()['status']
+        gameid_str = result.json()['gameID']
+        turnCounter_str = result.json()['turnCounter']
+        gameFinished_str = result.json()['gameFinished']
+        cardset_str = result.json()['cardset']
+        players_str = result.json()['players']
+        for pp in self.playersColl.find({}):
+            print("Bogus 02: ", pp)
+        vprint("    -> status: " + status)
+        vprint("    -> gameID: " + gameid_str)
+        vprint("    -> turnCounter: " + turnCounter_str)
+        vprint("    -> cardset: " + str(cardset_str))
+        vprint("    -> players: " + str(players_str))
+        self.assertEqual(status, "ok")
+        self.assertEqual(gameid_str, str(gameID))
+        self.assertTrue(cardsetDict_equality(cardset_str, ))
+        # removes residual test data
+        self.teardown()
 
 if __name__ == "__main__":
 

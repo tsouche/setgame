@@ -75,12 +75,9 @@ if __name__ == "__main__":
         # call the backend.
         playerid_str = request.query.get('playerID')
         if oidIsValid(playerid_str):
-            print("BOGUS02: playerID valid format")
             playerID = ObjectId(playerid_str)
             result = {'status': "ok", 'nicknames': backend.getNicknames(playerID)}
-            print("BOGUS03", result)
         else:
-            print("BOGUS04: playerId not recognized")
             result = {'status': "ko"}
         return result
 
@@ -93,7 +90,7 @@ if __name__ == "__main__":
             gameID = ObjectId(gameid_str)
             result = backend.stopGame(gameID)
         else:
-            result = {'status': "ko", 'reason': "invalid GameID"}
+            result = {'status': "ko", 'reason': "invalid gameID"}
         return result
     
     # this route enable to hard-stop a game
@@ -104,16 +101,20 @@ if __name__ == "__main__":
         if oidIsValid(gameid_str):
             result = backend.stopGame(ObjectId(gameid_str), True)
         else:
-            result = {'status': "ko", 'reason': "invalid GameID"}
+            result = {'status': "ko", 'reason': "invalid gameID"}
         return result
-    
+
+    @webserver.route('/game/details')
+    def details():
+        gameid_str = request.query.get('gameID')
+        if oidIsValid(gameid_str):
+            result = backend.details(ObjectId(gameid_str))
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
+        return result
+
     """
-    @webserver.route('/game/<gameid>/details') # with 1 parameter: 'gameid'
-    def details(gameid_str):
-        pass
-    """
-    """
-    @webserver.route('/game/<gameid>/step') # with 1 parameter: 'gameid'
+    @webserver.route('/game/step') # with 1 parameter: 'gameid'
     def step(gameid_str):
         pass
     """
@@ -128,7 +129,40 @@ if __name__ == "__main__":
         pass
     """
     
-    run(webserver, host=setserver_address, port=setserver_port, 
-        reloader=True, debug=True)
+    @webserver.route('/test/register_ref_players')
+    def testRegisterRefPlayers():
+        # registers the 6 reference test players.
+        result = backend.testRegisterRefPlayers()
+        return result
+
+    @webserver.route('/test/load_ref_game')
+    def testLoadRefGame():
+        # load the reference test game indicated by 'test_data_index'
+        index = request.query.get('test_data_index')
+        try:
+            test_data_index = int(index)
+            if test_data_index in (0,1):
+                result = backend.testLoadRefGame(test_data_index)
+                if result['status'] == "ok":
+                    gid_str = str(result['gameID'])
+                    result = {'status': "ok", 'gameID': gid_str}
+            else:
+                result = {'status': "ko", 'reason': "wrong index value"}
+        except:
+            result = {'status': "ko", 'reason': "invalid index"}
+        return result
+
+    @webserver.route('/test/back_to_turn/<index>/<turn>')
+    def testBackToTurn(index, turn):
+        # assuming a reference game was properly loaded, it enable to roll back 
+        # the finished game and get back to a given turn.
+        print("BOGUS 22:", index, int(index))
+        print("BOGUS 21:", turn, int(turn))
+        result = backend.testGetBackToTurn(int(index), int(turn))
+        print("BOGUS 23: ", result)
+        return result
+
 
     
+    run(webserver, host=setserver_address, port=setserver_port, 
+        reloader=True, debug=True)

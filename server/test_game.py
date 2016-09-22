@@ -10,8 +10,8 @@ from server.connmongo import getPlayersColl
 from server.game import Game, invalidPlayerID
 from server.players import Players
 from server.test_utilities import cardsetToString, stepToString
-from server.test_utilities import cardset_equality, step_equality, game_compliant
-from server.test_utilities import refCardsets, refSteps
+from server.test_utilities import cardset_equality, step_equality
+from server.test_utilities import refCardsets, refSteps, game_compliant
 from server.test_utilities import refGameHeader_start, refGameHeader_Finished
 from server.test_utilities import refGames_Dict, refPlayers
 from server.test_utilities import vprint, vbar

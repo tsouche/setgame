@@ -14,6 +14,10 @@ from server.test_utilities import game_compliant
 from server.test_utilities import refPlayers, refGames_Dict
 from server.test_utilities import vbar, vprint
 
+def printRefPlayer():
+    playersColl = getPlayersColl()
+    for pp in playersColl.find({}):
+        print("BOGUS 99:", pp)
 
 class test_Backend(unittest.TestCase):
 
@@ -27,24 +31,6 @@ class test_Backend(unittest.TestCase):
         getGamesColl().drop()
         # initialize a backend
         return Backend()
-
-    def registerRefPlayers(self, backend):
-        """
-        This method registers the 6 reference players straight to the Mongo DB, 
-        and make them available for the tests.
-        """
-        # connects straight to the Mongo database
-        playersColl = getPlayersColl()
-        # now register the reference players straight to the DB (bypassing the
-        # normal process = call to the setserver 'register' API)
-        vprint("We register the reference test players:")
-        for pp in refPlayers(True):
-            playersColl.insert_one( {'_id': pp['playerID'], 
-                'nickname': pp['nickname'], 
-                'totalScore': pp['totalScore'],
-                'gameID': None } )
-            vprint("    Registered " + pp['nickname'] 
-                   + " (" + str(pp['playerID']) + ")")
 
     def tearDown(self):
         # reset the DB data
@@ -129,7 +115,8 @@ class test_Backend(unittest.TestCase):
         vbar()
         # initiate a backend and register reference players
         backend = self.setUp()
-        self.registerRefPlayers(backend)
+        vprint("We register the reference test players:")
+        backend.testRegisterRefPlayers()
         pp_test = refPlayers(True)
         # enlist Donald and test the 'enlist' answer "wait"
         donald = pp_test[0]
@@ -170,9 +157,13 @@ class test_Backend(unittest.TestCase):
         # i.e. this fourth player enlisting should start a new game
         riri   = pp_test[2]
         pID = riri['playerID']
+        #printRefPlayer()
         result = backend.enlistPlayer(pID)
         status = result['status']
+        #print("BOGUS 21: status =", status)
         gameID = result['gameID']
+        #print("BOGUS 22: gameID =", gameID)
+        #printRefPlayer()
         riri_db = backend.players.getPlayer(pID)
         gameID_db = riri_db['gameID']
         vprint("    enlist Riri   : " + str(pID) + " - " + status 
@@ -214,7 +205,8 @@ class test_Backend(unittest.TestCase):
         vbar()
         # initiate a backend and register reference players
         backend = self.setUp()
-        self.registerRefPlayers(backend)
+        vprint("We register the reference test players:")
+        backend.testRegisterRefPlayers()
         pp_test = refPlayers(True)
         # enlist a team of 3 players: it should fail
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
@@ -270,7 +262,8 @@ class test_Backend(unittest.TestCase):
         vbar()
         # initiate a backend and register reference players
         backend = self.setUp()
-        self.registerRefPlayers(backend)
+        vprint("We register the reference test players:")
+        backend.testRegisterRefPlayers()
         pp_test = refPlayers(True)
         list_nicknames_ref = []
         for pp in pp_test:
@@ -318,7 +311,8 @@ class test_Backend(unittest.TestCase):
         vbar()
         # initiate a backend and register reference players
         backend = self.setUp()
-        self.registerRefPlayers(backend)
+        vprint("We register the reference test players:")
+        backend.testRegisterRefPlayers()
         pp_test = refPlayers(True)
         # enlist a team of 5 players 
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
@@ -408,7 +402,8 @@ class test_Backend(unittest.TestCase):
         vbar()
         # initialize test data, launch a game with 5 players
         backend = self.setUp()
-        self.registerRefPlayers(backend)
+        vprint("We register the reference test players:")
+        backend.testRegisterRefPlayers()
         pp_test = refPlayers(True)
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
                     {'playerID': pp_test[1]['playerID']},
@@ -463,7 +458,8 @@ class test_Backend(unittest.TestCase):
         vbar()
         # initialize test data, launch a game with 5 players
         backend = self.setUp()
-        self.registerRefPlayers(backend)
+        vprint("We register the reference test players:")
+        backend.testRegisterRefPlayers()
         pp_test = refPlayers(True)
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
                     {'playerID': pp_test[1]['playerID']},
@@ -526,7 +522,8 @@ class test_Backend(unittest.TestCase):
         vbar()
         # initialize test data, launch a game with 5 players
         backend = self.setUp()
-        self.registerRefPlayers(backend)
+        vprint("We register the reference test players:")
+        backend.testRegisterRefPlayers()
         pp_test = refPlayers(True)
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
                     {'playerID': pp_test[1]['playerID']},
@@ -559,41 +556,17 @@ class test_Backend(unittest.TestCase):
         print("Test backend.proposeSet")
         vbar()
         # initialize test data, launch a game with 5 players
-        backend = self.setUp()
-        self.registerRefPlayers(backend)
-        pp_test = refPlayers(True)
-        list_pid = [{'playerID': pp_test[0]['playerID']}, 
-                    {'playerID': pp_test[1]['playerID']},
-                    {'playerID': pp_test[2]['playerID']},
-                    {'playerID': pp_test[3]['playerID']},
-                    {'playerID': pp_test[4]['playerID']},
-                    {'playerID': pp_test[5]['playerID']}]
-        result = backend.enlistTeam(list_pid)
-        gID = result['gameID']
-        gID_ref = ObjectId('57b9bec5124e9b2d2503b72b')
-        getPlayersColl().update_many({'gameID': gID}, {'$set': {'gameID': gID_ref}})
-        # identify the right game and overwrite it with a reference game
-        # (cardset 0, refGame 0, finished, 25 turns)
         vprint("We reconstitute the reference game 0 at turn 0, and we will play the")
         vprint("whole game according to the reference path. We then check that the")
         vprint("resulting history is compliant.")
-        for j in range(0, len(backend.games)):
-            if str(backend.games[j].getGameID()) == str(gID):
-                i = j
-                break
-        backend.games[i].deserialize(refGames_Dict()[0])
+        backend = self.setUp()
+        backend.testRegisterRefPlayers()
+        backend.testLoadRefGame(0)
         # rewind the game back to turn 0
-        backend.games[i].gameFinished = False
-        backend.games[i].turnCounter = 0
-        backend.games[i].gameID = gID_ref
-        gID = gID_ref
-        j = 25
-        while j > 0:
-            del(backend.games[i].steps[j])
-            j -= 1
-        backend.games[i].steps[0].set = []
-        for pp in backend.games[i].players:
-            pp['points'] = 0
+        # we know - since the backend was reseted, that the new game is 
+        # backend.game[0] => we set the games index i at 0 
+        i = 0
+        backend.testGetBackToTurn(0, 0)
         # the game is now ready for the test case
         j = 0
         while (backend.games[i].getGameFinished() == False):
@@ -603,7 +576,7 @@ class test_Backend(unittest.TestCase):
             for k in range(0,3):
                 setlist[k] = int(setlist[k])
             result = backend.proposeSet(pID, setlist)
-            vprint("    - turn " + str(backend.games[i].turnCounter) 
+            vprint("    - turn " + str(backend.games[i].turnCounter).zfill(2) 
                    + ": " + pnn + " propose " + str(setlist) + " => "
                    + result['status'])
             self.assertEqual(result['status'], "ok")

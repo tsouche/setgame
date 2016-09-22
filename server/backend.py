@@ -3,11 +3,14 @@ Created on Sep 2, 2016
 @author: Thierry Souche
 '''
 
+from bson.objectid import ObjectId
+
 from server.connmongo import getPlayersColl, getGamesColl
 from server.constants import playersMin, playersMax, oidIsValid
+from server.constants import pointsPerStep
 from server.game import Game
 from server.players import Players
-
+from server.test_utilities import refPlayers, refGames_Dict
 
 class Backend():
     """
@@ -275,7 +278,14 @@ class Backend():
         The server will answer the clients when they ask about the generic 
         details of the game: cardset, turncounter...
         It will answer with the data description (JSON):
-            { "gameID": str(ObjectId), cardset.serialize, turnCounter }
+            { 'status': "ok", 
+            'gameID': str(ObjectId), 
+            'gameFinished': str(gameFinished), 
+            'cards': cardset.serialize,
+            'turnCounter': str(turncounter),
+            'players': list of {'playerID': str(playerID), 'nickname': nickname }
+        If the request is not ok, it will return the dictionary:
+            { 'status': "ko", 'reason': msg }
         """
         result = None
         if oidIsValid(gameID):
@@ -285,7 +295,7 @@ class Backend():
                     good_game = gg
                     break
             if good_game != None:
-                result = {'__class__': 'SetGameDetails', 
+                result = {'status': "ok",
                     'gameID': str(gameID),
                     'turnCounter': str(good_game.turnCounter),
                     'gameFinished': str(good_game.gameFinished),
@@ -295,7 +305,10 @@ class Backend():
                 for pp in good_game.players:
                     result["players"].append( { 'playerID': str(pp['playerID']), 
                         'nickname': pp['nickname'], 'points': str(pp['points'])})
-                
+            else:
+                result = {'status': "ko", 'reason': "Unknown gameID"}
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
         return result
 
     def step(self,gameID):
@@ -434,3 +447,92 @@ class Backend():
             result = {'status': "ko", 'reason': "invalid playerID"}
         return result
 
+    def testRegisterRefPlayers(self):
+        """
+        FOR TEST PURPOSE ONLY.
+        This method register 6 reference test players.
+        """
+        # connects straight to the Mongo database
+        playersColl = getPlayersColl()
+        playersColl.drop()
+        # now register the reference players straight to the DB (bypassing the
+        # normal process = call to the setserver 'register' API)
+        for pp in refPlayers(True):
+            playersColl.insert_one( {'_id': pp['playerID'], 
+                'nickname': pp['nickname'], 
+                'totalScore': pp['totalScore'],
+                'gameID': None } )
+        return {'status': "ok"}
+
+    def testLoadRefGame(self, test_data_index):
+        """
+        FOR TEST PURPOSE ONLY.
+        This method initiate the reference test game corresponding to the index 
+        passed as argument. The game is fully played and is finished.
+        """
+        # cleans the DB and registers the reference players
+        if test_data_index in (0,1):
+            self.reset()
+            self.testRegisterRefPlayers()
+            pp_test = refPlayers(True)# 
+            list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                        {'playerID': pp_test[1]['playerID']},
+                        {'playerID': pp_test[2]['playerID']},
+                        {'playerID': pp_test[3]['playerID']},
+                        {'playerID': pp_test[4]['playerID']},
+                        {'playerID': pp_test[5]['playerID']}]
+            # initiate a new game and overwrite it with reference test data
+            result = self.enlistTeam(list_pid)
+            gID = result['gameID']
+            gID_ref = ObjectId(refGames_Dict()[test_data_index]['gameID'])
+            getPlayersColl().update_many({'gameID': gID}, {'$set': {'gameID': gID_ref}})
+            self.games[0].deserialize(refGames_Dict()[test_data_index])
+            result = {'status': "ok", 'gameID': gID_ref}
+        else:
+            result = {'status': "ko", 'reason': "wrong test_data_index"}
+        return result
+    
+    def testGetBackToTurn(self, test_data_index, target_turn):
+        """
+        FOR TEST PURPOSE ONLY.
+        This method enable to roll the reference played loaded with previous 
+        method back to the turn N.
+        """
+        # rewind the game back to turn 'target_turn'
+        # we know - since the backend was reseted, that the new game is 
+        # backend.game[0] => we set the games index i at 0 
+        i = 0
+        if self.games[i].gameFinished:
+            nb_turn_max = self.games[i].turnCounter
+        target_turn = min(target_turn, nb_turn_max)
+        target_turn = max(0, target_turn)
+        original_turn = self.games[i].turnCounter
+        if (target_turn < original_turn):
+            refGames = refGames_Dict()[test_data_index]
+            # adapts the generic details
+            self.games[i].gameFinished = False
+            self.games[i].turnCounter = target_turn
+            # removes the 'future' steps
+            j = original_turn
+            while j > target_turn:
+                del(self.games[i].steps[j])
+                j -= 1
+                # resets the 'set' to empty
+            self.games[i].steps[target_turn].set = []
+            # set the player's points as from the reference test data
+            # The only way to do so is actually to replay the game and add points to
+            # the players accordingly.
+            for pp in self.games[0].players:
+                pp['points'] = 0
+            for j in range(0,target_turn):
+                pID_str = refGames['steps'][j]['playerID']
+                for pp in self.games[0].players:
+                    if str(pp['playerID']) == pID_str:
+                        pp['points'] += pointsPerStep
+                        print("BOGUS 60: tour",j, "-", pp['nickname'], pp['points'],
+                          "points")
+            result = {'status': "ok"}
+        else:
+            print("BOGUS 66: you ask to progress the game, not to roll back")
+            result = {'status': "ko"}
+        return result
