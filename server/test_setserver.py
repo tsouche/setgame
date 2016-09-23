@@ -7,14 +7,16 @@ import requests
 import unittest
 
 from server.connmongo import getPlayersColl, getGamesColl
-from server.constants import setserver_address, setserver_port, oidIsValid
+from server.constants import setserver_address, setserver_port
+from server.constants import version, oidIsValid
 from server.players import Players
 from server.test_utilities import cardsetDict_equality
 from server.test_utilities import refPlayersDict, refPlayers, refGames_Dict
 from server.test_utilities import vbar, vprint
 
+
 def _url(path):
-    return "http://" + setserver_address + ":" + str(setserver_port) + path
+    return "http://" + setserver_address + ":" + str(setserver_port) + '/' + version + path
 
 def printRefPlayer():
     playersColl = getPlayersColl()
@@ -89,9 +91,9 @@ class test_Setserver(unittest.TestCase):
                 str(self.players.getPlayerID("Loulou")),
                 str(self.players.getPlayerID("Daisy")) ]
         result = requests.get(path, params={'playerIDlist': list_ref})
-        gameID = result.json()['gameID']
-        vprint("We enlist the reference test players: gameID = " + str(gameID))
-        return gameID
+        gameid_str = result.json()['gameID']
+        vprint("We enlist the reference test players: gameID = " + gameid_str)
+        return gameid_str
     
     def loadRefGame(self, test_data_index):
         """
@@ -271,40 +273,50 @@ class test_Setserver(unittest.TestCase):
         self.registerRefPlayers()
         # enlist various players and check answers
         vprint("We now enlist players and capture the server's answers:")
-        path = _url('/enlist')
-        vprint("    path = '" + path + "'")
         # enlist Donald and test the 'enlist' answer "wait"
         donald = self.refPlayers[0]
-        result = requests.get(path, params={'playerID': str(donald['playerID'])})
+        playerid_str = str(donald['playerID'])
+        path = _url('/enlist/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
         nbp = result.json()['nb_players']
-        vprint("    enlist Donald : " + str(donald['playerID']) + " - " + status 
+        vprint("    enlist Donald : " + playerid_str + " - " + status 
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 1)
         # enlist Mickey and test the 'enlist' answer "wait"
         mickey = self.refPlayers[1]
-        result = requests.get(path, params={'playerID': str(mickey['playerID'])})
+        playerid_str = str(mickey['playerID'])
+        path = _url('/enlist/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
         nbp = result.json()['nb_players']
-        vprint("    enlist Mickey : " + str(mickey['playerID']) + " - " + status 
+        vprint("    enlist Mickey : " + playerid_str + " - " + status 
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 2)
         # enlist Daisy and test the 'enlist' answer == "wait"
         daisy  = self.refPlayers[5]
-        result = requests.get(path, params={'playerID': str(daisy['playerID'])})
+        playerid_str = str(daisy['playerID'])
+        path = _url('/enlist/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
         nbp = result.json()['nb_players']
-        vprint("    enlist Daisy  : " + str(daisy['playerID']) + " - " + status 
+        vprint("    enlist Daisy  : " + playerid_str + " - " + status 
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 3)
         # enlist AGAIN Donald and test the 'enlist' answer "wait"
-        result = requests.get(path, params={'playerID': str(donald['playerID'])})
+        playerid_str = str(donald['playerID'])
+        path = _url('/enlist/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
         nbp = result.json()['nb_players']
-        vprint("    enlist Donald : " + str(donald['playerID']) + " - " + status 
+        vprint("    enlist Donald : " + playerid_str + " - " + status 
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 3)
@@ -312,32 +324,44 @@ class test_Setserver(unittest.TestCase):
         # enlist Riri and test the 'enlist' answer == gameID
         # i.e. this fourth player enlisting should start a new game
         riri   = self.refPlayers[2]
-        result = requests.get(path, params={'playerID': str(riri['playerID'])})
+        playerid_str = str(riri['playerID'])
+        path = _url('/enlist/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         #printRefPlayer()
         #print("Bogus 01: ", result)
         #print("Bogus 02: ", result.json())
         status = result.json()['status']
         riri_db = self.players.getPlayer(ObjectId(riri['playerID']))
         gameid_str = str(riri_db['gameID'])
-        vprint("    enlist Riri   : " + str(riri['playerID']) + " - " + status 
+        vprint("    enlist Riri   : " + playerid_str + " - " + status 
                + " (" + gameid_str + ")")
         self.assertEqual(status, "ok")
         self.assertEqual(result.json()['gameID'], gameid_str)
         # enlist Fifi and test the 'enlist' answer == "wait"
         fifi   = self.refPlayers[3]
-        result = requests.get(path, params={'playerID': fifi['playerID']})
+        playerid_str = str(fifi['playerID'])
+        path = _url('/enlist/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
-        vprint("    enlist Fifi   : " + str(fifi['playerID']) + " - " + status)
+        vprint("    enlist Fifi   : " + playerid_str + " - " + status)
         self.assertEqual(status, "wait")
         # enlist AGAIN Mickey and test the 'enlist' answer gameID
-        result = requests.get(path, params={'playerID': mickey['playerID']})
+        playerid_str = str(mickey['playerID'])
+        path = _url('/enlist/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
-        vprint("    enlist again Mickey : " + str(mickey['playerID']) + " - " 
+        vprint("    enlist again Mickey : " + playerid_str + " - " 
                + status + " (" + gameid_str + ")")
         self.assertEqual(status, "ok")
         self.assertEqual(result.json()['gameID'], gameid_str)
         # enlist an unknown plauerID and test the 'enlist' answer 'invalid'
-        result = requests.get(path, params={'playerID': str(ObjectId())})
+        playerid_str = str(ObjectId())
+        path = _url('/enlist/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
         vprint("    enlist M. X (unknown to the server): " + status)
         self.assertEqual(status, "ko")
@@ -497,28 +521,36 @@ class test_Setserver(unittest.TestCase):
         playersColl.update_one({'nickname': "Daisy"}, 
             {'$set': {'gameID': None }} )
         vprint("We have enlisted 5 players on a game, excluding Daisy")
-        path = _url('/game/nicknames')
-        vprint("    path = '" + path + "'")
 
         # Donald collects the nicknames of other players
         vprint("    We ask for Donald's team-mates nicknames:")
         donald = self.refPlayers[0]
-        result = requests.get(path, params={'playerID': donald['playerID']})
+        playerid_str = str(donald['playerID'])
+        path = _url('/game/' + playerid_str + '/nicknames')
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
         list_nicknames = result.json()['nicknames']
         vprint("    -> team mates: " + str(list_nicknames))
         self.assertEqual(status, "ok")
         self.assertEqual(len(list_nicknames), 5)
-        self.assertTrue({'nickname': "Donald"})
-        self.assertTrue({'nickname': "Mickey"})
-        self.assertTrue({'nickname': "Riri"})
-        self.assertTrue({'nickname': "Fifi"})
-        self.assertTrue({'nickname': "Loulou"})
+        donald_db = playersColl.find_one({'nickname': "Donald"})
+        list_nicknames_db = []
+        for pp in playersColl.find({'gameID': donald_db['gameID']}):
+            list_nicknames_db.append({'nickname': pp['nickname']})
+        self.assertTrue({'nickname': "Donald"} in list_nicknames_db)
+        self.assertTrue({'nickname': "Mickey"} in list_nicknames_db)
+        self.assertTrue({'nickname': "Riri"} in list_nicknames_db)
+        self.assertTrue({'nickname': "Fifi"} in list_nicknames_db)
+        self.assertTrue({'nickname': "Loulou"} in list_nicknames_db)
 
         # Daisy collects the nicknames of other players
         vprint("    We ask for Daisy's team-mates nicknames:")
         daisy = self.refPlayers[5]
-        result = requests.get(path, params={'playerID': daisy['playerID']})
+        playerid_str = str(daisy['playerID'])
+        path = _url('/game/' + playerid_str + '/nicknames')
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
         list_nicknames = result.json()['nicknames']
         vprint("    -> team mates: " + str(list_nicknames))
@@ -527,7 +559,10 @@ class test_Setserver(unittest.TestCase):
 
         # collects the team-mates nicknames for an unknown player
         vprint("    We ask for X's (unknow ID) team-mates nicknames:")
-        result = requests.get(path, params={'playerID': str(ObjectId())})
+        playerid_str = str(ObjectId())
+        path = _url('/game/' + playerid_str + '/nicknames')
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         list_nicknames = result.json()['nicknames']
         vprint("    -> team mates: " + str(list_nicknames))
         self.assertEqual(status, "ok")
@@ -535,7 +570,10 @@ class test_Setserver(unittest.TestCase):
 
         # collects the team-mates nicknames for an invalid string
         vprint("    We ask for X's (invalid string) team-mates nicknames:")
-        result = requests.get(path, params={'playerID': "badstring"})
+        playerid_str = str(donald['playerID'])
+        path = _url('/game/badstring/nicknames')
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
         status = result.json()['status']
         vprint("    -> team mates: " + str(status))
         self.assertEqual(status, "ko")
@@ -554,7 +592,6 @@ class test_Setserver(unittest.TestCase):
             vprint("  Game " + str(index) + ": we run the whole game till it is finished")
             self.loadRefGame(index)
             #gameID = ObjectId(refGames_Dict()[index]['gameID'])
-            path = _url('/game/set/')
             turn_max = int(refGames_Dict()[index]['turnCounter'])
             self.getBackToTurn(index, 0)
             # now propose setsfrom reference data  and compare the answers 
@@ -563,7 +600,8 @@ class test_Setserver(unittest.TestCase):
                 playerid_str = refGames_Dict()[index]['steps'][turn]['playerID']
                 nickname = refGames_Dict()[index]['steps'][turn]['nickname']
                 set_dict = refGames_Dict()[index]['steps'][turn]['set']
-                result = requests.get(path + playerid_str, params={'set': set_dict})
+                path = _url('/game/' + playerid_str + '/set')
+                result = requests.get(path, params={'set': set_dict})
                 status = result.json()['status']
                 vprint("     - turn = "+str(turn) + " : " + status + 
                        " - player = " + nickname + " - set = " + str(set_dict))
@@ -571,12 +609,11 @@ class test_Setserver(unittest.TestCase):
         # initializes the reference game
         vprint("  Game 0: we propose incorrect set proposal and check answers")
         self.loadRefGame(0)
-        gameID = ObjectId(refGames_Dict()[0]['gameID'])
-        path = _url('/game/'+str(gameID)+'/set/')
+        gameid_str = refGames_Dict()[0]['gameID']
         turn_max = int(refGames_Dict()[0]['turnCounter'])
         self.getBackToTurn(0, 0)
         # propose an invalid playerID
-        path = _url('/game/set/rZZRGrs65325')
+        path = _url('/game/rZZRGrs65325/set')
         result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
@@ -585,7 +622,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "ko")
         self.assertEqual(reason, "invalid playerID")
         # propose an unknown playerID
-        path = _url('/game/set/' + str(ObjectId()))
+        path = _url('/game/' + str(ObjectId()) + '/set')
         result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
@@ -597,7 +634,7 @@ class test_Setserver(unittest.TestCase):
         playersColl = getPlayersColl()
         donald = playersColl.find_one({'nickname': "Donald"})
         playerID = donald['_id']
-        path = _url('/game/set/' + str(playerID))
+        path = _url('/game/' + str(playerID) + '/set')
         result = requests.get(path, params={'set': ['01', 'AE', '10']})
         status = result.json()['status']
         reason = result.json()['reason']
@@ -654,10 +691,10 @@ class test_Setserver(unittest.TestCase):
                 # read the set from reference test data
                 playerid_str = refGames_Dict()[index]['steps'][turn]['playerID']
                 set_dict = refGames_Dict()[index]['steps'][turn]['set']
-                path = _url('/game/set/' + playerid_str)
+                path = _url('/game/' + playerid_str + '/set')
                 result = requests.get(path, params={'set': set_dict})
-                path = _url('/game/step')
-                result = requests.get(path, params={'gameID': gameid_str})
+                path = _url('/game/' + gameid_str + '/step')
+                result = requests.get(path)
                 status = result.json()['status']
                 step = result.json()['step']
                 vprint("     - turn = "+str(turn) + "+set : " + status + 
@@ -665,10 +702,10 @@ class test_Setserver(unittest.TestCase):
                 self.assertEqual(status, "ok")
         # now test faulty cases
         self.loadRefGame(0)
-        path = _url('/game/step')
         # invalid gameID
         vprint("  We push an invalid gameID argument:")
-        result = requests.get(path, params={'gameID': "razetrAVFR23545"})
+        path = _url('/game/razetrAVFR23545/step')
+        result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
         vprint("     - status: "+ status + " - reason: " + reason)
@@ -676,7 +713,9 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(reason, "invalid gameID")
         # unknown gameID
         vprint("  We push an unknown gameID argument:")
-        result = requests.get(path, params={'gameID': str(ObjectId())})
+        gameid_str = str(ObjectId())
+        path = _url('/game/' + gameid_str + '/step')
+        result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
         vprint("     - status: "+ status + " - reason: " + reason)
@@ -697,13 +736,12 @@ class test_Setserver(unittest.TestCase):
         self.registerRefPlayers()
         # playersColl = getPlayersColl()
         # try soft-stopping a unfinished game
-        gameID = self.enlistRefPlayers()
-        if oidIsValid(gameID):
-            gameID = ObjectId(gameID)
-        path = _url('/game/stop')
+        gameid_str = self.enlistRefPlayers()
+        vprint()
+        vprint("We try to soft-stop the game: it should fail")
+        path = _url('/game/' + gameid_str + '/stop')
         vprint("    path = '" + path + "'")
-        vprint("    We try to soft-stop the game: it should fail")
-        result = requests.get(path, params={'gameID': gameID})
+        result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
         vprint("    -> status: " + status)
@@ -711,19 +749,19 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "ko")
         self.assertEqual(reason, "game not finished")
         # try hard-stopping a unfinished game
-        path = _url('/game/hardstop')
+        vprint("We try to hard-stop the game: it should succeed")
+        path = _url('/game/' + gameid_str + '/hardstop')
         vprint("    path = '" + path + "'")
-        vprint("    We try to hard-stop the game: it should succeed")
-        result = requests.get(path, params={'gameID': gameID})
+        result = requests.get(path)
         status = result.json()['status']
         vprint("    -> status: " + status)
         self.assertEqual(status, "ok")
         # try stopping an unknown game
-        gameID = ObjectId()
-        path = _url('/game/stop')
+        vprint("We try to soft-stop an unknow game: it should fail")
+        gameid_str = str(ObjectId())
+        path = _url('/game/' + gameid_str + '/stop')
         vprint("    path = '" + path + "'")
-        vprint("    We try to soft-stop an unknow game: it should fail")
-        result = requests.get(path, params={'gameID': gameID})
+        result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
         vprint("    -> status: " + status)
@@ -731,11 +769,10 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "ko")
         self.assertEqual(reason, "game does not exist")
         # try soft-stopping an invalid gameID
-        gameID = "AZEQ3FQEFVWr"
-        path = _url('/game/stop')
+        vprint("We try to soft-stop the game with invalid gameID: it should fail")
+        path = _url('/game/AZEQ3FQEFVWr/stop')
         vprint("    path = '" + path + "'")
-        vprint("    We try to soft-stop the game with invalid gameID: it should fail")
-        result = requests.get(path, params={'gameID': gameID})
+        result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
         vprint("    -> status: " + status)
@@ -743,11 +780,10 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "ko")
         self.assertEqual(reason, "invalid gameID")
         # try hard-stopping an invalid gameID
-        gameID = "AZEQ3FQEFVWr"
-        path = _url('/game/hardstop')
+        vprint("We try to hard-stop the game with invalid gameID: it should fail")
+        path = _url('/game/AZEQ3FQEFVWr/hardstop')
         vprint("    path = '" + path + "'")
-        vprint("    We try to hard-stop the game with invalid gameID: it should fail")
-        result = requests.get(path, params={'gameID': gameID})
+        result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
         vprint("    -> status: " + status)
@@ -755,12 +791,12 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "ko")
         self.assertEqual(reason, "invalid gameID")
         # try soft-stopping a finished game
+        vprint("We try to soft-stop a finished game: it should succeed")
         result = self.loadRefGame(0)
-        gameID = ObjectId(result['gameID'])
-        path = _url('/game/stop')
+        gameid_str = result['gameID']
+        path = _url('/game/' + gameid_str + '/stop')
         vprint("    path = '" + path + "'")
-        vprint("    We try to soft-stop a finished game: it should succeed")
-        result = requests.get(path, params={'gameID': gameID})
+        result = requests.get(path)
         status = result.json()['status']
         vprint("    -> status: " + status)
         self.assertEqual(status, "ok")

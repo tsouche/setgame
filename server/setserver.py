@@ -7,11 +7,14 @@ from bottle import Bottle, route, request, run
 from bson.objectid import ObjectId
 
 from server.backend import Backend
-from server.constants import oidIsValid
 from server.constants import setserver_address, setserver_port
+from server.constants import version, oidIsValid
 
 
 if __name__ == "__main__":
+
+    def url(path):
+        return '/' + version + path
 
     # initiate the server class
     backend = Backend()
@@ -22,26 +25,25 @@ if __name__ == "__main__":
     # declare the routes
     
     # this route is for test purpose
-    @webserver.route('/hello')
+    @webserver.route(url('/hello'))
     def hello():
         return "<p>Coucou les gens !!!</p>"
 
     # this route is for test purpose
-    @webserver.route('/reset')
+    @webserver.route(url('/reset'))
     def reset():
         return backend.reset()
 
     # this route enable to register players to the Set game server
-    @webserver.route('/register/<nickname>')
+    @webserver.route(url('/register/<nickname>'))
     def registerPlayer(nickname):
         return backend.registerPlayer(nickname)
 
     # this route enable register isolated players to a yet-to-start game
-    @webserver.route('/enlist')
-    def enlistPlayer():
+    @webserver.route(url('/enlist/<playerid_str>'))
+    def enlistPlayer(playerid_str):
         # check that the string passed is a valid ObjectId, and if so
         # call the backend.
-        playerid_str = request.query.get('playerID')
         if oidIsValid(playerid_str):
             result = backend.enlistPlayer(ObjectId(playerid_str))
             if result['status'] == "ok":
@@ -52,7 +54,7 @@ if __name__ == "__main__":
         return result
 
     # this route enable to register constituted teams and start a game
-    @webserver.route('/enlist_team')
+    @webserver.route(url('/enlist_team'))
     def enlistTeam():
         pid_list = []
         result = request.query.getall('playerIDlist')
@@ -68,11 +70,10 @@ if __name__ == "__main__":
         return result2
 
     # this route enable to collect the nicknames of the team-mates
-    @webserver.route('/game/nicknames')
-    def getNicknames():
+    @webserver.route(url('/game/<playerid_str>/nicknames'))
+    def getNicknames(playerid_str):
         # check that the string passed is a valid ObjectId, and if so
         # call the backend.
-        playerid_str = request.query.get('playerID')
         if oidIsValid(playerid_str):
             playerID = ObjectId(playerid_str)
             result = {'status': "ok", 'nicknames': backend.getNicknames(playerID)}
@@ -81,10 +82,9 @@ if __name__ == "__main__":
         return result
 
     # this route enable to soft-stop a game
-    @webserver.route('/game/stop')
-    def stopGame():
+    @webserver.route(url('/game/<gameid_str>/stop'))
+    def stopGame(gameid_str):
         # it needs (amongst other things) to read the 'hard' flag.
-        gameid_str = request.query.get('gameID')
         if oidIsValid(gameid_str):
             gameID = ObjectId(gameid_str)
             result = backend.stopGame(gameID)
@@ -93,28 +93,28 @@ if __name__ == "__main__":
         return result
     
     # this route enable to hard-stop a game
-    @webserver.route('/game/hardstop')
-    def stopGame():
+    @webserver.route(url('/game/<gameid_str>/hardstop'))
+    def stopGame(gameid_str):
         # it needs (amongst other things) to read the 'hard' flag.
-        gameid_str = request.query.get('gameID')
         if oidIsValid(gameid_str):
             result = backend.stopGame(ObjectId(gameid_str), True)
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
-
-    @webserver.route('/game/<gameid_str>/details')
+    
+    # this route enable to collect the generic details of a game 
+    @webserver.route(url('/game/<gameid_str>/details'))
     def details(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.details(ObjectId(gameid_str))
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
-
-    @webserver.route('/game/step')
-    def step():
+    
+    # this route enable to collect the current step
+    @webserver.route(url('/game/<gameid_str>/step'))
+    def step(gameid_str):
         # it needs 
-        gameid_str = request.query.get('gameID')
         if oidIsValid(gameid_str):
             result = backend.step(ObjectId(gameid_str))
         else:
@@ -126,10 +126,11 @@ if __name__ == "__main__":
     def history(gameid_str):
         pass
     """
-
-    @webserver.route('/game/set/<playerid_str>')
+    # this route enable a client to propose a set of 3 cards to the server
+    @webserver.route(url('/game/<playerid_str>/set'))
     def proposeSet(playerid_str):
         if oidIsValid(playerid_str):
+            playerID = ObjectId(playerid_str)
             set_dict = request.query.getall('set')
             set_list = []
             for s in set_dict:
@@ -137,19 +138,20 @@ if __name__ == "__main__":
                     set_list.append(int(s))
                 except:
                     result = {'status': "ko", 'reason': "invalid set"}
-            playerID = ObjectId(playerid_str)
             result = backend.proposeSet(playerID, set_list)
         else:
             result = {'status': "ko", 'reason': "invalid playerID"}
         return result
     
-    @webserver.route('/test/register_ref_players')
+    # this route enable test cases (register reference test players)
+    @webserver.route(url('/test/register_ref_players'))
     def testRegisterRefPlayers():
         # registers the 6 reference test players.
         result = backend.testRegisterRefPlayers()
         return result
-
-    @webserver.route('/test/load_ref_game')
+    
+    # this route enable to load and play to its end a reference test game
+    @webserver.route(url('/test/load_ref_game'))
     def testLoadRefGame():
         # load the reference test game indicated by 'test_data_index'
         index = request.query.get('test_data_index')
@@ -165,8 +167,9 @@ if __name__ == "__main__":
         except:
             result = {'status': "ko", 'reason': "invalid index"}
         return result
-
-    @webserver.route('/test/back_to_turn/<index>/<turn>')
+    
+    # this route enable to roll back a reference test game
+    @webserver.route(url('/test/back_to_turn/<index>/<turn>'))
     def testBackToTurn(index, turn):
         # assuming a reference game was properly loaded, it enable to roll back 
         # the finished game and get back to a given turn.

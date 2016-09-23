@@ -12,7 +12,7 @@ from server.constants import cardsMax
 from server.step import Step
 
 
-verbose = False
+verbose = True
 """
 Set verbose = True enable to capture many comments during unitary testing.
 Set verbose = False does not produce the comments.
