@@ -56,7 +56,6 @@ if __name__ == "__main__":
     def enlistTeam():
         pid_list = []
         result = request.query.getall('playerIDlist')
-        print("BOGUS 10: ", result)
         # check that the strings passed are valid ObjectId, and if so
         # add them into the list of players to be enlisted.
         for playerid_str in result:
@@ -104,30 +103,45 @@ if __name__ == "__main__":
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
 
-    @webserver.route('/game/details')
-    def details():
-        gameid_str = request.query.get('gameID')
+    @webserver.route('/game/<gameid_str>/details')
+    def details(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.details(ObjectId(gameid_str))
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
 
-    """
-    @webserver.route('/game/step') # with 1 parameter: 'gameid'
-    def step(gameid_str):
-        pass
-    """
+    @webserver.route('/game/step')
+    def step():
+        # it needs 
+        gameid_str = request.query.get('gameID')
+        if oidIsValid(gameid_str):
+            result = backend.step(ObjectId(gameid_str))
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
+        return result
+
     """
     @webserver.route('/game/<gameid>/history') # with 1 parameter: 'gameid'
     def history(gameid_str):
         pass
     """
-    """
-    @webserver.route('/game/<gameid>/set')
-    def collectSetProposal(gameid_str, set):
-        pass
-    """
+
+    @webserver.route('/game/set/<playerid_str>')
+    def proposeSet(playerid_str):
+        if oidIsValid(playerid_str):
+            set_dict = request.query.getall('set')
+            set_list = []
+            for s in set_dict:
+                try:
+                    set_list.append(int(s))
+                except:
+                    result = {'status': "ko", 'reason': "invalid set"}
+            playerID = ObjectId(playerid_str)
+            result = backend.proposeSet(playerID, set_list)
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
+        return result
     
     @webserver.route('/test/register_ref_players')
     def testRegisterRefPlayers():
@@ -156,12 +170,15 @@ if __name__ == "__main__":
     def testBackToTurn(index, turn):
         # assuming a reference game was properly loaded, it enable to roll back 
         # the finished game and get back to a given turn.
-        print("BOGUS 22:", index, int(index))
-        print("BOGUS 21:", turn, int(turn))
-        result = backend.testGetBackToTurn(int(index), int(turn))
-        print("BOGUS 23: ", result)
-        return result
-
+        try:
+            index = int(index)
+        except:
+            return {'status': "ko", 'reason': "invalid index arguments"} 
+        try:
+            turn = int(turn)
+        except:
+            return {'status': "ko", 'reason': "invalid turn arguments"}
+        return backend.testGetBackToTurn(int(index), int(turn))
 
     
     run(webserver, host=setserver_address, port=setserver_port, 

@@ -8,12 +8,10 @@ import unittest
 
 from server.connmongo import getPlayersColl, getGamesColl
 from server.constants import setserver_address, setserver_port, oidIsValid
-from server.game import Game
 from server.players import Players
 from server.test_utilities import cardsetDict_equality
 from server.test_utilities import refPlayersDict, refPlayers, refGames_Dict
 from server.test_utilities import vbar, vprint
-
 
 def _url(path):
     return "http://" + setserver_address + ":" + str(setserver_port) + path
@@ -52,7 +50,7 @@ class test_Setserver(unittest.TestCase):
         and make them available for the tests.
         """
         # register the reference players vai the test routine of the server
-        vprint("We register the reference test players:")
+        vprint("     We register the reference test players:")
         path = _url('/test/register_ref_players')
         requests.get(path)
 
@@ -111,7 +109,6 @@ class test_Setserver(unittest.TestCase):
         self.registerRefPlayers()
         # create the game and load reference data
         path = _url('/test/load_ref_game')
-        vprint("    path = '" + path + "'")
         result = requests.get(path, params={'test_data_index': str(test_data_index)})
         return result.json()
 
@@ -160,9 +157,6 @@ class test_Setserver(unittest.TestCase):
         a reference test game was properly loaded.
         """
         path = _url('/test/back_to_turn/'+str(index)+'/'+str(turn))
-        vprint("    path = '" + path + "'")
-        print("BOGUS 15: ", index)
-        print("BOGUS 16: ", turn)
         result = requests.get(path)
         return result.json()
     
@@ -178,7 +172,7 @@ class test_Setserver(unittest.TestCase):
         # now get back in time to step 10
         self.loadRefGame(0)
         result = self.getBackToTurn(0, 10)
-        print("BOGUS XX: ", result)
+        self.assertEqual(result['status'], "ok")
     
     def teardown(self):
         """
@@ -547,11 +541,149 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "ko")
 
     def test_proposeSet(self):
-
+        """ 
+        Test setserver.proposeSet
+        """
+        vbar()
+        print("Test setserver.proposeSet")
+        vbar()
+        # build test data and context
+        self.setup()
+        for index in range (0,2):
+            # initializes the reference game
+            vprint("  Game " + str(index) + ": we run the whole game till it is finished")
+            self.loadRefGame(index)
+            #gameID = ObjectId(refGames_Dict()[index]['gameID'])
+            path = _url('/game/set/')
+            turn_max = int(refGames_Dict()[index]['turnCounter'])
+            self.getBackToTurn(index, 0)
+            # now propose setsfrom reference data  and compare the answers 
+            for turn in range(0, turn_max):
+                # read the set from reference test data
+                playerid_str = refGames_Dict()[index]['steps'][turn]['playerID']
+                nickname = refGames_Dict()[index]['steps'][turn]['nickname']
+                set_dict = refGames_Dict()[index]['steps'][turn]['set']
+                result = requests.get(path + playerid_str, params={'set': set_dict})
+                status = result.json()['status']
+                vprint("     - turn = "+str(turn) + " : " + status + 
+                       " - player = " + nickname + " - set = " + str(set_dict))
+                self.assertEqual(status, "ok")
+        # initializes the reference game
+        vprint("  Game 0: we propose incorrect set proposal and check answers")
+        self.loadRefGame(0)
+        gameID = ObjectId(refGames_Dict()[0]['gameID'])
+        path = _url('/game/'+str(gameID)+'/set/')
+        turn_max = int(refGames_Dict()[0]['turnCounter'])
+        self.getBackToTurn(0, 0)
+        # propose an invalid playerID
+        path = _url('/game/set/rZZRGrs65325')
+        result = requests.get(path)
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("    - invalid playerID: status: " + status + " - reason: " + 
+               reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "invalid playerID")
+        # propose an unknown playerID
+        path = _url('/game/set/' + str(ObjectId()))
+        result = requests.get(path)
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("    - unknown playerID: status: " + status + " - reason: " + 
+               reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "unknown playerID")
+        # propose an invalid set
+        playersColl = getPlayersColl()
+        donald = playersColl.find_one({'nickname': "Donald"})
+        playerID = donald['_id']
+        path = _url('/game/set/' + str(playerID))
+        result = requests.get(path, params={'set': ['01', 'AE', '10']})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("    - player 'available': status: " + status + " - reason: " + 
+               reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "invalid set")
+        # propose an invalid set (still with Donald: same path)
+        result = requests.get(path, params={'set': ['01', '01', '10']})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("    - player 'available': status: " + status + " - reason: " + 
+               reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "invalid set")
+        # propose a wrong set (still with Donald: same path)
+        result = requests.get(path, params={'set': ['01', '06', '10']})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("    - player 'available': status: " + status + " - reason: " + 
+               reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "wrong set")
+        # propose an 'available' player - delist Donald (same path)
+        playersColl.update_one({'nickname': "Donald"}, {'$set': {'gameID': None}})
+        result = requests.get(path, params={'set': ['01', '06', '11']})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("    - player 'available': status: " + status + " - reason: " + 
+               reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "player not in game")
         # removes residual test data
         self.teardown()
 
-        pass
+    def test_step(self):
+        """ 
+        Test setserver.step
+        """
+        vbar()
+        print("Test setserver.step")
+        vbar()
+        # build test data and context
+        self.setup()
+        for index in range (0,2):
+            # initializes the reference game
+            vprint("  Game " + str(index) + ": we run the whole game and check the results")
+            self.loadRefGame(index)
+            turn_max = int(refGames_Dict()[index]['turnCounter'])
+            self.getBackToTurn(index, 0)
+            gameid_str = refGames_Dict()[index]['gameID']
+            # now propose setsfrom reference data  and compare the answers 
+            for turn in range(0, turn_max):
+                # read the set from reference test data
+                playerid_str = refGames_Dict()[index]['steps'][turn]['playerID']
+                set_dict = refGames_Dict()[index]['steps'][turn]['set']
+                path = _url('/game/set/' + playerid_str)
+                result = requests.get(path, params={'set': set_dict})
+                path = _url('/game/step')
+                result = requests.get(path, params={'gameID': gameid_str})
+                status = result.json()['status']
+                step = result.json()['step']
+                vprint("     - turn = "+str(turn) + "+set : " + status + 
+                       " - step = " + str(step))
+                self.assertEqual(status, "ok")
+        # now test faulty cases
+        self.loadRefGame(0)
+        path = _url('/game/step')
+        # invalid gameID
+        vprint("  We push an invalid gameID argument:")
+        result = requests.get(path, params={'gameID': "razetrAVFR23545"})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("     - status: "+ status + " - reason: " + reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "invalid gameID")
+        # unknown gameID
+        vprint("  We push an unknown gameID argument:")
+        result = requests.get(path, params={'gameID': str(ObjectId())})
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("     - status: "+ status + " - reason: " + reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "game does not exist")
+        # removes residual test data
+        self.teardown()
 
     def test_stopGame(self):
         """ 
@@ -563,7 +695,7 @@ class test_Setserver(unittest.TestCase):
         # build test data and context
         self.setup()
         self.registerRefPlayers()
-        playersColl = getPlayersColl()
+        # playersColl = getPlayersColl()
         # try soft-stopping a unfinished game
         gameID = self.enlistRefPlayers()
         if oidIsValid(gameID):
@@ -644,32 +776,32 @@ class test_Setserver(unittest.TestCase):
         vbar()
         # build test data and context
         self.setup()
-        self.registerRefPlayers()
         self.loadRefGame(0)
         # start a game and retrieve the game details
-        gameID = self.refGame.getGameID()
-        print("Bogus 01: gameID =", gameID)
-        path = _url('/game/details')
+        gameID = ObjectId(refGames_Dict()[0]['gameID'])
+        path = _url('/game/' + str(gameID) + '/details')
         vprint("    path = '" + path + "'")
         vprint("    We retrieve the details of the game: it should succeed")
-        result = requests.get(path, params={'gameID': gameID})
-        print("BOGUS 02: ", result)
-        status = result.json()['status']
-        gameid_str = result.json()['gameID']
-        turnCounter_str = result.json()['turnCounter']
-        gameFinished_str = result.json()['gameFinished']
-        cardset_str = result.json()['cardset']
-        players_str = result.json()['players']
-        for pp in self.playersColl.find({}):
-            print("Bogus 02: ", pp)
+        result = requests.get(path)
+        result_dict = result.json()
+        status = result_dict['status']
+        gameid_str = result_dict['gameID']
+        turnCounter_str = result_dict['turnCounter']
+        gameFinished_str = result_dict['gameFinished']
+        cardset_str = result_dict['cardset']
+        players_str = result_dict['players']
         vprint("    -> status: " + status)
         vprint("    -> gameID: " + gameid_str)
         vprint("    -> turnCounter: " + turnCounter_str)
+        vprint("    -> gameFinished:" + gameFinished_str)
         vprint("    -> cardset: " + str(cardset_str))
         vprint("    -> players: " + str(players_str))
         self.assertEqual(status, "ok")
         self.assertEqual(gameid_str, str(gameID))
-        self.assertTrue(cardsetDict_equality(cardset_str, ))
+        self.assertEqual(turnCounter_str, '25')
+        self.assertEqual(gameFinished_str, 'True')
+        self.assertEqual(players_str, refGames_Dict()[0]['players'])
+        self.assertTrue(cardsetDict_equality(cardset_str, refGames_Dict()[0]['cardset']))
         # removes residual test data
         self.teardown()
 

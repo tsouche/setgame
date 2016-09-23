@@ -378,7 +378,7 @@ class Backend():
             - 3 new cards are taken from the 'pick' and put on the 'table'
             - turnCounter and points are incremented...
         the method returns:
-            - if PlayerID is an invalid OnjectId:
+            - if PlayerID is an invalid ObjectId:
                 { 'status': "ko", 'reason': "invalid playerID"}
             - else if playerID is valid but the player does not exist:
                 { 'status': "ko", 'reason': "unknown player" }
@@ -529,10 +529,9 @@ class Backend():
                 for pp in self.games[0].players:
                     if str(pp['playerID']) == pID_str:
                         pp['points'] += pointsPerStep
-                        print("BOGUS 60: tour",j, "-", pp['nickname'], pp['points'],
-                          "points")
             result = {'status': "ok"}
         else:
-            print("BOGUS 66: you ask to progress the game, not to roll back")
             result = {'status': "ko"}
         return result
+    
+    
