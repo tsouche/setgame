@@ -114,18 +114,21 @@ if __name__ == "__main__":
     # this route enable to collect the current step
     @webserver.route(url('/game/<gameid_str>/step'))
     def step(gameid_str):
-        # it needs 
         if oidIsValid(gameid_str):
             result = backend.step(ObjectId(gameid_str))
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
 
-    """
-    @webserver.route('/game/<gameid>/history') # with 1 parameter: 'gameid'
+    # this route enable to collect the full history of the game
+    @webserver.route(url('/game/<gameid_str>/history'))
     def history(gameid_str):
-        pass
-    """
+        if oidIsValid(gameid_str):
+            result = backend.history(ObjectId(gameid_str))
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
+        return result
+
     # this route enable a client to propose a set of 3 cards to the server
     @webserver.route(url('/game/<playerid_str>/set'))
     def proposeSet(playerid_str):

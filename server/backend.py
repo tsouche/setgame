@@ -346,8 +346,7 @@ class Backend():
         of a game (active or finished): it will answer with the full description 
         (JSON):
         - collect the full details of the game:
-            GET https://server.org/Set/gameid/history/
-            post { }
+            GET url/game/<gameid>/history/
             answer { serialized Game }
         """
         # check that the gameID is a valid ID
