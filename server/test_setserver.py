@@ -10,7 +10,9 @@ from server.connmongo import getPlayersColl, getGamesColl
 from server.constants import setserver_address, setserver_port
 from server.constants import version, oidIsValid
 from server.players import Players
-from server.test_utilities import cardsetDict_equality
+from server.game import Game
+from server.test_utilities import cardsetDict_equality, stepDict_equality
+from server.test_utilities import game_compliant
 from server.test_utilities import refPlayersDict, refPlayers, refGames_Dict
 from server.test_utilities import vbar, vprint
 
@@ -697,9 +699,15 @@ class test_Setserver(unittest.TestCase):
                 result = requests.get(path)
                 status = result.json()['status']
                 step = result.json()['step']
+                # load the corresponding reference step and remove the player info
+                stepRef_dict = refGames_Dict()[index]['steps'][turn+1]
+                stepRef_dict['playerID'] = 'None'
+                stepRef_dict['nickname'] = ''
+                stepRef_dict['set'] = []
                 vprint("     - turn = "+str(turn) + "+set : " + status + 
                        " - step = " + str(step))
-                self.assertEqual(status, "ok")
+                self.assertEqual(status, "ok")        
+                self.assertTrue(stepDict_equality(step, stepRef_dict))
         # now test faulty cases
         self.loadRefGame(0)
         # invalid gameID
@@ -724,6 +732,54 @@ class test_Setserver(unittest.TestCase):
         # removes residual test data
         self.teardown()
 
+    def test_history(self):
+        """
+        Test setserver.history        
+        """
+        vbar()
+        print("Test setserver.history")
+        vbar()
+        # build test data and context
+        self.setup()
+        for index in range (0,2):
+            # initializes the reference game
+            vprint("  Game " + str(index) + ": we run the whole game and check the results")
+            self.loadRefGame(index)
+            gameid_str = refGames_Dict()[index]['gameID']
+            # compare the history retrieved via the API with reference test data
+            path = _url('/game/' + gameid_str + '/history')
+            result = requests.get(path)
+            status = result.json()['status']
+            game_dict = result.json()['game']
+            players = []
+            for pp in game_dict['players']:
+                temp = {'playerID': ObjectId(pp['playerID']), 'nickname': pp['nickname']}
+                players.append(temp)
+            game = Game(players)
+            game.deserialize(game_dict)
+            self.assertEqual(status, "ok")
+            self.assertTrue(game_compliant(game, index,"        "))
+        # now test faulty cases
+        self.loadRefGame(0)
+        # invalid gameID
+        vprint("We push an invalid gameID argument:")
+        path = _url('/game/razetrAVFR23545/history')
+        result = requests.get(path)
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("     - status: "+ status + " - reason: " + reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "invalid gameID")
+        # unknown gameID
+        vprint("We push an unknown gameID argument:")
+        path = _url('/game/' + str(ObjectId()) + '/history')
+        result = requests.get(path)
+        status = result.json()['status']
+        reason = result.json()['reason']
+        vprint("     - status: "+ status + " - reason: " + reason)
+        self.assertEqual(status, "ko")
+        self.assertEqual(reason, "game does not exist")
+    
     def test_stopGame(self):
         """ 
         Test setserver.stopGames
