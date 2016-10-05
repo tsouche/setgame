@@ -5,11 +5,11 @@ Created on August 8th 2016
 
 from bson.objectid import ObjectId
 
-from server.cardset import CardSet
-from server.connmongo import getGamesColl
-import server.constants as constants
-from server.players import Players
-from server.step import Step
+from cardset import CardSet
+from connmongo import getGamesColl
+import constants
+from players import Players
+from step import Step
 
 
 class invalidPlayerID(Exception):

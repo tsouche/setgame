@@ -5,12 +5,13 @@ Created on Sep 2, 2016
 
 from bson.objectid import ObjectId
 
-from server.connmongo import getPlayersColl, getGamesColl
-from server.constants import playersMin, playersMax, oidIsValid
-from server.constants import pointsPerStep
-from server.game import Game
-from server.players import Players
-from server.test_utilities import refPlayers, refGames_Dict
+from connmongo import getPlayersColl, getGamesColl
+from constants import playersMin, playersMax, oidIsValid
+from constants import pointsPerStep
+from game import Game
+from players import Players
+from test_utilities import refPlayers, refGames_Dict
+
 
 class Backend():
     """

@@ -6,9 +6,9 @@ Created on August 11th 2016
 from bottle import Bottle, route, request, run
 from bson.objectid import ObjectId
 
-from server.backend import Backend
-from server.constants import setserver_address, setserver_port
-from server.constants import version, oidIsValid
+from backend import Backend
+from constants import setserver_address, setserver_port
+from constants import version, oidIsValid
 
 
 if __name__ == "__main__":

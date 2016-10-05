@@ -5,11 +5,11 @@ Created on August 2nd 2016
 
 import unittest
 
-from server.cardset import CardSet
-from server.constants import cardsMax
-from server.test_utilities import cardsList
-from server.test_utilities import displayCardList, vprint, vbar
-from server.test_utilities import refGames_Dict, refCardsets
+from cardset import CardSet
+from constants import cardsMax
+from test_utilities import cardsList
+from test_utilities import displayCardList, vprint, vbar
+from test_utilities import refGames_Dict, refCardsets
 
 
 class test_CardSet(unittest.TestCase):

@@ -6,15 +6,15 @@ from bson.objectid import ObjectId
 import requests
 import unittest
 
-from server.connmongo import getPlayersColl, getGamesColl
-from server.constants import setserver_address, setserver_port
-from server.constants import version, oidIsValid
-from server.players import Players
-from server.game import Game
-from server.test_utilities import cardsetDict_equality, stepDict_equality
-from server.test_utilities import game_compliant
-from server.test_utilities import refPlayersDict, refPlayers, refGames_Dict
-from server.test_utilities import vbar, vprint
+from connmongo import getPlayersColl, getGamesColl
+from constants import setserver_address, setserver_port
+from constants import version, oidIsValid
+from game import Game
+from players import Players
+from test_utilities import cardsetDict_equality, stepDict_equality
+from test_utilities import game_compliant
+from test_utilities import refPlayersDict, refPlayers, refGames_Dict
+from test_utilities import vbar, vprint
 
 
 def _url(path):

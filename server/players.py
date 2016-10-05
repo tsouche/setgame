@@ -6,8 +6,8 @@ Created on August 8th 2016
 from bson.objectid import ObjectId
 from pymongo import ReturnDocument
 
-from server.connmongo import getPlayersColl
-from server.constants import oidIsValid
+from connmongo import getPlayersColl
+from constants import oidIsValid
 
 
 class Players:

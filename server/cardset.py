@@ -5,7 +5,7 @@ Created on August 2nd 2016
 
 from random import randint
 
-import server.constants as constants
+import constants as constants
 
 
 class CardSet:

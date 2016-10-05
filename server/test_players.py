@@ -6,11 +6,11 @@ Created on August 8th 2016
 from bson.objectid import ObjectId
 import unittest
 
-from server.connmongo import getPlayersColl
-from server.players import Players
-from server.test_utilities import playersDict_equality
-from server.test_utilities import refPlayersDict, refPlayers
-from server.test_utilities import vprint, vbar
+from connmongo import getPlayersColl
+from players import Players
+from test_utilities import playersDict_equality
+from test_utilities import refPlayersDict, refPlayers
+from test_utilities import vprint, vbar
 
 
 def player_format_DB(p):

@@ -1,3 +1,3 @@
-import server.setserver
+import setserver
 
 

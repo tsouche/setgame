@@ -6,7 +6,7 @@ Created on August 5th 2016
 from bson.objectid import ObjectId
 from operator import itemgetter
 
-import server.constants as constants
+import constants as constants
 
 
 class Step:
