@@ -27,7 +27,12 @@ from kivy.properties import StringProperty
 
 cards_height = 150
 cards_width = 100
+cards_spacing = 10
+table_padding = 10
 cards_file_path = "/data/code/setgame/clients/images/"
+pos_pick  = 
+pos_table =
+pos_used  =
 
 Class Card(Button):
     """
@@ -37,25 +42,27 @@ Class Card(Button):
 
     card_width = NumericProperty()
     card_height = NumericProperty()
+    x = NumericProperty()
+    y = NumericProperty()
     i = BoundedNumericProperty(0, min=0, max=4)
     j = BoundedNumericProperty(0, min=0, max=3)
-    code = StringProperty()
-    filename = StringProperty()
-    
-    card_code = None
-    i = j = 0
-    face_visible = False
-    orientation_portrait = False
-    highlighted = False
+    card_code = StringProperty()
     filename = StringProperty()
     
     def __init__(self, code, x, y):
+        """
+        Set the initial values so that the card is in the 'Pick'
+        """
         super(Card, self).__init__(self)
-        self.i = None
-        self.j = None
+        self.i = 0
+        self.j = 0
         self.x = x
         self.y = y
         self.face_visible = False
         self.orientation_portrait = False
         self.highlighted = False
-        
+
+    def moveToTable(self, i, j):
+        """
+        Set the initial values so that the card is in the 'Pick'
+        """
