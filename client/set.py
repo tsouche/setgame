@@ -1,24 +1,44 @@
-'''
-Created on Oct 15, 2016
+# File name: layouts2.py
+import kivy
+from gi.overrides.Gdk import Color
+kivy.require('1.9.0')
 
-@author: thierry
-'''
-
-from kivy.uix.widget import Widget
+from kivy.app import App
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.relativelayout import RelativeLayout
+from kivy.uix.button import Button
 from kivy.properties import NumericProperty, BoundedNumericProperty
 from kivy.properties import StringProperty, BooleanProperty
+from random import randint
 
 
-from client.constants import constant_unit_min, constant_card_height, constant_card_width
+constant_unit = 10
+constant_card_height = 15 * constant_unit
+constant_card_width  = 10 * constant_unit
+constant_nb_cols = 4
+constant_nb_rows = 3
+constant_color_background = (0.0, 0.4, 0.0, 1.0)    # rgba
+constant_color_highlight  = (1.0, 0.2, 0.2, 0.6)    # rgba
+constant_color_card       = (1.0, 1.0, 1.0, 1.0)    # rgba
+constant_color_card_back  = (0.0, 0.2, 0.0, 1.0)    # rgba
+constant_color_blue       = (0.0, 0.0, 0.8, 1.0)    # rgba
+constant_color_blue_half  = (0.0, 0.0, 0.8, 0.3)    # rgba
+constant_color_red        = (0.8, 0.0, 0.0, 1.0)    # rgba
+constant_color_red_half   = (0.8, 0.0, 0.0, 0.3)    # rgba
+constant_color_green      = (0.0, 0.8, 0.0, 1.0)    # rgba
+constant_color_green_half = (0.0, 0.8, 0.0, 0.3)    # rgba
+constant_spacing = constant_unit
+constant_padding = constant_unit
+constant_table_width  =  constant_card_width *  constant_nb_cols      \
+                      +     constant_spacing * (constant_nb_cols - 1) \
+                      +     constant_padding * 2
+constant_table_height = constant_card_height *  constant_nb_rows      \
+                      +     constant_spacing * (constant_nb_rows - 1) \
+                      +     constant_padding * 2
 
-from client.constants import constant_color_background, constant_color_highlight
-from client.constants import constant_color_card, constant_color_card_back
-from client.constants import constant_color_blue, constant_color_blue_half
-from client.constants import constant_color_red, constant_color_red_half
-from client.constants import constant_color_green, constant_color_green_half
 
             
-class Card(Widget):
+class Card(RelativeLayout):
 
     unit = NumericProperty()
     # card_width = NumericProperty()
@@ -83,23 +103,7 @@ class Card(Widget):
                 self.canvas.add(Color(color))
                 self.canvas.add(Quad((x,y+h/2,x+w/2,y+h,x+w,y+h/2,x+w/2,y)))
     
-    def set_position(self, x, y):
-        """
-        This method enable to override the existing position. 
-        """
-        self.pos_hint = None, None
-        self.pos = self.to_parent(x,y)
-    
-    def resize(self, w,h):
-        """
-        This method allows to resize the card in case it is not well displayed.
-        """
-        self.size_hint_x = None
-        self.size_hint_y = None
-        self.width = w
-        self.height = h
-        
-    def __init__(self, ic, jc, card_code, x, y, w, h):
+    def __init__(self, ic, jc, card_code):
         # filepath = "/data/code/setgame/client/images/"
         filepath = "./../../setgame/client/images/"
         super(Card, self).__init__()
@@ -113,8 +117,23 @@ class Card(Widget):
         self.filename = filepath + self.code + ".png"
         self.visible = False
         self.selected = False
-        self.set_position(x, y)
-        self.resize(w, h)
+        
+    def set_position(self, x, y):
+        """
+        This method enable to override the existing position. 
+        """
+        self.pos_hint = None, None
+        self.x = x
+        self.y = y
+    
+    def resize(self, w,h):
+        """
+        This method allows to resize the card in case it is not well displayed.
+        """
+        self.size_hint_x = None
+        self.size_hint_y = None
+        self.width = w
+        self.height = h
         
     def show(self):
         """
@@ -179,10 +198,16 @@ class Card(Widget):
             # the card is not visible: we display the card back
             self.canvas.add(Color(constant_color_card_back))
             self.canvas.add(Line(rounder_rectangle=(0,0,10*self.unit, 15*self.unit,self.unit)))
-        # and draw !
-        super(Card, self).draw()
-
             
     def build(self):
         return self
 
+
+
+class SetApp(App):
+    def build(self):
+        table = Table()
+        return table
+
+if __name__=="__main__":
+    SetApp().run()
