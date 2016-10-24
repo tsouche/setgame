@@ -1,0 +1,26 @@
+# File name: generictable.kv 
+#:kivy 1.9.1
+
+<GenericTable>:
+    spacing: self.unit
+    padding: self.unit
+    canvas.before:
+        Color:
+            rgba: self.backgroundColor
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    <PlayingArea@RelativeLayout>:
+        id: _playing_area
+        pos_hint: {'center_x':.5,'center_y':.5}
+        size_hint: None,None
+        width:  self.table_width
+        height: self.table_height
+        canvas.before:
+            Color:
+                rgba: self.backgroundColor
+            Rectangle:
+                pos: 0,0
+                wid:th  self.table_width
+                height: self.table_height
+

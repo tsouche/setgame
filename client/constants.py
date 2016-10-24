@@ -40,16 +40,16 @@ constant_value_one     = 0
 constant_value_two     = 1
 constant_value_three   = 2
 
-constant_color_background = (0.0, 0.4, 0.0, 1.0)    # rgba
-constant_color_cardshape  = (1.0, 1.0, 1.0, 0.3)    # rgba
-constant_color_highlight  = (1.0, 0.2, 0.2, 0.6)    # rgba
-constant_color_card       = (1.0, 1.0, 1.0, 1.0)    # rgba
-constant_color_card_back  = (0.0, 0.2, 0.0, 1.0)    # rgba
-constant_color_blue       = (0.0, 0.0, 0.8, 1.0)    # rgba
-constant_color_blue_half  = (0.0, 0.0, 0.8, 0.3)    # rgba
-constant_color_red        = (0.8, 0.0, 0.0, 1.0)    # rgba
-constant_color_red_half   = (0.8, 0.0, 0.0, 0.3)    # rgba
-constant_color_green      = (0.0, 0.8, 0.0, 1.0)    # rgba
-constant_color_green_half = (0.0, 0.8, 0.0, 0.3)    # rgba
+constant_color_background = {'r': 0.0, 'g': 0.4, 'b':0.0, 'a': 1.0}
+constant_color_cardshape  = {'r': 1.0, 'g': 1.0, 'b':1.0, 'a': 0.3}
+constant_color_highlight  = {'r': 1.0, 'g': 0.2, 'b':0.2, 'a': 0.6}
+constant_color_card       = {'r': 1.0, 'g': 1.0, 'b':1.0, 'a': 1.0}
+constant_color_card_back  = {'r': 0.0, 'g': 0.2, 'b':0.0, 'a': 1.0}
+constant_color_blue       = {'r': 0.0, 'g': 0.0, 'b':0.8, 'a': 1.0}
+constant_color_blue_half  = {'r': 0.0, 'g': 0.0, 'b':0.8, 'a': 0.3}
+constant_color_red        = {'r': 0.8, 'g': 0.0, 'b':0.0, 'a': 1.0}
+constant_color_red_half   = {'r': 0.8, 'g': 0.0, 'b':0.0, 'a': 0.3}
+constant_color_green      = {'r': 0.0, 'g': 0.8, 'b':0.0, 'a': 1.0}
+constant_color_green_half = {'r': 0.0, 'g': 0.8, 'b':0.0, 'a': 0.3}
 
 
