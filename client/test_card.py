@@ -13,6 +13,8 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.graphics import Color, Rectangle, RoundedRectangle
+from kivy.properties import NumericProperty
+
 from client.constants import constant_color_background, constant_color_card
 from random import randint
 from client.card import Card
@@ -22,15 +24,16 @@ from client.card import Card
 
 class CardSpace(RelativeLayout):
     
-    # declare properties for the colors
+    # declare properties for the size
+    unit = NumericProperty()
     
     def __init__(self, **kwargs):
         print("BOGUS 00: create the layout")
         super(CardSpace, self).__init__(**kwargs)
+        self.w_table = 800
+        self.h_table = 800
         self.size_hint = None, None
-        self.size = (800,800)
-        self.bind(pos = self.refresh)
-        self.bind(size = self.refresh)
+        self.size = (self.w_table, self.h_table)
         self.createCards(10)
         
     def createCards(self, u):
@@ -38,21 +41,26 @@ class CardSpace(RelativeLayout):
         bg = constant_color_background
         with self.canvas.before:
             Color(bg['r'], bg['g'], bg['b'], bg['a'])
-            self.bg = Rectangle(pos = (0,0), size = self.size)
+            self.table_background = Rectangle(pos = (0,0), size = self.size)
+        self.bind(on_pos = self.refresh)
+        self.bind(on_size = self.refresh)
+        
+
         # draw the cards
         w = 10 * u
         h = 15 * u
         # add 1 card on the pick, hidden
-        card_pick = Card(0,0,"0122", u, u, u)
+        card_pick = Card(0,0,"0122", u, pos=(u,u), size=(h,w))
         self.add_widget(card_pick)
         # add 12 cards on the table and 1 card on the pick
         for i in range(0,3):
             for j in range(0,3):
                 code = str(randint(0,2)) + str(randint(0,2)) \
                      + str(randint(0,2)) + str(randint(0,2))
-                print("BOGUS: code = ", code)
-                card = Card(i,j,code,u+i*(u+w),2*u+(j+1)*(u+h), u)
-                card.show()
+                print("BOGUS: code = ", code, u+i*(u+w),2*u+(j+1)*(u+h))
+                card = Card(i,j,code, u, pos = (u+i*(u+w), 2*u+(j+1)*(u+h)), size = (w, h))
+                card.visible = True
+                card.refresh()
                 self.add_widget(card)
         for cc in self.children:
             print("BOGUS: ", cc)
@@ -102,6 +110,7 @@ class CardSpace(RelativeLayout):
         """
 
     def refresh(self):
+        print("BOGUS 50: refresh")
         # compute u
         w = float(self.width)
         h = float(self.height)

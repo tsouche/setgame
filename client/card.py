@@ -37,6 +37,9 @@ def addsymbol(dest_widget,x,y,w,h,c,s,f):
         - shape (0 = rectangle, 1 = ellipse, 2 = diamond)
         - filling (0 = empty, 1 = half-filled, 2 = full)
         """
+        # relocate the symbol into the destination widget
+        x += dest_widget.x
+        y += dest_widget.y
         # choose the color
         if c == constant_value_red:
             clf = constant_color_red
@@ -132,7 +135,7 @@ class Card(Widget):
     visible = BooleanProperty()
     selected = BooleanProperty()
             
-    def __init__(self, ic, jc, card_code, x, y, u, **kwargs):
+    def __init__(self, ic, jc, card_code, u, **kwargs):
         # filepath = "/data/code/setgame/client/images/"
         filepath = "/data/code/setgame/client/images/"
         super(Card, self).__init__(**kwargs)
@@ -145,17 +148,12 @@ class Card(Widget):
         self.j = jc
         self.code = card_code
         self.filename = filepath + self.code + ".png"
-        self.pos = (x,y)
-        self.width = 10 * u
-        self.height = 15 * u
+        #self.pos_hint = (x,y)
+        #self.width = 10 * u
+        #self.height = 15 * u
         self.visible = False
         self.selected = False
-        # bind the card to its status ('visible' or selected')
-        self.bind(visible = self.refresh)
-        self.bind(selected = self.refresh)
-        # bind the card to its position
-        self.bind(pos = self.refresh)
-        self.bind(size = self.refresh)
+        self.refresh()
         
     def refresh(self, *args, **kwargs):
         """
@@ -174,14 +172,14 @@ class Card(Widget):
         # draw the background
         with self.canvas.before:
             Color(bg['r'], bg['g'], bg['b'], bg['a'])
-            self.background = Rectangle(pos = self.center, size = self.size)
+            self.background = Rectangle(pos = self.pos, size = self.size)
 
         # draw the card
         if self.visible:
             with self.canvas:
                 # the card is visible (face up): we draw it
                 Color(cd['r'], cd['g'], cd['b'], cd['a'])
-                self.cardShape = RoundedRectangle(pos = self.center, 
+                self.cardShape = RoundedRectangle(pos = self.pos, 
                     size = self.size, radius = [u,])
 
             # read the characteristics of the card from the card code
