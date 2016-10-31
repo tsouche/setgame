@@ -126,7 +126,9 @@ def addsymbol(dest_widget,x,y,w,h,c,s,f):
             return {'status': "ko", 'reason': "invalid shape code"}
             
 class Card(Widget):
-
+    """
+    This Class delivers the graphical representation of a Set card. 
+    """
     unit = NumericProperty()
     i = BoundedNumericProperty(0, min=0, max=4)
     j = BoundedNumericProperty(0, min=0, max=3)
@@ -208,14 +210,21 @@ class Card(Widget):
                     Color(constant_color_card)
                     RoundedBox(pos = (0,0), size = (10*self.unit, 15*self.unit),
                         radius = (self.unit), width = self.unit/3)
-                """    
+                """
+            if self.selected:
+                with self.canvas.after:  
+                    # show a line around the card if it is selected
+                    hl = constant_color_highlight
+                    Color(hl['r'], hl['g'], hl['b'], hl['a'])
+                    Line(rounded_rectangle=(self.x, self.y, self.width, self.height, u), 
+                         width = u/3)
         else:
             # the card is not visible: we display the card back
             with self.canvas:
                 Color(bk['r'], bk['g'], bk['b'], bk['a'])
                 #background_image = Image('./Images/card_back.jpg').texture
                 #self.cardShape = RoundedRectangle(pos = self.center, size = self.size, radius = u, texture = background_image)
-                self.cardShape = RoundedRectangle(pos = self.center, size = self.size, radius = [u,])
+                self.cardShape = RoundedRectangle(pos = self.pos, size = self.size, radius = [u,])
                 
         # and trigger a refreshed draw !
         self.canvas.ask_update()
@@ -249,10 +258,10 @@ class Card(Widget):
         self.visible = False
 
     def select(self):
-        self.selected = True
-
-    def unselect(self):
-        self.selected = False
+        """
+        This method invert the 'selected' boolean and triggers a refresh.
+        """
+        self.selected = (self.selected == True)
         
 
 

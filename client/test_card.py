@@ -31,7 +31,7 @@ class CardSpace(RelativeLayout):
         print("BOGUS 00: create the layout")
         super(CardSpace, self).__init__(**kwargs)
         self.w_table = 800
-        self.h_table = 800
+        self.h_table = 900
         self.size_hint = None, None
         self.size = (self.w_table, self.h_table)
         self.createCards(10)
@@ -50,16 +50,19 @@ class CardSpace(RelativeLayout):
         w = 10 * u
         h = 15 * u
         # add 1 card on the pick, hidden
-        card_pick = Card(0,0,"0122", u, pos=(u,u), size=(h,w))
+        card_pick = Card(0,0,"0122", u, pos = (u,u), size = (h,w))
         self.add_widget(card_pick)
         # add 12 cards on the table and 1 card on the pick
-        for i in range(0,3):
+        for i in range(0,4):
             for j in range(0,3):
                 code = str(randint(0,2)) + str(randint(0,2)) \
                      + str(randint(0,2)) + str(randint(0,2))
                 print("BOGUS: code = ", code, u+i*(u+w),2*u+(j+1)*(u+h))
-                card = Card(i,j,code, u, pos = (u+i*(u+w), 2*u+(j+1)*(u+h)), size = (w, h))
+                card = Card(i,j,code, u, pos = (u+i*(u+w), 3*u + w + j*(u+h)), 
+                            size = (w, h))
                 card.visible = True
+                if (i+j)%4 == 0:
+                    card.selected = True
                 card.refresh()
                 self.add_widget(card)
         for cc in self.children:
@@ -116,6 +119,7 @@ class CardSpace(RelativeLayout):
         h = float(self.height)
         u = int(min( w / 45.0, h / 65.0))
         u = max(u, 10)
+        self.canvas.before.table_background.size = self.size
         # clean the existing drawings
         self.canvas.before.clean()
         self.clear_widgets()
