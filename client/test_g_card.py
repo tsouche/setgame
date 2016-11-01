@@ -17,7 +17,7 @@ from kivy.properties import NumericProperty
 
 from client.constants import constant_color_background, constant_color_card
 from random import randint
-from client.card import Card
+from client.g_card import Card
 
 
 

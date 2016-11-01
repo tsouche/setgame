@@ -1,3 +1,3 @@
-import client.card
+import client.g_card
 
 
