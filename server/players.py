@@ -13,7 +13,9 @@ from constants import oidIsValid
 class Players:
     """
     This class manages the players: it stores and manipulate
+    - _id = playerID, unique identifyer for the player
     - nickname (identifying uniquely the player)
+    - hash = the hash of the player's password
     - totalScore = accumulated points over time
     - gameID = id of the game in which the player is currently engaged
     The data are stored in a MongoDB.  
@@ -26,12 +28,14 @@ class Players:
         # initiates the players collections and the 'in memory' list
         self.playersColl = getPlayersColl()
         
-    def getPlayerID(self, nickname):
-        playerID = None
+    def getPlayerID(self, nickname, playerHash):
         pp = self.playersColl.find_one({'nickname': nickname})
         if pp != None:
-            playerID = pp['_id']
-        return playerID
+            if pp['hash'] == playerHash:
+                result = {'status': "ok", 'playerID': pp['_id']}
+            else:
+                result = {'status': "ko", 'reason': "invalid nickname or hash"}
+        return result
 
     def playerIDisValid(self, playerID):
         """
