@@ -13,12 +13,22 @@ from constants import oidIsValid
 class Players:
     """
     This class manages the players: it stores and manipulate
-    - _id = playerID, unique identifyer for the player
+    - _id = playerID, unique identifier for the player. Contrary to the 
+        password, this is public information.
     - nickname (identifying uniquely the player)
-    - hash = the hash of the player's password
+    - passwordHash = the hash of the player's password, which is provided when 
+        the player is created
     - totalScore = accumulated points over time
     - gameID = id of the game in which the player is currently engaged
     The data are stored in a MongoDB.  
+    
+    NB: the purpose of storing the player's password hash in the DB is not to 
+        authenticate every call to the APIs but to enable a client to check 
+        that the password entered locally at client level is the right one, and
+        so allow the player to call on the server's API via the client.
+        To date, it is a weak security approach which does not aim at securing 
+        the access to the server or the DB, but to enable the client to 
+        properly log in a player.
     """
         
     def __init__(self):
@@ -28,15 +38,31 @@ class Players:
         # initiates the players collections and the 'in memory' list
         self.playersColl = getPlayersColl()
         
-    def getPlayerID(self, nickname, playerHash):
+    def getPlayerID(self, nickname):
         pp = self.playersColl.find_one({'nickname': nickname})
         if pp != None:
-            if pp['hash'] == playerHash:
-                result = {'status': "ok", 'playerID': pp['_id']}
-            else:
-                result = {'status': "ko", 'reason': "invalid nickname or hash"}
+            result = {'status': "ok", 'playerID': pp['_id']}
+        else:
+            result = {'status': "ko", 'reason': "invalid nickname"}
         return result
 
+    def checkLogin(self, nickname, passwordHash):
+        """
+        This method enable a client to remotely check the validity of the 
+        password which the player entered to log into the client.
+        """
+        pp = self.playersColl.find_one({'nickname': nickname})
+        if pp != None:
+            if passwordHash == pp['passwordHash']:
+                result = {'status': "ok", 'playerID': pp['_id']}
+            else:
+                result = {'status': "ko", 'reason': "invalid password"}
+        else:
+            result = {'status': "ko", 'reason': "invalid nickname"}
+        return result
+        
+        
+        
     def playerIDisValid(self, playerID):
         """
         This method checks that the playerID is valid (ie. it is a valid 
@@ -91,7 +117,7 @@ class Players:
     def getPlayer(self, playerID):
         """
         If playerID is valid, this method return a dictionary with all player's 
-        details:
+        details (except its password hash):
             { 'playerID': ObjectId, 'nickname': string, 'totalScore': int,
               'gameID': ObjectId }
         Else it will return 'None'.
@@ -122,26 +148,35 @@ class Players:
             players.append(pp)
         return players
 
-    def register(self, nickname):
+    def register(self, nickname, passwordHash):
         """
-        The nickname is mandatory. It must be a unique non-empty string.
-        Returns True if the nickname was succesfuly added to the DB.
+        This method enable to create a new player in the DB with a unique 
+        nickname and the hash of the player's password.
+        
+        The nickname is mandatory, since the method will check that it is a 
+        unique non-empty string.
+        
+        The method returns:
+            - if successful: {'status': "ok", 'nickname': nickname, 'playerID': ObjectID }
+            - if nok: {'status': "ko", 'reason': "invalid nickname"}
         """
         # Checks in the DB that the nickname was not already used. If ok, create
         # the player in the DB.
-        valid = False
         if self.playersColl.find_one({'nickname': nickname}) == None:
             # creates the players in the DB
             playerID = self.playersColl.insert_one({'nickname': nickname, 
+                'passwordHash': passwordHash, 
                 'totalScore': 0, 'gameID': None}).inserted_id
-            valid = playerID
-        return valid
+            result = {'status': "ok", 'nickname': nickname, 'playerID': playerID }
+        else:
+            result = {'status': "ko", 'reason': "invalid nickname"}
+        return result
     
-    def deregister(self, playerID):
+    def deregister(self, playerID, playerHash):
         """
         This method check that the playerID exists, and if so removes it from 
         both the memory and the DB.
-        Returns True if the playerID was succesfuly removed from the DB.
+        Returns True if the playerID was successfully removed from the DB.
         """
         valid = False
         if oidIsValid(playerID):
@@ -149,7 +184,7 @@ class Players:
                 valid = True
         return valid
         
-    def enlist(self, playerID, gameID):
+    def enlist(self, playerID, gameID, playerHash):
         """
         This method receives two ObjectId. If they are valid playerID and 
         gameID, it will store this gameID in the players record, and return
@@ -167,7 +202,7 @@ class Players:
                 result = pp['gameID'] == gameID
         return result
     
-    def delist(self, playerID):
+    def delist(self, playerID, playerHash):
         """
         This method de-enlist the player from any game he would be part of
         (i.e. it overwrites the gameID with 'None').
@@ -183,7 +218,7 @@ class Players:
             result = (pp.modified_count == 1)
         return result
 
-    def delistGame(self, gameID):
+    def delistGame(self, gameID, playerHash):
         """
         This method de-enlists all the players playing the game identified by 
         its gameID (i.e. it overwrites the gameID with 'None').

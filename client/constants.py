@@ -4,6 +4,18 @@ Created on Oct 15, 2016
 @author: thierry
 '''
 
+
+"""
+Data related constant values
+"""
+
+encryption_algorithm = "sha512_crypt"
+backup_file = "./backup.ply"
+
+
+"""
+GUI related constant values
+"""
 constant_nb_cols = 4
 constant_nb_rows = 3
 
