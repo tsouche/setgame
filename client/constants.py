@@ -4,6 +4,18 @@ Created on Oct 15, 2016
 @author: thierry
 '''
 
+
+"""
+Data related constant values
+"""
+
+encryption_algorithm = "sha512_crypt"
+backup_file = "./backup.ply"
+
+
+"""
+GUI related constant values
+"""
 constant_nb_cols = 4
 constant_nb_rows = 3
 
@@ -16,6 +28,8 @@ constant_command_tool_width = 5
 # describe the relative dimensions of the table area
 constant_card_height = 15
 constant_card_width  = 10
+constant_sendset_height = 9
+constant_sendset_width  = 9
 constant_spacing = 1
 constant_padding = 1
 constant_table_width  =  constant_card_width *  constant_nb_cols      \
@@ -40,16 +54,16 @@ constant_value_one     = 0
 constant_value_two     = 1
 constant_value_three   = 2
 
-constant_color_background = (0.0, 0.4, 0.0, 1.0)    # rgba
-constant_color_cardshape  = (1.0, 1.0, 1.0, 0.3)    # rgba
-constant_color_highlight  = (1.0, 0.2, 0.2, 0.6)    # rgba
-constant_color_card       = (1.0, 1.0, 1.0, 1.0)    # rgba
-constant_color_card_back  = (0.0, 0.2, 0.0, 1.0)    # rgba
-constant_color_blue       = (0.0, 0.0, 0.8, 1.0)    # rgba
-constant_color_blue_half  = (0.0, 0.0, 0.8, 0.3)    # rgba
-constant_color_red        = (0.8, 0.0, 0.0, 1.0)    # rgba
-constant_color_red_half   = (0.8, 0.0, 0.0, 0.3)    # rgba
-constant_color_green      = (0.0, 0.8, 0.0, 1.0)    # rgba
-constant_color_green_half = (0.0, 0.8, 0.0, 0.3)    # rgba
+constant_color_background = {'r': 0.0, 'g': 0.4, 'b':0.0, 'a': 1.0}
+constant_color_cardshape  = {'r': 1.0, 'g': 1.0, 'b':1.0, 'a': 0.3}
+constant_color_highlight  = {'r': 1.0, 'g': 0.1, 'b':0.1, 'a': 1.0}
+constant_color_card       = {'r': 1.0, 'g': 1.0, 'b':1.0, 'a': 1.0}
+constant_color_card_back  = {'r': 0.0, 'g': 0.2, 'b':0.0, 'a': 1.0}
+constant_color_blue       = {'r': 0.0, 'g': 0.0, 'b':0.8, 'a': 1.0}
+constant_color_blue_half  = {'r': 0.0, 'g': 0.0, 'b':0.8, 'a': 0.3}
+constant_color_red        = {'r': 0.8, 'g': 0.0, 'b':0.0, 'a': 1.0}
+constant_color_red_half   = {'r': 0.8, 'g': 0.0, 'b':0.0, 'a': 0.3}
+constant_color_green      = {'r': 0.0, 'g': 0.6, 'b':0.0, 'a': 1.0}
+constant_color_green_half = {'r': 0.0, 'g': 0.6, 'b':0.0, 'a': 0.3}
 
 
