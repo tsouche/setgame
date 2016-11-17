@@ -5,10 +5,17 @@ Created on August 8th 2016
 
 from bson.objectid import ObjectId
 from pymongo import ReturnDocument
+from passlib.context import CryptContext
 
 from connmongo import getPlayersColl
 from constants import oidIsValid
+from client.constants import encryption_algorithm
 
+"""
+BEWARE: securing the pairing of the client with the server is not implemented
+at this stage, so we assume that all client request are VALID (i.e. the client
+is entitled to push such a request to the server).
+"""
 
 class Players:
     """
@@ -37,31 +44,122 @@ class Players:
         """
         # initiates the players collections and the 'in memory' list
         self.playersColl = getPlayersColl()
+        """
+        self.context = CryptContext(schemes=[encryption_algorithm])
+        """
         
     def getPlayerID(self, nickname):
         pp = self.playersColl.find_one({'nickname': nickname})
         if pp != None:
             result = {'status': "ok", 'playerID': pp['_id']}
         else:
-            result = {'status': "ko", 'reason': "invalid nickname"}
+            result = {'status': "ko", 'reason': "unknown nickname"}
         return result
 
-    def checkLogin(self, nickname, passwordHash):
+    def getNickname(self, playerID):
         """
-        This method enable a client to remotely check the validity of the 
-        password which the player entered to log into the client.
+        This method return the nickname of the player.
+        We assume that the playerID is a valid ObjectId.
         """
-        pp = self.playersColl.find_one({'nickname': nickname})
-        if pp != None:
-            if passwordHash == pp['passwordHash']:
-                result = {'status': "ok", 'playerID': pp['_id']}
+        if oidIsValid(playerID):
+            pp = self.playersColl.find_one({'_id': playerID})
+            if pp != None:
+                result = {'status': "ok", 'nickname': pp['nickname']}
             else:
-                result = {'status': "ko", 'reason': "invalid password"}
+                result = {'status': "ko", 'reason': "unknown playerID"}
         else:
-            result = {'status': "ko", 'reason': "invalid nickname"}
+            result = {'status': "ko", 'reason': "invalid playerID"}
+        return result
+    
+    def getHash(self, playerID):
+        """
+        This method enable a client to retrieve the password hash, so that it 
+        will locally check the password entered by the player to log into the 
+        client.
+        """
+        if oidIsValid(playerID):
+            pp = self.playersColl.find_one({'_id': playerID})
+            if pp != None:
+                result = {'status': "ok", 'passwordHash': pp['passwordHash']}
+            else:
+                result = {'status': "ko", 'reason': "unknown playerID"}
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
         return result
         
-        
+    def getGameID(self, playerID):
+        """
+        This method returns:
+            - the gameID if the player exist and is part of a game,
+            - None if the playerID is invalid, or does not exist in the DB, 
+                or is not attending a game.
+        """
+        if oidIsValid(playerID):
+            pp = self.playersColl.find_one({'_id': playerID})
+            if pp != None:
+                result = {'status': "ok", 'gameID': pp['gameID']}
+            else:
+                result = {'status': "ko", 'reason': "unknown playerID"}
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
+        return result
+            
+    def getPlayer(self, playerID):
+        """
+        If playerID is valid, this method return a dictionary with all player's 
+        details (except its password hash):
+            { 'playerID': ObjectId, 'nickname': string, 'totalScore': int,
+              'gameID': ObjectId }
+        Else it will return 'None'.
+        """
+        if oidIsValid(playerID):
+            pp_db= self.playersColl.find_one({'_id': playerID})
+            if pp_db != None:
+                result = { 'status': "ok",
+                    'playerID': pp_db['_id'],
+                    'nickname': pp_db['nickname'], 
+                    'passwordHash': pp_db['passwordHash'],
+                    'totalScore': pp_db['totalScore'],
+                    'gameID': pp_db['gameID'] }
+            else:
+                result = {'status': "ko", 'reason': "unknown playerID"}
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
+        return result
+    
+    def getPlayers(self):
+        """
+        This method return the whole list of players, under the form:
+            { 'playerID': ObjectId, 'nickname': string, 'totalScore': int,
+              'gameID': ObjectId }
+        """
+        players_dict = self.playersColl.find({})
+        players =  []
+        for pp_db in players_dict:
+            pp = { 'playerID': pp_db['_id'],
+                   'nickname': pp_db['nickname'],
+                   'passwordHash': pp_db['passwordHash'],
+                   'totalScore': pp_db['totalScore'],
+                   'gameID': pp_db['gameID'] }
+            players.append(pp)
+        return players
+
+    def changeHash(self, playerID, newHash):
+        """
+        This method enable a remote client to update the hash in case the player
+        need to change its password. 
+        """
+        if oidIsValid(playerID):
+            pp = self.playersColl.find_one({'_id': playerID})
+            if pp != None:
+                self.playersColl.update_one({'_id': playerID}, 
+                    {'$set': {'passwordHash': newHash}})
+                result = {'status': "ok", 'passwordHash': newHash}
+            else:
+                result = {'status': "ko", 'reason': "unknown playerID"}
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
+        return result
         
     def playerIDisValid(self, playerID):
         """
@@ -83,70 +181,17 @@ class Players:
         'None').
         """
         if oidIsValid(playerID):
-            pp = self.playersColl.find_one({'_id': playerID, 'gameID': None})
+            pp = self.playersColl.find_one({'_id': playerID})
+            if pp == None:
+                result = {'status': "ko", 'reason': "unknown playerID"}
+            else:
+                if pp['gameID'] == None:
+                    result = {'status': "ok"}
+                else:
+                    result = {'status': "ko", 'reason': "player is not available"}
         else:
-            pp = None
-        return (pp != None)
-
-    def getGameID(self, playerID):
-        """
-        This method returns:
-            - the gameID if the player exist and is part of a game,
-            - None if the playerID is invalid, or does not exist in the DB, 
-                or is not attending a game.
-        """
-        result = None
-        if oidIsValid(playerID):
-            pp = self.playersColl.find_one({'_id': playerID})
-            if pp != None:
-                return pp['gameID']
+            result = {'status': "ko", 'reason': "invalid playerID"}
         return result
-            
-    def getNickname(self, playerID):
-        """
-        This method return the nickname of the player.
-        We assume that the playerID is a valid ObjectId.
-        """
-        result = None
-        if oidIsValid(playerID):
-            pp = self.playersColl.find_one({'_id': playerID})
-            if pp != None:
-                result = pp['nickname']
-        return result
-    
-    def getPlayer(self, playerID):
-        """
-        If playerID is valid, this method return a dictionary with all player's 
-        details (except its password hash):
-            { 'playerID': ObjectId, 'nickname': string, 'totalScore': int,
-              'gameID': ObjectId }
-        Else it will return 'None'.
-        """
-        result = None
-        if oidIsValid(playerID):
-            pp_db= self.playersColl.find_one({'_id': playerID})
-            if pp_db != None:
-                result = { 'playerID': pp_db['_id'],
-                    'nickname': pp_db['nickname'], 
-                    'totalScore': pp_db['totalScore'],
-                    'gameID': pp_db['gameID'] }
-        return result
-    
-    def getPlayers(self):
-        """
-        This method return the whole list of players, under the form:
-            { 'playerID': ObjectId, 'nickname': string, 'totalScore': int,
-              'gameID': ObjectId }
-        """
-        players_dict = self.playersColl.find({})
-        players =  []
-        for pp_db in players_dict:
-            pp = { 'playerID': pp_db['_id'],
-                   'nickname': pp_db['nickname'],
-                   'totalScore': pp_db['totalScore'],
-                   'gameID': pp_db['gameID'] }
-            players.append(pp)
-        return players
 
     def register(self, nickname, passwordHash):
         """
@@ -155,6 +200,9 @@ class Players:
         
         The nickname is mandatory, since the method will check that it is a 
         unique non-empty string.
+        
+        The server cannot check the validity of the hash: "garbage in, garbage 
+        out..."
         
         The method returns:
             - if successful: {'status': "ok", 'nickname': nickname, 'playerID': ObjectID }
@@ -172,7 +220,7 @@ class Players:
             result = {'status': "ko", 'reason': "invalid nickname"}
         return result
     
-    def deregister(self, playerID, playerHash):
+    def deregister(self, playerID):
         """
         This method check that the playerID exists, and if so removes it from 
         both the memory and the DB.
@@ -184,25 +232,28 @@ class Players:
                 valid = True
         return valid
         
-    def enlist(self, playerID, gameID, playerHash):
+    def enlist(self, playerID, gameID):
         """
         This method receives two ObjectId. If they are valid playerID and 
         gameID, it will store this gameID in the players record, and return
-        this gameID:  te player is enlist on the game.
+        this gameID:  the player is enlist on the game.
         If it is not possible (for instance, the player is already part of a 
         game), it will return None.
         """
-        result = None
         if oidIsValid(playerID) and oidIsValid(gameID):
             pp = self.playersColl.find_one_and_update(
                 {'_id': playerID, 'gameID': None},
                 {'$set': {'gameID': gameID}}, 
                 return_document=ReturnDocument.AFTER)
             if pp != None:
-                result = pp['gameID'] == gameID
+                result = {'status': "ok", 'gameID': gameID}
+            else:
+                result = {'status': "ko", 'reason': "unknown playerID"}
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
         return result
     
-    def delist(self, playerID, playerHash):
+    def delist(self, playerID):
         """
         This method de-enlist the player from any game he would be part of
         (i.e. it overwrites the gameID with 'None').
@@ -218,7 +269,7 @@ class Players:
             result = (pp.modified_count == 1)
         return result
 
-    def delistGame(self, gameID, playerHash):
+    def delistGame(self, gameID):
         """
         This method de-enlists all the players playing the game identified by 
         its gameID (i.e. it overwrites the gameID with 'None').
@@ -250,7 +301,12 @@ class Players:
             list_pid = []
             for pp in self.playersColl.find({'gameID': gameID}):
                 list_pid.append(pp['_id'])
-            result = list_pid
+            if (len(pp) == 0):
+                result = {'status': "ko", 'reason': "unknown gameID"}
+            else:
+                result = {'status': "ok", 'list': list_pid}
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
         return result
         
     def updateTotalScore(self, playerID, points):
@@ -278,6 +334,7 @@ class Players:
             playerDict = {}
             playerDict['playerID'] = str(pp['_id'])
             playerDict['nickname'] = pp['nickname']
+            playerDict['passwordHash'] = pp['passwordHash']
             playerDict['totalScore'] = str(pp['totalScore'])
             playerDict['gameID'] = str(pp['gameID'])
             playersDict['players'].append(playerDict)
@@ -297,6 +354,7 @@ class Players:
                 for pp in objDict['players']:
                     temp = {'_id': ObjectId(pp['playerID']),
                         'nickname': pp['nickname'],
+                        'passwordHash': pp['passwordHash'],
                         'totalScore': int(pp['totalScore'])}
                     if pp['gameID'] == "None":
                         temp['gameID'] = None

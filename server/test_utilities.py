@@ -6,7 +6,9 @@ This modules contains few constants which are useful to the Set gale.
 '''
 
 from bson.objectid import ObjectId
+from passlib.context import CryptContext
 
+from client.constants import encryption_algorithm
 from cardset import CardSet
 from constants import cardsMax
 from step import Step
@@ -24,15 +26,41 @@ def vprint(arg="\n"):
 
 def vbar():
     vprint("------------------------------------------------------------------------")
+
+def encryptPassword(password):
+    """
+    This function encrypts a password and returns a hash.
+    """
+    context = CryptContext(schemes=[encryption_algorithm])
+    return context.encrypt(password)
+    
+def checkPassword(password, passwordHash):
+    """
+    This function decrypts a passwordHash and returns the password.
+    """
+    context = CryptContext(schemes=[encryption_algorithm])
+    return context.verify(password, passwordHash)
     
 def refPlayersDict():
     return [
-            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald", 'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845a'},
-            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey", 'totalScore': '30', 'gameID': 'None'},
-            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri", 'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845b'},
-            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi", 'totalScore': '0', 'gameID': '57bf224df9a2f36dd206845b'},
-            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou", 'totalScore': '33', 'gameID': '57bf224df9a2f36dd206845b'},
-            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy", 'totalScore': '45', 'gameID': '57bf224df9a2f36dd206845a'}
+            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald", 
+             'passwordHash': "$6$rounds=656000$9J3qlvOuPqVAB1h3$29401w.r.1qLeLqGwTklcQ5oixPJGXyYrZetUnV3WdjGEeqAbEZE1MSXtUWZ6cI1u/2.YYH9/.9BlWs29deWM.",
+             'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845a'},
+            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey", 
+             'passwordHash': "$6$rounds=656000$x184Sb1.AgeFH09L$xMTg28wbdIx1CFTxw5H7oa2MRTkyw4wwdNElEYlxwlovVKwh0vbPIm8rN4FKyUQwJQHEbnlvWJZzqL1HLYkbu0",
+             'totalScore': '30', 'gameID': 'None'},
+            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri", 
+             'passwordHash': "$6$rounds=656000$bcxUoDEZ1EoOAHHb$fmljI4QsoUxQSrevuUMO4jD5mRj3TnaeRj87w3dkjcEHjc9iTqXyxUrmRz4gx7y0FeAg2UD.Ufi/4dWjBHfbL1",
+             'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845b'},
+            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi", 
+             'passwordHash': "$6$rounds=656000$21XpxSD3UWiR/GDG$8TMRQm1SlXy7h.I0mq6i.LZocPOZCbofjwD/hF2P4kQbXmaRfL03PYpXXTU1jc6afQSiVYMqToFm4OXgCVWGt0",
+             'totalScore': '0', 'gameID': '57bf224df9a2f36dd206845b'},
+            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou", 
+             'passwordHash': "$6$rounds=656000$VB0Nc3c12tpo90En$W2QT/xYn/opvWhDJfJ2bM9wIB1CT6K2Wevlb5qGWdU85.dgu4NObmJxJGMVwelhx/NSBn66.VWjQYXgopAEyn/",
+             'totalScore': '33', 'gameID': '57bf224df9a2f36dd206845b'},
+            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy", 
+             'passwordHash': "$6$rounds=656000$iLID3I10RENiuZPy$Rmo48wznR9Yqb6i9/SNDUa.hslEyycZ2UYZV0bX6ChdtSA5MGCmN3BrF1xoZG4TMRzEmwmppY/W3.ZzT4ogRL/",
+             'totalScore': '45', 'gameID': '57bf224df9a2f36dd206845a'}
             ]
 
 def refPlayers(fill_none = False):
@@ -51,6 +79,8 @@ def refPlayers(fill_none = False):
             gameID = ObjectId(gameID)
         list_pp.append({'playerID': ObjectId(pp_dict['playerID']),
                         'nickname': pp_dict['nickname'], 
+                        #'password': pp_dict['password'],
+                        'passwordHash': pp_dict['passwordHash'],
                         'totalScore': int(pp_dict['totalScore']), 
                         'gameID': gameID
                         })
