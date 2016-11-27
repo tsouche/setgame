@@ -66,7 +66,7 @@ class Backend():
         # returns status update answer
         return {'status': "reset"}
                 
-    def registerPlayer(self, nickname):
+    def registerPlayer(self, nickname, passwordHash):
         """
         This method registers new players so that they can play and connect 
         to a game with their nickname (must be unique) or playerID and then 
@@ -86,11 +86,12 @@ class Backend():
         # It will try to register a new player via 'players.addPlayer'.
         #     - If the answer is True, it returns the playerID 
         #     - if the answer is False, it returns 'Failed'.
-        if self.players.register(nickname):
-            playerID = self.players.getPlayerID(nickname)
-            result = {'status': "ok", 'playerID': str(playerID)}
+        answer = self.players.register(nickname, passwordHash)
+        if answer['status'] == "ok":
+            playerID = self.players.getPlayerID(nickname)['playerID']
+            result = {'status': "ok", 'playerID': playerID}
         else:
-            result = {'status': "ko"}
+            result = {'status': "ko", 'reason': answer['reason']}
         return result
 
     def enlistPlayer(self, playerID):

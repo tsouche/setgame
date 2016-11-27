@@ -15,7 +15,7 @@ from test_utilities import vprint, vbar, encryptPassword, checkPassword
 
 def player_format_DB(p):
     """
-    This function changes the 'playerID' field into a '_id' field in order to 
+    This function changes the 'playerID' field into a '_id' field in order to
     comply with native MongoDB field structure.
     """
     p_db = {}
@@ -25,14 +25,14 @@ def player_format_DB(p):
     p_db['totalScore']   = p['totalScore']
     p_db['gameID']       = p['gameID']
     return p_db
-    
+
 class TestPlayers(unittest.TestCase):
     """
     This class is used to unit-test the Players class.
-    The setup method will load test data in the database, and the teardown 
+    The setup method will load test data in the database, and the teardown
     method will clean the database.
     """
-    
+
     def setUp(self, gameIDNone = True):
         # Connection to the MongoDB server / players collection
         playersColl = getPlayersColl()
@@ -40,29 +40,29 @@ class TestPlayers(unittest.TestCase):
         playersColl.drop()
         for pp in refPlayers():
             if gameIDNone:
-                playersColl.insert_one({'_id': pp['playerID'], 
+                playersColl.insert_one({'_id': pp['playerID'],
                                 'nickname': pp['nickname'],
                                 #'password': pp['password'],
                                 'passwordHash': pp['passwordHash'],
-                                'totalScore': pp['totalScore'], 
+                                'totalScore': pp['totalScore'],
                                 'gameID': None})
             else:
-                playersColl.insert_one({'_id': pp['playerID'], 
+                playersColl.insert_one({'_id': pp['playerID'],
                                 'nickname': pp['nickname'],
                                 #'password': pp['password'],
                                 'passwordHash': pp['passwordHash'],
-                                'totalScore': pp['totalScore'], 
+                                'totalScore': pp['totalScore'],
                                 'gameID': pp['gameID']})
             #print("bogus: password verify = ", checkPassword(pp['password'], pp['passwordHash']))
             #print("bogus: ", pp['nickname'], pp['password'], encryptPassword(pp['password']))
         return playersColl
-        
+
     def teardown(self, players):
         players.playersColl.drop()
-    
+
     def test__init__(self):
         """
-        Test players.__init__ 
+        Test players.__init__
         """
         # setup the test data
         self.setUp()
@@ -90,7 +90,7 @@ class TestPlayers(unittest.TestCase):
         self.assertEqual(pp['nickname'], "Daisy")
         # end of the test
         self.teardown(players)
-        
+
     def test_getPlayerID(self):
         """
         Test players.getPlayerID
@@ -230,22 +230,22 @@ class TestPlayers(unittest.TestCase):
         vbar()
         vprint("We test the validity of several playerIDs and compare the result with")
         vprint("the reference test data:")
-        # test with the valid IDs in the DB 
+        # test with the valid IDs in the DB
         for pp in refPlayers():
             playerID_ref = pp['playerID']
             # test if the 'reference' playerID are recognized
             result = players.playerIDisValid(playerID_ref)
-            vprint("    " + pp['nickname'] + ": playerID = " + str(playerID_ref) 
+            vprint("    " + pp['nickname'] + ": playerID = " + str(playerID_ref)
                    + " is considered valid : " + str(result))
             self.assertTrue(result)
         # now test with wrong IDs
-        invalid_IDs = [ 
+        invalid_IDs = [
             {'playerID': '57b9a303124e9b13e6759bda'}, {'playerID': '57b9a003124e9b13e6751bdb'},
             {'playerID': '57b9a003124e9b13e6757bdc'}, {'playerID': '57b9fffb124e9b2e056a765c'},
             {'playerID': '57b9bffb124e9b2eb56a765d'}, {'playerID': '5748529a124e9b6187cf6c2a'} ]
         for pID in invalid_IDs:
             result = players.playerIDisValid(pID['playerID'])
-            vprint("    playerID " + str(pID['playerID']) + 
+            vprint("    playerID " + str(pID['playerID']) +
                    " is considered invalid : " + str(result))
             self.assertFalse(result)
         # end of the test
@@ -326,7 +326,7 @@ class TestPlayers(unittest.TestCase):
         result = players.playerIsAvailableToPlay("stupid")
         vprint("      Invalid playerID: " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "invalid playerID")
-        
+
         # end of the test
         self.teardown(players)
 
@@ -435,7 +435,7 @@ class TestPlayers(unittest.TestCase):
         self.assertTrue(valid)
         # end of the test
         self.teardown(players)
-        
+
     def test_register(self):
         """
         Test players.register
@@ -494,7 +494,7 @@ class TestPlayers(unittest.TestCase):
 
     def test_enlist(self):
         """
-        Test players.enlist 
+        Test players.enlist
         """
         # setup the test data
         self.setUp()
@@ -545,10 +545,10 @@ class TestPlayers(unittest.TestCase):
             vprint("      " + pp['nickname'] + " - gameID: " + str(pp['gameID']))
         # end of the test
         self.teardown(players)
-            
+
     def test_delistPlayer(self):
         """
-        Test players.delistPlayer 
+        Test players.delistPlayer
         """
         # setup the test data
         self.setUp()
@@ -595,10 +595,10 @@ class TestPlayers(unittest.TestCase):
             vprint("      " + pp['nickname'] + " - gameID: " + str(pp['gameID']))
         # end of the test
         self.teardown(players)
-    
+
     def test_delistGame(self):
         """
-        Test players.delistGame 
+        Test players.delistGame
         """
         # setup the test data
         self.setUp()
@@ -632,7 +632,7 @@ class TestPlayers(unittest.TestCase):
             vprint("      " + pp['nickname'] + " - gameID: " + str(pp['gameID']))
         # end of the test
         self.teardown(players)
-    
+
     def test_inGame(self):
         """
         Test players.inGame
@@ -671,10 +671,10 @@ class TestPlayers(unittest.TestCase):
             vprint("      " + name + " (" + str(pid) + ")")
         # end of the test
         self.teardown(players)
-            
+
     def test_updateTotalScore(self):
         """
-        Test players.updateTotalScore 
+        Test players.updateTotalScore
         """
         # setup the test data
         self.setUp()
@@ -693,10 +693,10 @@ class TestPlayers(unittest.TestCase):
             vprint("      " + pp['nickname'] + " - totalScore: " + str(pp['totalScore']))
         # end of the test
         self.teardown(players)
-            
+
     def test_serialize(self):
         """
-        Test players.serialize 
+        Test players.serialize
         """
         # build the reference data
         target = {'__class__': 'SetPlayers'}
@@ -722,10 +722,10 @@ class TestPlayers(unittest.TestCase):
         self.assertTrue(playersDict_equality(target, result))
         # end of the test
         self.teardown(players)
-        
+
     def test_deserialize(self):
         """
-        Test players.deserialize 
+        Test players.deserialize
         """
         # setup the test data
         self.setUp()

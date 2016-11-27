@@ -53,10 +53,10 @@ class test_Backend(unittest.TestCase):
         backend.gameFinished = True
         vprint("    - gameStarter :" + str(backend.gameStarted))
         vprint("    - gameFinished:" + str(backend.gameFinished))
-        backend.players.register("Superman")
-        backend.players.register("Ironman")
-        backend.players.register("Spiderman")
-        backend.players.register("Batman")
+        backend.players.register("Superman", "hash_superman")
+        backend.players.register("Ironman", "hash_ironman")
+        backend.players.register("Spiderman", "hash_spiderman")
+        backend.players.register("Batman", "hash_batman")
         #coll = getPlayersColl()
         #for pp in coll.find({}):
         #    vprint(pp)
@@ -95,17 +95,19 @@ class test_Backend(unittest.TestCase):
         # register reference players
         vprint("Initiate a backend and register reference players:")
         for pp in refPlayers(True):
-            result = backend.registerPlayer(pp['nickname'])
+            result = backend.registerPlayer(pp['nickname'], pp['passwordHash'])
             self.assertEqual(result['status'], "ok")
-            vprint("    - register " + pp['nickname'] + ": " + result['playerID'])
+            vprint("    - register " + pp['nickname'] + ": " + str(result['playerID']))
             pp_db = getPlayersColl().find_one({'nickname': pp['nickname']})
-            self.assertEqual(result['playerID'], str(pp_db['_id']))
+            self.assertEqual(str(result['playerID']), str(pp_db['_id']))
         # re-register the same players => should fail
         vprint("Re-register the same players: it should fail")
         for pp in refPlayers(True):
-            result = backend.registerPlayer(pp['nickname'])
-            vprint("    - register " + pp['nickname'] + ": " + result['status'])
+            result = backend.registerPlayer(pp['nickname'], pp['passwordHash'])
+            vprint("    - register " + pp['nickname'] + ": " + result['status'] +
+                   " - " + result['reason'])
             self.assertEqual(result['status'], "ko")
+            self.assertEqual(result['reason'], "invalid nickname")
         
     def test_enlistPlayer(self):
         """
