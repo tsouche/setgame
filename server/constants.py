@@ -21,6 +21,8 @@ version = 'v100'
 setserver_address = 'localhost'
 setserver_port = 8080
 
+encryption_algorithm = "sha512_crypt"
+
 from bson.objectid import ObjectId
 
 

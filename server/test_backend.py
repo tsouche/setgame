@@ -100,7 +100,7 @@ class test_Backend(unittest.TestCase):
             self.assertEqual(result['status'], "ok")
             vprint("    - register " + pp['nickname'] + ": " + str(result['playerID']))
             pp_db = getPlayersColl().find_one({'nickname': pp['nickname']})
-            self.assertEqual(str(result['playerID']), str(pp_db['_id']))
+            self.assertEqual(result['playerID'], str(pp_db['_id']))
         # re-register the same players => should fail
         vprint("Re-register the same players: it should fail")
         for pp in refPlayers(True):
@@ -588,6 +588,7 @@ class test_Backend(unittest.TestCase):
             for k in range(0,3):
                 setlist[k] = int(setlist[k])
             result = backend.proposeSet(pID, setlist)
+            print("Bogus 34:", result)
             vprint("    - turn " + str(backend.games[i].turnCounter).zfill(2) 
                    + ": " + pnn + " propose " + str(setlist) + " => "
                    + result['status'])

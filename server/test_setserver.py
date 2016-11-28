@@ -5,6 +5,7 @@ Created on August 30th, 2016
 from bson.objectid import ObjectId
 import requests
 import unittest
+import subprocess
 
 from connmongo import getPlayersColl, getGamesColl
 from constants import setserver_address, setserver_port
@@ -27,6 +28,8 @@ def printRefPlayer():
 
 class test_Setserver(unittest.TestCase):
 
+    subprocess.call(['./start_setserver.sh'])
+    
     def setup(self):
         """
         Sets up the test data by launching a server
@@ -72,7 +75,7 @@ class test_Setserver(unittest.TestCase):
         playersColl = getPlayersColl()
         for pp in self.refPlayers:
             p_db = playersColl.find_one({'_id': pp['playerID']})
-            vprint("    Registered " + pp['nickname'] 
+            vprint("     Registered " + pp['nickname'] 
                    + " (" + str(pp['playerID']) + ")")
             self.assertTrue(p_db != None)
 
@@ -229,9 +232,10 @@ class test_Setserver(unittest.TestCase):
         # register several players
         for pp in self.refPlayers:
             nickname = pp['nickname']
+            passwordHash = pp['passwordHash']
             path = _url('/register/' + nickname)
             vprint("We poll " + path)
-            result = requests.get(path)
+            result = requests.get(path, params={'passwordHash': passwordHash})
             status = result.json()['status']
             if status == "ok":
                 playerid_str = result.json()['playerID']
@@ -247,9 +251,10 @@ class test_Setserver(unittest.TestCase):
         # re-register the same players => should fail
         for pp in refPlayersDict():
             nickname = pp['nickname']
+            passwordHash = pp['passwordHash']
             path = _url('/register/' + nickname)
             vprint("We poll again " + path)
-            result = requests.get(path)
+            result = requests.get(path, params={'passwordHash': passwordHash})
             status = result.json()['status']
             if status == "ko":
                 vprint("    registration answer is " + status)

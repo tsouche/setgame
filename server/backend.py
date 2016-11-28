@@ -78,7 +78,7 @@ class Backend():
         "nickname" to the server who will - if successful - return a player ID:
         - POST https://server.org/set/player/
             post: { "nickname": "str" }
-            answer: { "playerID": "ObjectId" }
+            answer: { "playerID": str(ObjectId) }
                 
         The client need to parse the returned message to read the (stringified) 
         playerID.
@@ -89,7 +89,7 @@ class Backend():
         answer = self.players.register(nickname, passwordHash)
         if answer['status'] == "ok":
             playerID = self.players.getPlayerID(nickname)['playerID']
-            result = {'status': "ok", 'playerID': playerID}
+            result = {'status': "ok", 'playerID': str(playerID)}
         else:
             result = {'status': "ko", 'reason': answer['reason']}
         return result
@@ -422,14 +422,14 @@ class Backend():
                 # check if the set syntax is valid (3 integers between 0 and 11)
                 if setSyntax(setlist):
                     # find the game
-                    gameID = self.players.getGameID(playerID)
+                    gameID = self.players.getGameID(playerID)['gameID']
                     if gameID != None:
                         good_game = None
                         for gg in self.games:
                             if (str(gg.getGameID()) == str(gameID)):
                                 good_game = gg
                                 break
-                        if good_game != None: 
+                        if good_game != None:
                             # push the set to the game
                             valid = good_game.receiveSetProposal(playerID, setlist)
                             if valid:

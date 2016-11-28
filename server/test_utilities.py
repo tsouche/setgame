@@ -8,7 +8,7 @@ This modules contains few constants which are useful to the Set gale.
 from bson.objectid import ObjectId
 from passlib.context import CryptContext
 
-from client.constants import encryption_algorithm
+from constants import encryption_algorithm
 from cardset import CardSet
 from constants import cardsMax
 from step import Step

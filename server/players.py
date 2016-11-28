@@ -8,8 +8,7 @@ from pymongo import ReturnDocument
 from passlib.context import CryptContext
 
 from connmongo import getPlayersColl
-from constants import oidIsValid
-from client.constants import encryption_algorithm
+from constants import oidIsValid, encryption_algorithm
 
 """
 BEWARE: securing the pairing of the client with the server is not implemented

@@ -10,6 +10,14 @@ from backend import Backend
 from constants import setserver_address, setserver_port
 from constants import version, oidIsValid
 
+"""
+This script must be run in order to start the server. 
+Unitary test can be run with test_setserver.py, provided that the bottle server
+will have been started with the command line:
+    > cd /
+    > python /data/code/setgame/server/setserver.py
+"""
+
 
 if __name__ == "__main__":
 
@@ -37,7 +45,8 @@ if __name__ == "__main__":
     # this route enable to register players to the Set game server
     @webserver.route(url('/register/<nickname>'))
     def registerPlayer(nickname):
-        return backend.registerPlayer(nickname)
+        passwordHash = request.query.get('passwordHash')
+        return backend.registerPlayer(nickname, passwordHash)
 
     # this route enable register isolated players to a yet-to-start game
     @webserver.route(url('/enlist/<playerid_str>'))
