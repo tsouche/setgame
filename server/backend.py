@@ -124,7 +124,7 @@ class Backend():
         # check if the playerID is valid
         if self.players.playerIDisValid(playerID):
             # check if the player is available to take part into a new game
-            if self.players.playerIsAvailableToPlay(playerID):
+            if self.players.playerIsAvailableToPlay(playerID)['status'] == "ok":
                 # check if the playerID  is in the waiting list
                 if (playerID in self.playersWaitingList):
                     # the player already enlisted but the game is not yet
@@ -143,8 +143,11 @@ class Backend():
                         # build the players list for the new game
                         game_players = []
                         for pID in self.playersWaitingList:
-                            game_players.append({'playerID': pID, 
-                                'nickname': self.players.getNickname(pID)})
+                            game_players.append({
+                                'playerID': pID, 
+                                'nickname': self.players.getNickname(pID)['nickname'],
+                                'passwordHash': self.players.getHash(pID)['passwordHash']
+                                })
                         # initiate the new game
                         game = Game(game_players)
                         gameID = game.getGameID()
@@ -161,10 +164,10 @@ class Backend():
                 # the server indicates which game (i.e. gameID) the player 
                 # is part of.
                 result = {'status': "ok", 
-                          'gameID': self.players.getGameID(playerID)}
+                          'gameID': self.players.getGameID(playerID)['gameID']}
         else:
             # the playerID does not exist:
-            result = {'status': "ko"}
+            result = {'status': "ko", 'reason': "unknown playerID"}
         # in any case, the server returns 'result'
         return result
         
@@ -193,7 +196,7 @@ class Backend():
         while j >= 0:
             pID = list_playerID[j]['playerID']
             if self.players.playerIDisValid(pID):
-                if not self.players.playerIsAvailableToPlay(pID):
+                if self.players.playerIsAvailableToPlay(pID)['status'] == "ko":
                     del(list_playerID[j])
             else:
                 del(list_playerID[j])
@@ -207,7 +210,9 @@ class Backend():
             for pp in list_playerID:
                 pID = pp['playerID']
                 game_players.append({'playerID': pID, 
-                    'nickname': self.players.getNickname(pID)})
+                    'nickname': self.players.getNickname(pID)['nickname'],
+                    'passwordHash': self.players.getHash(pID)['passwordHash'],
+                    'points': 0})
             #initiate a game
             game = Game(game_players)
             gameID = game.getGameID()
@@ -233,11 +238,11 @@ class Backend():
         # not valid ObjectId.
         list_names = []
         if self.players.playerIDisValid(playerID):
-            gameID = self.players.getGameID(playerID)
+            gameID = self.players.getGameID(playerID)['gameID']
             if gameID != None:
-                list_pID = self.players.inGame(gameID)
+                list_pID = self.players.inGame(gameID)['list']
                 for pID in list_pID:
-                    nickname = self.players.getNickname(pID)
+                    nickname = self.players.getNickname(pID)['nickname']
                     list_names.append({'nickname': nickname})
         return list_names
         
@@ -285,15 +290,15 @@ class Backend():
             'gameFinished': str(gameFinished), 
             'cards': cardset.serialize,
             'turnCounter': str(turncounter),
-            'players': list of {'playerID': str(playerID), 'nickname': nickname }
+            'players': list of {'playerID': str(playerID), 'nickname': nickname,
+                'passwordHash': passwordHash, 'points': str(points) }
         If the request is not ok, it will return the dictionary:
             { 'status': "ko", 'reason': msg }
         """
-        result = None
         if oidIsValid(gameID):
             good_game = None
             for gg in self.games:
-                if str(gg.gameID) == str(gameID):
+                if gg.gameID == gameID:
                     good_game = gg
                     break
             if good_game != None:
@@ -305,8 +310,11 @@ class Backend():
                 # add the players (local vision from within the game)
                 result["players"] = []
                 for pp in good_game.players:
-                    result["players"].append( { 'playerID': str(pp['playerID']), 
-                        'nickname': pp['nickname'], 'points': str(pp['points'])})
+                    result["players"].append( { 
+                        'playerID': str(pp['playerID']), 
+                        'nickname': pp['nickname'], 
+                        'passwordHash': pp['passwordHash'],
+                        'points': str(pp['points'])})
             else:
                 result = {'status': "ko", 'reason': "Unknown gameID"}
         else:
@@ -460,7 +468,8 @@ class Backend():
         # normal process = call to the setserver 'register' API)
         for pp in refPlayers(True):
             playersColl.insert_one( {'_id': pp['playerID'], 
-                'nickname': pp['nickname'], 
+                'nickname': pp['nickname'],
+                'passwordHash': pp['passwordHash'],
                 'totalScore': pp['totalScore'],
                 'gameID': None } )
         return {'status': "ok"}

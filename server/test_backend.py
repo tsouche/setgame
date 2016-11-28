@@ -13,6 +13,7 @@ from test_utilities import cardsetDict_equality, stepDict_equality
 from test_utilities import game_compliant
 from test_utilities import refPlayers, refGames_Dict
 from test_utilities import vbar, vprint
+from server.test_utilities import refPlayersDict
 
 
 def printRefPlayer():
@@ -244,8 +245,8 @@ class test_Backend(unittest.TestCase):
         vprint("Enlist 6 players (including 1 duplicate): " + str(result['status']) 
                + " (" + str(result['gameID']) + ")")
         self.assertEqual(result['status'], "ok")
-        gid_db = backend.players.getGameID(ObjectId(list_pid[0]['playerID']))
-        self.assertEqual(str(result['gameID']), str(gid_db))
+        gid_db = backend.players.getGameID(ObjectId(list_pid[0]['playerID']))['gameID']
+        self.assertEqual(result['gameID'], gid_db)
         # enlist another team of 4 players, out of which 3 are already playing
         # it should fail
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
@@ -282,8 +283,8 @@ class test_Backend(unittest.TestCase):
         vprint("Enlist a team of 5 player: " + str(result['status']) 
                + " (" + str(result['gameID']) + ")")
         # ask for the nicknames of the players
-        pid_str = pp_test[0]['playerID']
-        result = backend.getNicknames(pid_str)
+        ppID = pp_test[0]['playerID']
+        result = backend.getNicknames(ppID)
         # build the test list of nicknames
         vprint("Ask for the nickname of Donald's team:") 
         list_nicknames_test = []
@@ -413,42 +414,50 @@ class test_Backend(unittest.TestCase):
                     {'playerID': pp_test[2]['playerID']},
                     {'playerID': pp_test[3]['playerID']},
                     {'playerID': pp_test[4]['playerID']}]
-        result = backend.enlistTeam(list_pid)
-        gID = result['gameID']
-        target = {'__class__': 'SetGameDetails', 
+        # we enlist 5 players => succeed and return the gameID 
+        enlisted = backend.enlistTeam(list_pid)
+        # build the target against which the test data will be compared
+        gID = enlisted['gameID']
+        target_cardset = refGames_Dict()[0]['cardset']
+        target = {
+            '__class__': 'SetGameDetails', 
             'gameFinished': 'False',
-            'turnCounter': '0' }
-        target['players'] = [
-            {'playerID': '57b9bffb124e9b2e056a765c', 'points': '0', 'nickname': 'Loulou'}, 
-            {'playerID': '57b8529a124e9b6187cf6c2a', 'points': '0', 'nickname': 'Donald'}, 
-            {'playerID': '57b9a003124e9b13e6759bdb', 'points': '0', 'nickname': 'Riri'}, 
-            {'playerID': '57b9a003124e9b13e6759bdc', 'points': '0', 'nickname': 'Fifi'}, 
-            {'playerID': '57b9a003124e9b13e6759bda', 'points': '0', 'nickname': 'Mickey'} ]
-        target['cardset'] = refGames_Dict()[0]['cardset']
-        target['gameID'] = str(gID)
-        # impose the reference test data onto this newly created game
-        backend.games[0].cards.deserialize(refGames_Dict()[0]['cardset'])
+            'turnCounter': '0',
+            'players': [],
+            'cardset': target_cardset,
+            'gameID': str(gID)
+            }
+        for pp in refPlayers():
+            if pp['nickname'] != "Daisy":
+                target['players'].append({
+                    'playerID': str(pp['playerID']),
+                    'nickname': pp['nickname'],
+                    'passwordHash': pp['passwordHash'],
+                    'points': '0'
+                    })
+        # override the newly created game with the reference test data
+        backend.games[0].cards.deserialize(target_cardset)
         backend.games[0].gameID = gID
-        vprint("Enlist a team of 5 player: " + str(result['status']) 
+        vprint("Enlist a team of 5 player: " + str(enlisted['status']) 
                + " (" + str(gID) + ")")
         # request the details of the game
         result = backend.details(gID)
-        #vprint("    Result: " + str(result['players']))
-        #vprint("    Target: " + str(target['players']))
         # check that the result is compliant
         valid = True
-        valid = valid and (target['gameID'] == result['gameID'])
+        valid1 = (target['gameID'] == result['gameID'])
         vprint("    - 'gameID' are similar: " + str(valid))
-        valid = valid and (target['turnCounter'] == result['turnCounter'])
+        valid2 = (target['turnCounter'] == result['turnCounter'])
         vprint("    - 'turnCounters' are similar: " + str(valid))
-        valid = valid and (target['gameFinished'] == result['gameFinished'])
+        valid3 = (target['gameFinished'] == result['gameFinished'])
         vprint("    - 'gameFinished' are similar: " + str(valid))
-        valid = valid and (len(target['players']) == len(result['players']))
+        valid4 = (len(target['players']) == len(result['players']))
+        valid5 = True
         for pp in target['players']:
-            valid = valid and (pp in result['players']) 
-        vprint("    - 'players' are similar: " + str(valid))
-        valid = valid and cardsetDict_equality(target['cardset'], result['cardset'])
-        vprint("    - 'cardset' are similar: " + str(valid))
+            valid5 = valid5 and (pp in result['players']) 
+        vprint("    - 'players' are similar: " + str(valid5))
+        valid6 = cardsetDict_equality(target['cardset'], result['cardset'])
+        vprint("    - 'cardset' are similar: " + str(valid6))
+        valid = valid1 and valid2 and valid3 and valid4 and valid5 and valid6
         vprint("    -> the result is compliant: " + str(valid))
         self.assertTrue(valid)
 

@@ -61,8 +61,11 @@ class Game:
         del(temp_players)
         if valid:
             for pp in players:
-                self.players.append({'playerID': pp['playerID'], 
-                    'nickname': pp['nickname'], 'points': 0})
+                self.players.append({
+                    'playerID': pp['playerID'], 
+                    'nickname': pp['nickname'], 
+                    'passwordHash': pp['passwordHash'],
+                    'points': 0})
             # populate the DB with generic details and retrieve the gameID
             self.turnCounter = 0
             self.gameFinished = False
