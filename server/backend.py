@@ -32,18 +32,12 @@ class Backend():
         """
         Initiates the backend by creating game-persistent data
         """
-        self.gameStarted = False
-        self.gameFinished = False
         # initiate the list of future games
         self.games = []
         # initiates the players and waiting list
         self.players = Players()
         self.playersWaitingList = []
         self.nextGameID = None
-        # initiate the web server
-        # self.set_server = Bottle()
-        # start the server
-        # run(self.set_server, host=setserver_address, port=setserver_port, debug=True)
 
     def reset(self):
         """
@@ -57,8 +51,6 @@ class Backend():
         # connect to the games collection and empty it
         getGamesColl().drop()
         # initialize again all generic variables
-        self.gameStarted = False
-        self.gameFinished = False
         self.games = []
         self.players = Players()
         self.playersWaitingList = []
@@ -109,8 +101,8 @@ class Backend():
                 being part of.
                 This is the nominal way for a client to check the gameID for an
                 active player.
-            - the player is not recognised (because its 'playerID' is not in the
-                DN or is invalid): the answer is 'invalid'
+            - the player is not recognized (because its 'playerID' is not in the
+                DB or is invalid): the answer is 'invalid'
 
         The information needed to start a game is a list of 'players' 
         dictionaries as:
@@ -393,7 +385,7 @@ class Backend():
                 { 'status': "ko", 'reason': "unknown player" }
             - else if PlayerID is valid but the setlist syntax is invalid:
                 { 'status': "ko", 'reason': "invalid set" }
-            - else if the okayerID is valid, the setlist syntax is valid but 
+            - else if the playerID is valid, the setlist syntax is valid but 
                 does not form a valid set of 3 cards:
                 { 'status': "ko", 'reason': "wrong set" }
             - else the setlist is valid:
@@ -456,7 +448,7 @@ class Backend():
             result = {'status': "ko", 'reason': "invalid playerID"}
         return result
 
-    def testRegisterRefPlayers(self):
+    def ForTestOnly_RegisterRefPlayers(self):
         """
         FOR TEST PURPOSE ONLY.
         This method register 6 reference test players.
@@ -467,14 +459,28 @@ class Backend():
         # now register the reference players straight to the DB (bypassing the
         # normal process = call to the setserver 'register' API)
         for pp in refPlayers(True):
-            playersColl.insert_one( {'_id': pp['playerID'], 
+            playersColl.insert_one( {
+                '_id': pp['playerID'], 
                 'nickname': pp['nickname'],
                 'passwordHash': pp['passwordHash'],
-                'totalScore': pp['totalScore'],
+                'totalScore': 0,
                 'gameID': None } )
         return {'status': "ok"}
 
-    def testLoadRefGame(self, test_data_index):
+    def ForTestOnly_EnlistRefPlayers(self):
+        """
+        FOR TEST PURPOSE ONLY.
+        This method enlist 6 reference test players. It assumes that these 
+        reference players were already registered.
+        """
+        # enlist a team of 6 players (in which 1 duplicate): it should succeed
+        list_pid = []
+        for pp in refPlayers(True):
+            list_pid.append({'playerID': pp['playerID']})
+        result = self.enlistTeam(list_pid)
+        return result
+
+    def ForTestOnly_LoadRefGame(self, test_data_index):
         """
         FOR TEST PURPOSE ONLY.
         This method initiate the reference test game corresponding to the index 
@@ -482,27 +488,23 @@ class Backend():
         """
         # cleans the DB and registers the reference players
         if test_data_index in (0,1):
-            self.reset()
-            self.testRegisterRefPlayers()
-            pp_test = refPlayers(True)# 
-            list_pid = [{'playerID': pp_test[0]['playerID']}, 
-                        {'playerID': pp_test[1]['playerID']},
-                        {'playerID': pp_test[2]['playerID']},
-                        {'playerID': pp_test[3]['playerID']},
-                        {'playerID': pp_test[4]['playerID']},
-                        {'playerID': pp_test[5]['playerID']}]
             # initiate a new game and overwrite it with reference test data
-            result = self.enlistTeam(list_pid)
-            gID = result['gameID']
-            gID_ref = ObjectId(refGames_Dict()[test_data_index]['gameID'])
-            getPlayersColl().update_many({'gameID': gID}, {'$set': {'gameID': gID_ref}})
+            self.reset()
+            self.ForTestOnly_RegisterRefPlayers()
+            # initialize a game (just to have a game object available
+            self.games.append(Game(refPlayers(True)))
+            # override this game with the reference test data
             self.games[0].deserialize(refGames_Dict()[test_data_index])
-            result = {'status': "ok", 'gameID': gID_ref}
+            gID = self.games[0].getGameID()
+            for pp in self.players.getPlayers():
+                self.players.delist(pp['playerID'])
+                self.players.enlist(pp['playerID'], gID)
+            result = {'status': "ok", 'gameID': gID}
         else:
             result = {'status': "ko", 'reason': "wrong test_data_index"}
         return result
     
-    def testGetBackToTurn(self, test_data_index, target_turn):
+    def ForTestOnly_GetBackToTurn(self, test_data_index, target_turn):
         """
         FOR TEST PURPOSE ONLY.
         This method enable to roll the reference played loaded with previous 

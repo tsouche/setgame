@@ -10,9 +10,10 @@ from backend import Backend
 from connmongo import getGamesColl, getPlayersColl
 from game import Game 
 from test_utilities import cardsetDict_equality, stepDict_equality
-from test_utilities import game_compliant
+from test_utilities import gameRef_compliant, game_compliant
 from test_utilities import refPlayers, refGames_Dict
 from test_utilities import vbar, vprint
+from test_game import gameToString, gameSetup, gameSetupAndProgress
 from server.test_utilities import refPlayersDict
 
 
@@ -50,17 +51,10 @@ class test_Backend(unittest.TestCase):
         # initiate a backend and populate it partially
         vprint("Initiate a backend and partially populate it:")
         backend = self.setUp()
-        backend.gameStarted = True
-        backend.gameFinished = True
-        vprint("    - gameStarter :" + str(backend.gameStarted))
-        vprint("    - gameFinished:" + str(backend.gameFinished))
         backend.players.register("Superman", "hash_superman")
         backend.players.register("Ironman", "hash_ironman")
         backend.players.register("Spiderman", "hash_spiderman")
         backend.players.register("Batman", "hash_batman")
-        #coll = getPlayersColl()
-        #for pp in coll.find({}):
-        #    vprint(pp)
         vprint("    - players:" + str(backend.players.getPlayers()))
         gg = Game(backend.players.getPlayers())
         gg.deserialize(refGames_Dict()[0])
@@ -69,10 +63,6 @@ class test_Backend(unittest.TestCase):
         result = backend.reset()
         # check that the backend was actually reseted
         vprint("After reset, we check the backend:")
-        vprint("    - gameStarter :" + str(backend.gameStarted))
-        vprint("    - gameFinished:" + str(backend.gameFinished))
-        self.assertFalse(backend.gameStarted)
-        self.assertFalse(backend.gameFinished)
         self.assertEqual(backend.games, [])
         vprint("    - players:" + str(backend.players.getPlayers()))
         self.assertEqual(backend.players.getPlayers(), [])
@@ -120,7 +110,7 @@ class test_Backend(unittest.TestCase):
         # initiate a backend and register reference players
         backend = self.setUp()
         vprint("We register the reference test players:")
-        backend.testRegisterRefPlayers()
+        backend.ForTestOnly_RegisterRefPlayers()
         pp_test = refPlayers(True)
         # enlist Donald and test the 'enlist' answer "wait"
         donald = pp_test[0]
@@ -210,7 +200,7 @@ class test_Backend(unittest.TestCase):
         # initiate a backend and register reference players
         backend = self.setUp()
         vprint("We register the reference test players:")
-        backend.testRegisterRefPlayers()
+        backend.ForTestOnly_RegisterRefPlayers()
         pp_test = refPlayers(True)
         # enlist a team of 3 players: it should fail
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
@@ -267,7 +257,7 @@ class test_Backend(unittest.TestCase):
         # initiate a backend and register reference players
         backend = self.setUp()
         vprint("We register the reference test players:")
-        backend.testRegisterRefPlayers()
+        backend.ForTestOnly_RegisterRefPlayers()
         pp_test = refPlayers(True)
         list_nicknames_ref = []
         for pp in pp_test:
@@ -316,7 +306,7 @@ class test_Backend(unittest.TestCase):
         # initiate a backend and register reference players
         backend = self.setUp()
         vprint("We register the reference test players:")
-        backend.testRegisterRefPlayers()
+        backend.ForTestOnly_RegisterRefPlayers()
         pp_test = refPlayers(True)
         # enlist a team of 5 players 
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
@@ -407,7 +397,7 @@ class test_Backend(unittest.TestCase):
         # initialize test data, launch a game with 5 players
         backend = self.setUp()
         vprint("We register the reference test players:")
-        backend.testRegisterRefPlayers()
+        backend.ForTestOnly_RegisterRefPlayers()
         pp_test = refPlayers(True)
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
                     {'playerID': pp_test[1]['playerID']},
@@ -471,7 +461,7 @@ class test_Backend(unittest.TestCase):
         # initialize test data, launch a game with 5 players
         backend = self.setUp()
         vprint("We register the reference test players:")
-        backend.testRegisterRefPlayers()
+        backend.ForTestOnly_RegisterRefPlayers()
         pp_test = refPlayers(True)
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
                     {'playerID': pp_test[1]['playerID']},
@@ -535,7 +525,7 @@ class test_Backend(unittest.TestCase):
         # initialize test data, launch a game with 5 players
         backend = self.setUp()
         vprint("We register the reference test players:")
-        backend.testRegisterRefPlayers()
+        backend.ForTestOnly_RegisterRefPlayers()
         pp_test = refPlayers(True)
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
                     {'playerID': pp_test[1]['playerID']},
@@ -557,7 +547,7 @@ class test_Backend(unittest.TestCase):
         result = backend.history(ObjectId('57b9bec5124e9b2d2503b72b'))
         status = result['status']
         vprint("    - status: " + status)
-        valid = game_compliant(backend.games[i], 0, "       ")
+        valid = gameRef_compliant(backend.games[i], 0, "       ")
         vprint("    - game compliant: " + str(valid))
 
     def test_proposeSet(self):
@@ -572,13 +562,13 @@ class test_Backend(unittest.TestCase):
         vprint("whole game according to the reference path. We then check that the")
         vprint("resulting history is compliant.")
         backend = self.setUp()
-        backend.testRegisterRefPlayers()
-        backend.testLoadRefGame(0)
+        backend.ForTestOnly_EnlistRefPlayers()
+        backend.ForTestOnly_LoadRefGame(0)
         # rewind the game back to turn 0
         # we know - since the backend was reseted, that the new game is 
         # backend.game[0] => we set the games index i at 0 
         i = 0
-        backend.testGetBackToTurn(0, 0)
+        backend.ForTestOnly_GetBackToTurn(0, 0)
         # the game is now ready for the test case
         j = 0
         while (backend.games[i].getGameFinished() == False):
@@ -588,16 +578,102 @@ class test_Backend(unittest.TestCase):
             for k in range(0,3):
                 setlist[k] = int(setlist[k])
             result = backend.proposeSet(pID, setlist)
-            print("Bogus 34:", result)
             vprint("    - turn " + str(backend.games[i].turnCounter).zfill(2) 
                    + ": " + pnn + " propose " + str(setlist) + " => "
                    + result['status'])
             self.assertEqual(result['status'], "ok")
             j += 1
         self.assertTrue(backend.games[i].gameFinished)
-        self.assertTrue(game_compliant(backend.games[i], 0, "     "))
+        self.assertTrue(gameRef_compliant(backend.games[i], 0, "     "))
         # At this point, the game should be finished.
 
+    def test_ForTestOnly_RegisterRefPlayers(self):
+        """
+        Test backend.ForTestOnly_RegisterRefPlayers
+        """
+        vbar()
+        print("Test backend.ForTestOnly_RegisterRefPlayers")
+        vbar()
+        # initiate a backend
+        backend = self.setUp()
+        # register reference players
+        vprint("Initiate a backend and register reference players:")
+        backend.ForTestOnly_RegisterRefPlayers()
+        # compare the registered players with the reference test data
+        for pp_ref in refPlayers(True):
+            pp_test = backend.players.getPlayer(pp_ref['playerID'])
+            self.assertEqual(pp_test['status'], "ok")
+            self.assertEqual(pp_test['playerID'], pp_ref['playerID'])
+            self.assertEqual(pp_test['nickname'], pp_ref['nickname'])
+            self.assertEqual(pp_test['passwordHash'], pp_ref['passwordHash'])
+            self.assertEqual(pp_test['totalScore'], 0)
+            self.assertEqual(pp_test['gameID'], None)
+            vprint("    - registered successfully " + pp_ref['nickname'])
+        
+    def test_ForTestOnly_EnlistRefPlayers(self):
+        """
+        Test backend.ForTestOnly_EnlistRefPlayers
+        """
+        vbar()
+        print("Test backend.ForTestOnly_EnlistRefPlayers")
+        vbar()
+        # initiate a backend adn register reference players
+        backend = self.setUp()
+        backend.ForTestOnly_RegisterRefPlayers()
+        # enlist reference players and check the result.
+        result = backend.ForTestOnly_EnlistRefPlayers()
+        gameID = result['gameID']
+        vprint("Game initiated with gameID = " + str(gameID))
+        self.assertEqual(result['status'], "ok")
+        for pp in backend.players.getPlayers():
+            self.assertEqual(pp['gameID'], gameID)
+            vprint("    - enlisted successfully " + pp['nickname'])
+
+    def test_ForTestOnly_LoadRefGame(self):
+        """
+        Test backend.ForTestOnly_LoadRefGame
+        """
+        vbar()
+        print("Test backend.ForTestOnly_LoadRefGame")
+        vbar()
+        # initiate a backend and register reference players
+        for test_data_index in (0,1):
+            backend = self.setUp()
+            backend.ForTestOnly_LoadRefGame(test_data_index)
+            # compare the backend with the reference test data
+            self.assertEqual(backend.nextGameID, None)
+            self.assertEqual(backend.playersWaitingList, [])
+            result = gameRef_compliant(backend.games[0], test_data_index)
+            vprint("  > Index " + str(test_data_index) + ": " + str(result))
+            self.assertTrue(result)
+
+    def test_ForTestOnly_GetBackToTurn(self):
+        """
+        Test backend.ForTestOnly_GetBackToTurn
+        """
+        vbar()
+        print("Test backend.ForTestOnly_GetBackToTurn")
+        vbar()
+        # initiate a backend and load a reference game
+        for test_data_index in (0,1):
+            backend = self.setUp()
+            backend.ForTestOnly_LoadRefGame(test_data_index)
+            # get back to turn 9
+            backend.ForTestOnly_GetBackToTurn(test_data_index,9)
+            # compare the backend with the reference test data
+            game_ref = gameSetupAndProgress(test_data_index, 9)
+            result = game_compliant(backend.games[0], game_ref)
+            print("Bogus 12:", result)
+            
+            
+            
+            self.assertEqual(backend.nextGameID, None)
+            self.assertEqual(backend.playersWaitingList, [])
+            result = gameRef_compliant(backend.games[0], test_data_index)
+            vprint("  > Index " + str(test_data_index) + ": " + str(result))
+            self.assertTrue(result)
+
+            
 if __name__ == "__main__":
 
     unittest.main()

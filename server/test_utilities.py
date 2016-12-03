@@ -79,7 +79,6 @@ def refPlayers(fill_none = False):
             gameID = ObjectId(gameID)
         list_pp.append({'playerID': ObjectId(pp_dict['playerID']),
                         'nickname': pp_dict['nickname'], 
-                        #'password': pp_dict['password'],
                         'passwordHash': pp_dict['passwordHash'],
                         'totalScore': int(pp_dict['totalScore']), 
                         'gameID': gameID
@@ -111,12 +110,18 @@ def refGames_Dict():
         'gameFinished': 'True', 
         'turnCounter': '25', 
         'players': [
-            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': 'Donald', 'points': '18'}, 
-            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': 'Mickey', 'points': '15'}, 
-            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': 'Riri', 'points': '3'}, 
-            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': 'Fifi', 'points': '12'}, 
-            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': 'Loulou', 'points': '6'}, 
-            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': 'Daisy', 'points': '21'}
+            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': 'Donald', 'points': '18',
+             'passwordHash': "$6$rounds=656000$9J3qlvOuPqVAB1h3$29401w.r.1qLeLqGwTklcQ5oixPJGXyYrZetUnV3WdjGEeqAbEZE1MSXtUWZ6cI1u/2.YYH9/.9BlWs29deWM."}, 
+            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': 'Mickey', 'points': '15',
+             'passwordHash': "$6$rounds=656000$x184Sb1.AgeFH09L$xMTg28wbdIx1CFTxw5H7oa2MRTkyw4wwdNElEYlxwlovVKwh0vbPIm8rN4FKyUQwJQHEbnlvWJZzqL1HLYkbu0"}, 
+            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': 'Riri', 'points': '3',
+             'passwordHash': "$6$rounds=656000$bcxUoDEZ1EoOAHHb$fmljI4QsoUxQSrevuUMO4jD5mRj3TnaeRj87w3dkjcEHjc9iTqXyxUrmRz4gx7y0FeAg2UD.Ufi/4dWjBHfbL1"}, 
+            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': 'Fifi', 'points': '12',
+             'passwordHash': "$6$rounds=656000$21XpxSD3UWiR/GDG$8TMRQm1SlXy7h.I0mq6i.LZocPOZCbofjwD/hF2P4kQbXmaRfL03PYpXXTU1jc6afQSiVYMqToFm4OXgCVWGt0"}, 
+            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': 'Loulou', 'points': '6',
+             'passwordHash': "$6$rounds=656000$VB0Nc3c12tpo90En$W2QT/xYn/opvWhDJfJ2bM9wIB1CT6K2Wevlb5qGWdU85.dgu4NObmJxJGMVwelhx/NSBn66.VWjQYXgopAEyn/"}, 
+            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': 'Daisy', 'points': '21',
+             'passwordHash': "$6$rounds=656000$iLID3I10RENiuZPy$Rmo48wznR9Yqb6i9/SNDUa.hslEyycZ2UYZV0bX6ChdtSA5MGCmN3BrF1xoZG4TMRzEmwmppY/W3.ZzT4ogRL/"}
             ], 
         'cardset': {
             '__class__': 'SetCardset',
@@ -395,12 +400,18 @@ def refGames_Dict():
         'gameFinished': 'True', 
         'turnCounter': '24', 
         'players': [
-                {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': 'Donald', 'points': '15'}, 
-                {'playerID': '57b9a003124e9b13e6759bda', 'nickname': 'Mickey', 'points': '18'}, 
-                {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': 'Riri', 'points': '6'}, 
-                {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': 'Fifi', 'points': '6'}, 
-                {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': 'Loulou', 'points': '21'}, 
-                {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': 'Daisy', 'points': '6'}
+            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': 'Donald', 'points': '15',
+             'passwordHash': "$6$rounds=656000$9J3qlvOuPqVAB1h3$29401w.r.1qLeLqGwTklcQ5oixPJGXyYrZetUnV3WdjGEeqAbEZE1MSXtUWZ6cI1u/2.YYH9/.9BlWs29deWM."}, 
+            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': 'Mickey', 'points': '18',
+             'passwordHash': "$6$rounds=656000$x184Sb1.AgeFH09L$xMTg28wbdIx1CFTxw5H7oa2MRTkyw4wwdNElEYlxwlovVKwh0vbPIm8rN4FKyUQwJQHEbnlvWJZzqL1HLYkbu0"}, 
+            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': 'Riri', 'points': '6',
+             'passwordHash': "$6$rounds=656000$bcxUoDEZ1EoOAHHb$fmljI4QsoUxQSrevuUMO4jD5mRj3TnaeRj87w3dkjcEHjc9iTqXyxUrmRz4gx7y0FeAg2UD.Ufi/4dWjBHfbL1"}, 
+            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': 'Fifi', 'points': '6',
+             'passwordHash': "$6$rounds=656000$21XpxSD3UWiR/GDG$8TMRQm1SlXy7h.I0mq6i.LZocPOZCbofjwD/hF2P4kQbXmaRfL03PYpXXTU1jc6afQSiVYMqToFm4OXgCVWGt0"}, 
+            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': 'Loulou', 'points': '21',
+             'passwordHash': "$6$rounds=656000$VB0Nc3c12tpo90En$W2QT/xYn/opvWhDJfJ2bM9wIB1CT6K2Wevlb5qGWdU85.dgu4NObmJxJGMVwelhx/NSBn66.VWjQYXgopAEyn/"}, 
+            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': 'Daisy', 'points': '6',
+             'passwordHash': "$6$rounds=656000$iLID3I10RENiuZPy$Rmo48wznR9Yqb6i9/SNDUa.hslEyycZ2UYZV0bX6ChdtSA5MGCmN3BrF1xoZG4TMRzEmwmppY/W3.ZzT4ogRL/"}
             ], 
         'cardset': {
             '__class__': 'SetCardset',
@@ -970,7 +981,50 @@ def stepDict_equality(dict1, dict2):
     # print("equal7:",test_equal)
     return test_equal
 
-def game_compliant(game, index, tab):
+def game_compliant(game1, game2, tab="    "):
+    """
+    This function returns True if the two games show the same generic details,
+    the same players, the same cardsets and the same steps.
+    """
+    # set the validity flags
+    valid_generic = valid_players = valid_cardset = valid_steps = False
+    # compare the generic details
+    valid_generic = (game1.gameID == game2.gameID) and \
+                    (game1.turnCounter == game2.turnCounter) and \
+                    (game1.gameFinished == game2.gameFinished)
+    vprint(tab + "generic details: " + str(valid_generic))
+    # compare the players
+    if valid_generic:
+        valid_players = (len(game1.players) == len(game2.players))
+        for p1 in game1.players:
+            # find the same player in the reference data
+            for p2 in game2.players:
+                if (str(p1['playerID']) == str(p2['playerID'])):
+                    valid_players = valid_players and (p1['nickname'] == p2['nickname'])
+                    valid_players = valid_players and (int(p1['points']) == int(p2['points']))
+                    break
+        vprint(tab + "players: " + str(valid_players))
+    # compare the cardsets
+    if valid_players:
+        valid_cardset = cardset_equality(game1.cards, game2.cards)
+        vprint(tab + "cardsets: " + str(valid_cardset))
+    # compare the steps
+    if valid_cardset:
+        valid_steps = (len(game1.steps) == len(game2.steps) == game1.turnCounter+1)
+        msg = tab
+        vprint(tab + "steps:")
+        for i in range(0, game1.turnCounter + 1):
+            step1 = game1.steps[i]
+            step2 = game2.steps[i]
+            valid_steps = valid_steps and step_equality(step1, step2)
+            msg += " step " + str(i).zfill(2) + ": "+ str(valid_steps)
+            if (i+1)%6 == 0:
+                msg += "\n" + tab
+        vprint(msg)
+    valid = valid_generic and valid_players and valid_cardset and valid_steps
+    return valid
+
+def gameRef_compliant(game, index, tab="    "):
     """
     This function returns True if the two games show the same generic details,
     the same players, the same cardsets and the same steps.

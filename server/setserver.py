@@ -67,12 +67,15 @@ if __name__ == "__main__":
     def enlistTeam():
         pid_list = []
         result = request.query.getall('playerIDlist')
+        print("Bogus 14: ", result)
         # check that the strings passed are valid ObjectId, and if so
         # add them into the list of players to be enlisted.
         for playerid_str in result:
             if oidIsValid(playerid_str):
                 pid_list.append({'playerID': ObjectId(playerid_str)})
+        print("Bogus 17: ", pid_list)
         result2 = backend.enlistTeam(pid_list)
+        print("Bogus 12: ", result2)
         if result2['status'] == "ok":
             gameid_str = str(result2['gameID'])
             result2 = {'status': "ok", 'gameID': gameid_str}
@@ -116,6 +119,7 @@ if __name__ == "__main__":
     def details(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.details(ObjectId(gameid_str))
+            print("Bogus 17: ", result)
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
@@ -157,20 +161,27 @@ if __name__ == "__main__":
     
     # this route enable test cases (register reference test players)
     @webserver.route(url('/test/register_ref_players'))
-    def testRegisterRefPlayers():
+    def ForTestOnly_RegisterRefPlayers():
         # registers the 6 reference test players.
-        result = backend.testRegisterRefPlayers()
+        result = backend.ForTestOnly_RegisterRefPlayers()
+        return result
+    
+    # this route enable test cases (enlist reference test players)
+    @webserver.route(url('/test/enlist_ref_players'))
+    def ForTestOnly_EnlistRefPlayers():
+        # registers the 6 reference test players.
+        result = backend.ForTestOnly_EnlistRefPlayers()
         return result
     
     # this route enable to load and play to its end a reference test game
     @webserver.route(url('/test/load_ref_game'))
-    def testLoadRefGame():
+    def ForTestOnly_LoadRefGame():
         # load the reference test game indicated by 'test_data_index'
         index = request.query.get('test_data_index')
         try:
             test_data_index = int(index)
             if test_data_index in (0,1):
-                result = backend.testLoadRefGame(test_data_index)
+                result = backend.ForTestOnly_LoadRefGame(test_data_index)
                 if result['status'] == "ok":
                     gid_str = str(result['gameID'])
                     result = {'status': "ok", 'gameID': gid_str}
@@ -182,7 +193,7 @@ if __name__ == "__main__":
     
     # this route enable to roll back a reference test game
     @webserver.route(url('/test/back_to_turn/<index>/<turn>'))
-    def testBackToTurn(index, turn):
+    def ForTestOnly_BackToTurn(index, turn):
         # assuming a reference game was properly loaded, it enable to roll back 
         # the finished game and get back to a given turn.
         try:
@@ -193,7 +204,7 @@ if __name__ == "__main__":
             turn = int(turn)
         except:
             return {'status': "ko", 'reason': "invalid turn arguments"}
-        return backend.testGetBackToTurn(int(index), int(turn))
+        return backend.ForTestOnly_GetBackToTurn(int(index), int(turn))
 
     
     run(webserver, host=setserver_address, port=setserver_port, 

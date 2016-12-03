@@ -5,7 +5,7 @@ Created on August 30th, 2016
 from bson.objectid import ObjectId
 import requests
 import unittest
-import subprocess
+#import subprocess
 
 from connmongo import getPlayersColl, getGamesColl
 from constants import setserver_address, setserver_port
@@ -13,7 +13,7 @@ from constants import version, oidIsValid
 from game import Game
 from players import Players
 from test_utilities import cardsetDict_equality, stepDict_equality
-from test_utilities import game_compliant
+from test_utilities import gameRef_compliant
 from test_utilities import refPlayersDict, refPlayers, refGames_Dict
 from test_utilities import vbar, vprint
 
@@ -27,63 +27,61 @@ def printRefPlayer():
         print("BOGUS 99:", pp)
 
 class test_Setserver(unittest.TestCase):
-
-    subprocess.call(['./start_setserver.sh'])
+    """
+    This class unit-test the setgame server API:
+        - it assumes the server is running and the API exposed, and behaves as a
+            client.
+        - it then runs through the various available verbs and check that all
+            results sent back by the server are conform to expected answers. 
+    """
+    #subprocess.call(['./start_setserver.sh'])
+    players = []
+    refPlayers = []
+    gameID = None
     
-    def setup(self):
+    def setup_reset(self):
         """
-        Sets up the test data by launching a server
+        Reset the server to a clean state
         """
         # Start the bottle server
-        """ How do we start the bottle webserver ?
-        maybe simply run the shell command:
+        """
+        Because we cannot start the web server from this script, we assume it 
+        was manually started before running this test script, by this shell 
+        command:
+            python /data/code/setgame/server/serserver.py
+        
+        Q: How do we start the bottle webserver ?
+        A: maybe simply run the shell command:
             'python /data/code/setgame/server/setsetver.py' ?
-        import subprocess
-        subprocess.run('python /data/code/setgame/server/setserver.py',
-            shell=True, check=True)
+            import subprocess
+            subprocess.run('python /data/code/setgame/server/setserver.py',
+                shell=True, check=True)
         """
         # reset the server data
-        vprint("We clean the test databases.")
+        vprint("     We reset the test server.")
         result = requests.get(_url('/reset'))
         self.assertEqual(result.json()['status'], "reset")
-        # connect to the MongoDB and create 'self.players'
-        self.players = Players()
-        # populate the reference players in memory
-        self.refPlayers = refPlayers()
 
-    def registerRefPlayers(self):
+    def setup_registerRefPlayers(self):
         """
         This method registers the 6 reference players straight to the Mongo DB, 
         and make them available for the tests.
         """
         # register the reference players vai the test routine of the server
-        vprint("     We register the reference test players:")
+        vprint("     We register the reference test players")
         path = _url('/test/register_ref_players')
         requests.get(path)
+        # connect to the MongoDB and connect 'self.players' to this DB
+        self.players = Players()
+        # populate the reference players in memory
+        self.refPlayers = refPlayers()
 
-    def test_testRegisterRefPlayers(self):
-        """
-        Unit test for the method enabling to load reference test data.
-        """
-        vbar()
-        print("Test setserver.testRegisterRefPlayers")
-        vbar()
-        # setup test data and environment
-        self.setup()
-        # test the 'reference players' provisioning
-        self.registerRefPlayers()
-        playersColl = getPlayersColl()
-        for pp in self.refPlayers:
-            p_db = playersColl.find_one({'_id': pp['playerID']})
-            vprint("     Registered " + pp['nickname'] 
-                   + " (" + str(pp['playerID']) + ")")
-            self.assertTrue(p_db != None)
-
-    def enlistRefPlayers(self):
+    def setup_enlistRefPlayers(self):
         """
         This method enlists the 6 reference players on a game and returns the 
         gameID
         """
+        vprint("     We enlist the reference test players.")
         path = _url('/enlist_team')
         # delist all players
         playersColl = getPlayersColl()
@@ -100,38 +98,63 @@ class test_Setserver(unittest.TestCase):
         vprint("We enlist the reference test players: gameID = " + gameid_str)
         return gameid_str
     
-    def loadRefGame(self, test_data_index):
+    def setup_loadRefGame(self, test_data_index):
         """
         This method first remove any data in the DB and then loads a reference
         game, enlisting all players on it and enabling testing few functions 
         against the reference test data.
         We assume that 'test_data_index' is either 0 or 1 (integer value).
         """
+        vprint("     We load the reference game " + str(test_data_index))
         # delist all players and games
         playersColl = getPlayersColl()
         playersColl.drop()
         gamesColl = getGamesColl()
         gamesColl.drop()
         # register reference test players
-        self.registerRefPlayers()
+        self.setup_registerRefPlayers()
         # create the game and load reference data
         path = _url('/test/load_ref_game')
         result = requests.get(path, params={'test_data_index': str(test_data_index)})
         return result.json()
 
-    def test_testLoadRefGame(self):
+    def test_ForTestOnly_RegisterRefPlayers(self):
         """
-        Test setserver.testLoadRefGame
+        Unit test for the method enabling to load reference test data.
         """
         vbar()
-        print("Test setserver.testLoadRefGame")
+        print("Test test_setserver.setup_registerRefPlayers")
+        vbar()
+        # setup test data and environment
+        self.setup_reset()
+        # test the 'reference players' provisioning
+        self.setup_registerRefPlayers()
+        playersColl = getPlayersColl()
+        for pp in self.refPlayers:
+            p_db = playersColl.find_one({'_id': pp['playerID']})
+            vprint("     Registered " + pp['nickname'] 
+                   + " (" + str(pp['playerID']) + ") - " + pp['passwordHash'])
+            self.assertTrue(p_db != None)
+
+    def test_enlistRefPlayers(self):
+        """
+        Test test_setserver.enlistRefPlayers
+        """
+        
+        
+    def test_ForTestOnly_LoadRefGame(self):
+        """
+        Test setserver.ForTestOnly_LoadRefGame
+        """
+        vbar()
+        print("Test setserver.ForTestOnly_LoadRefGame")
         vbar()
         # build test data and context
-        self.setup()
+        self.setup_reset()
         vprint("We order loading reference games with various parameter value and")
         vprint("check the answer:")
         # load with a proper index
-        result = self.loadRefGame(0)
+        result = self.setup_loadRefGame(0)
         vprint("    index = 0: should succeed")
         status = result['status']
         gid_str = result['gameID']
@@ -140,7 +163,7 @@ class test_Setserver(unittest.TestCase):
         vprint("      -> gameID: " + gid_str)
         self.assertEqual(gid_str, '57b9bec5124e9b2d2503b72b')
         # load with a wrong index value
-        result = self.loadRefGame(2)
+        result = self.setup_loadRefGame(2)
         vprint("    index = 2: should fail")
         status = result['status']
         reason = result['reason']
@@ -149,7 +172,7 @@ class test_Setserver(unittest.TestCase):
         vprint("      -> reason: " + reason)
         self.assertEqual(reason, "wrong index value")
         # load with an invalid index type
-        result = self.loadRefGame("E")
+        result = self.setup_loadRefGame("E")
         vprint("    index = 'E': should fail")
         status = result['status']
         reason = result['reason']
@@ -160,24 +183,24 @@ class test_Setserver(unittest.TestCase):
                 
     def getBackToTurn(self, index, turn):
         """
-        This method must be used together with 'loadRefGame': it assumes that
+        This method must be used together with 'setup_loadRefGame': it assumes that
         a reference test game was properly loaded.
         """
         path = _url('/test/back_to_turn/'+str(index)+'/'+str(turn))
         result = requests.get(path)
         return result.json()
     
-    def test_testGetBackToTurn(self):
+    def test_ForTestOnly_GetBackToTurn(self):
         """
-        Test setserver.testGetBackToTurn
+        Test setserver.ForTestOnly_GetBackToTurn
         """
         vbar()
-        print("Test setserver.testGetBackToTurn")
+        print("Test setserver.ForTestOnly_GetBackToTurn")
         vbar()
         # build test data and context
-        self.setup()
+        self.setup_reset()
         # now get back in time to step 10
-        self.loadRefGame(0)
+        self.setup_loadRefGame(0)
         result = self.getBackToTurn(0, 10)
         self.assertEqual(result['status'], "ok")
     
@@ -204,7 +227,7 @@ class test_Setserver(unittest.TestCase):
         vprint("Test setserver.__init__")
         vbar()
         # build test data and context
-        self.setup()
+        self.setup_reset()
         # we put a 'get' request to the server and check that it answers 'Coucou'
         vprint("BEWARE: if this test does not pass, it probably means that the setserver")
         vprint("        did not start.")
@@ -225,7 +248,7 @@ class test_Setserver(unittest.TestCase):
         print("Test setserver.registerPlayer")
         vbar()
         # build test data and context
-        self.setup()
+        self.setup_reset()
         # Here we must register few players, and then compare the playerID sent
         # back by the server wit the values in the DB.
         # We also try to register invalid nicknames and see the server answer.
@@ -276,8 +299,8 @@ class test_Setserver(unittest.TestCase):
         # started and that the 4 first players are assigned to this game.
         
         # build test data and context
-        self.setup()
-        self.registerRefPlayers()
+        self.setup_reset()
+        self.setup_registerRefPlayers()
         # enlist various players and check answers
         vprint("We now enlist players and capture the server's answers:")
         # enlist Donald and test the 'enlist' answer "wait"
@@ -386,8 +409,8 @@ class test_Setserver(unittest.TestCase):
         # started and that the 4 first players are assigned to this game.
         
         # build test data and context
-        self.setup()
-        self.registerRefPlayers()
+        self.setup_reset()
+        self.setup_registerRefPlayers()
         playersColl = getPlayersColl()
         # enlist various players and check answers
         vprint("We will enlist several teams and capture the server's answers:")
@@ -441,7 +464,9 @@ class test_Setserver(unittest.TestCase):
                 str(self.players.getPlayerID("Riri")),
                 str(self.players.getPlayerID("Fifi")) ]
         result = requests.get(path, params={'playerIDlist': list_ref})
+        print("Bogus 10: ", result)
         result = result.json()
+        print("Bogus 11: ", result)
         status = result['status']
         gameid_str = result['gameID']
         #collect equivalent information from the DB
@@ -520,9 +545,9 @@ class test_Setserver(unittest.TestCase):
         print("Test setserver.getNicknames")
         vbar()
         # build test data and context
-        self.setup()
-        self.registerRefPlayers()
-        self.enlistRefPlayers()
+        self.setup_reset()
+        self.setup_registerRefPlayers()
+        self.setup_enlistRefPlayers()
         # delist Daisy
         playersColl = getPlayersColl()
         playersColl.update_one({'nickname': "Daisy"}, 
@@ -593,11 +618,11 @@ class test_Setserver(unittest.TestCase):
         print("Test setserver.proposeSet")
         vbar()
         # build test data and context
-        self.setup()
+        self.setup_reset()
         for index in range (0,2):
             # initializes the reference game
             vprint("  Game " + str(index) + ": we run the whole game till it is finished")
-            self.loadRefGame(index)
+            self.setup_loadRefGame(index)
             #gameID = ObjectId(refGames_Dict()[index]['gameID'])
             turn_max = int(refGames_Dict()[index]['turnCounter'])
             self.getBackToTurn(index, 0)
@@ -615,7 +640,7 @@ class test_Setserver(unittest.TestCase):
                 self.assertEqual(status, "ok")
         # initializes the reference game
         vprint("  Game 0: we propose incorrect set proposal and check answers")
-        self.loadRefGame(0)
+        self.setup_loadRefGame(0)
         gameid_str = refGames_Dict()[0]['gameID']
         turn_max = int(refGames_Dict()[0]['turnCounter'])
         self.getBackToTurn(0, 0)
@@ -685,11 +710,11 @@ class test_Setserver(unittest.TestCase):
         print("Test setserver.step")
         vbar()
         # build test data and context
-        self.setup()
+        self.setup_reset()
         for index in range (0,2):
             # initializes the reference game
             vprint("  Game " + str(index) + ": we run the whole game and check the results")
-            self.loadRefGame(index)
+            self.setup_loadRefGame(index)
             turn_max = int(refGames_Dict()[index]['turnCounter'])
             self.getBackToTurn(index, 0)
             gameid_str = refGames_Dict()[index]['gameID']
@@ -714,7 +739,7 @@ class test_Setserver(unittest.TestCase):
                 self.assertEqual(status, "ok")        
                 self.assertTrue(stepDict_equality(step, stepRef_dict))
         # now test faulty cases
-        self.loadRefGame(0)
+        self.setup_loadRefGame(0)
         # invalid gameID
         vprint("  We push an invalid gameID argument:")
         path = _url('/game/razetrAVFR23545/step')
@@ -745,11 +770,11 @@ class test_Setserver(unittest.TestCase):
         print("Test setserver.history")
         vbar()
         # build test data and context
-        self.setup()
+        self.setup_reset()
         for index in range (0,2):
             # initializes the reference game
             vprint("  Game " + str(index) + ": we run the whole game and check the results")
-            self.loadRefGame(index)
+            self.setup_loadRefGame(index)
             gameid_str = refGames_Dict()[index]['gameID']
             # compare the history retrieved via the API with reference test data
             path = _url('/game/' + gameid_str + '/history')
@@ -763,9 +788,9 @@ class test_Setserver(unittest.TestCase):
             game = Game(players)
             game.deserialize(game_dict)
             self.assertEqual(status, "ok")
-            self.assertTrue(game_compliant(game, index,"        "))
+            self.assertTrue(gameRef_compliant(game, index,"        "))
         # now test faulty cases
-        self.loadRefGame(0)
+        self.setup_loadRefGame(0)
         # invalid gameID
         vprint("We push an invalid gameID argument:")
         path = _url('/game/razetrAVFR23545/history')
@@ -793,11 +818,11 @@ class test_Setserver(unittest.TestCase):
         print("Test setserver.stopGame")
         vbar()
         # build test data and context
-        self.setup()
-        self.registerRefPlayers()
+        self.setup_reset()
+        self.setup_registerRefPlayers()
+        gameid_str = self.setup_enlistRefPlayers()
         # playersColl = getPlayersColl()
         # try soft-stopping a unfinished game
-        gameid_str = self.enlistRefPlayers()
         vprint()
         vprint("We try to soft-stop the game: it should fail")
         path = _url('/game/' + gameid_str + '/stop')
@@ -853,7 +878,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(reason, "invalid gameID")
         # try soft-stopping a finished game
         vprint("We try to soft-stop a finished game: it should succeed")
-        result = self.loadRefGame(0)
+        result = self.setup_loadRefGame(0)
         gameid_str = result['gameID']
         path = _url('/game/' + gameid_str + '/stop')
         vprint("    path = '" + path + "'")
@@ -872,8 +897,8 @@ class test_Setserver(unittest.TestCase):
         print("Test setserver.details")
         vbar()
         # build test data and context
-        self.setup()
-        self.loadRefGame(0)
+        self.setup_reset()
+        self.setup_loadRefGame(0)
         # start a game and retrieve the game details
         gameID = ObjectId(refGames_Dict()[0]['gameID'])
         path = _url('/game/' + str(gameID) + '/details')

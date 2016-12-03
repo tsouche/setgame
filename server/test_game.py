@@ -11,7 +11,7 @@ from game import Game, invalidPlayerID
 from players import Players
 from test_utilities import cardsetToString, stepToString
 from test_utilities import cardset_equality, step_equality
-from test_utilities import refCardsets, refSteps, game_compliant
+from test_utilities import refCardsets, refSteps, gameRef_compliant
 from test_utilities import refGameHeader_start, refGameHeader_Finished
 from test_utilities import refGames_Dict, refPlayers
 from test_utilities import vprint, vbar
@@ -99,6 +99,70 @@ def getValidSetFromTable(game):
     # if it returns [-1, -1, -1], it means that there is no set on the Table.
     return [i0, j0, k0]
 
+def gameSetup(test_data_index):
+        """
+        Initialize a game from test data: the 'test_data_index' (0 or 1) points
+        at the data set to be used from 'test_utilities' for:
+            - players
+            - cardset
+        We then use the reference 'set proposal history' (in 'test_utilities' in 
+        order to go through the game and compare the progress against reference 
+        data available from 'refSteps'.
+        """
+        # Connection to the MongoDB server
+        # read the players, register them and initiate a game.
+        players = refPlayers(True)
+        temp_players = Players()
+        for pp in players:
+            temp_players.register(pp['nickname'], pp['passwordHash'])
+        partie = Game(players)
+        # overwrite the gameID with the reference test data
+        partie.gameID = ObjectId(refGameHeader_start()[test_data_index]['gameID'])
+        # Overwrite the cardset with reference test data
+        cards_dict = refGames_Dict()[test_data_index]['cardset']
+        partie.cards.deserialize(cards_dict)
+        # Force 'Steps' to take into account this new cardset.
+        partie.steps[0].start(partie.cards)
+        # The game is ready to start.
+        return partie
+    
+def gameProgress(game, test_data_index):
+    """
+    Takes the game in a current status, and make it progress with one step
+    by using the reference test data (the series 0 or 1 being pointed by the 
+    'test_data_index' argument.
+    """
+    # check if we can still iterate or if the game is finished according to 
+    # the test data
+    mx_turn = int(refGames_Dict()[test_data_index]['turnCounter'])+1
+    turn = game.turnCounter
+    if turn < mx_turn:
+        # read the reference Step and apply
+        step_dict = refGames_Dict()[test_data_index]['steps'][turn]
+        next_set = []
+        for i in step_dict['set']:
+            next_set.append(int(i))
+        if step_dict['playerID'] == 'None':
+            next_playerID = None
+        else:
+            next_playerID = ObjectId(step_dict['playerID'])
+        game.receiveSetProposal(next_playerID, next_set)
+        
+def gameSetupAndProgress(test_data_index, nbTurns):
+    """
+    Initialize a game from test data, using the 'setup' method, and
+    then progresses with n turns by proposing sets from the reference
+    test data.
+    """
+    # initiate the game
+    partie = gameSetup(test_data_index)
+    # start iteration until the nb of turns request
+    for i in range(0, nbTurns):
+        gameProgress(partie, test_data_index)
+    # gives the game back in a controlled state
+    return partie
+        
+
 class test_Game(unittest.TestCase):
     """
     This class is used to unit-test the Game class.
@@ -116,58 +180,15 @@ class test_Game(unittest.TestCase):
         order to go through the game and compare the progress against reference 
         data available from 'refSteps'.
         """
-        # Connection to the MongoDB server
-        # read the players, register them and initiate a game.
-        players = refPlayers(True)
-        temp_players = Players()
-        for pp in players:
-            temp_players.register(pp['nickname'])
-        partie = Game(players)
-        # overwrite the gameID with the reference test data
-        partie.gameID = ObjectId(refGameHeader_start()[test_data_index]['gameID'])
-        # Overwrite the cardset with reference test data
-        cards_dict = refGames_Dict()[test_data_index]['cardset']
-        partie.cards.deserialize(cards_dict)
-        # Force 'Steps' to take into account this new cardset.
-        partie.steps[0].start(partie.cards)
-        # The game is ready to start.
-        return partie
+        return gameSetup(test_data_index)
     
-    def progress(self, game, test_data_index):
-        """
-        Takes the game in a current status, and make it progress with one step
-        by using the reference test data (the series 0 or 1 being pointed by the 
-        'test_data_index' argument.
-        """
-        # check if we can still iterate or if the game is finished according to 
-        # the test data
-        mx_turn = int(refGames_Dict()[test_data_index]['turnCounter'])+1
-        turn = game.turnCounter
-        if turn < mx_turn:
-            # read the reference Step and apply
-            step_dict = refGames_Dict()[test_data_index]['steps'][turn]
-            next_set = []
-            for i in step_dict['set']:
-                next_set.append(int(i))
-            if step_dict['playerID'] == 'None':
-                next_playerID = None
-            else:
-                next_playerID = ObjectId(step_dict['playerID'])
-            game.receiveSetProposal(next_playerID, next_set)
-        
     def setupAndProgress(self, test_data_index, nbTurns):
         """
         Initialize a game from test data, using the 'setup' method, and
         then progresses with n turns by proposing sets from the reference
         test data.
         """
-        # initiate the game
-        partie = self.setup(test_data_index)
-        # start iteration until the nb of turns request
-        for i in range(0, nbTurns):
-            self.progress(partie, test_data_index)
-        # gives the game back in a controlled state
-        return partie
+        return gameSetupAndProgress(test_data_index, nbTurns)
         
     def teardown(self):
         pass
@@ -305,7 +326,7 @@ class test_Game(unittest.TestCase):
                        + ": set = [--,--,--], here is the final status:")
         vprint(stepToString(partie.steps[partie.turnCounter], partie.cards, "    "))
         vprint("    We check the compliance with reference data:")
-        valid = game_compliant(partie, 0, "    -> ")
+        valid = gameRef_compliant(partie, 0, "    -> ")
         self.assertTrue(valid)
         vprint("    The game is fully compliant: " + str(valid))
         # run a full game with the '0 data series' starting point, and then
@@ -317,7 +338,7 @@ class test_Game(unittest.TestCase):
                        + ": set = [--,--,--], here is the final status:")
         vprint(stepToString(partie.steps[partie.turnCounter], partie.cards, "    "))
         vprint("    We check the compliance with reference data:")
-        valid = game_compliant(partie, 1, "    ")
+        valid = gameRef_compliant(partie, 1, "    ")
         self.assertTrue(valid)
         vprint("    The game is fully compliant: " + str(valid))
 
@@ -379,25 +400,24 @@ class test_Game(unittest.TestCase):
             ref_dict = refGames_Dict()[test_data_index]
             # compare various sections of the dictionaries
             vprint("   > Game " + str(test_data_index) + ":")
-            result = (test_dict['gameID'] == ref_dict['gameID'])
-            vprint("              gameID: " + str(result))
-            self.assertTrue(result)
-            result = (test_dict['gameFinished'] == ref_dict['gameFinished'])
-            vprint("        gameFinished: " + str(result))
-            self.assertTrue(result)
-            result = (test_dict['turnCounter'] == ref_dict['turnCounter'])
-            vprint("         turnCounter: " + str(result))
-            self.assertTrue(result)
-            result = (test_dict['cardset'] == ref_dict['cardset'])
-            vprint("             cardset: " + str(result))
-            self.assertTrue(result)
-            result = (test_dict['steps'] == ref_dict['steps'])
-            vprint("               steps: " + str(result))
-            self.assertTrue(result)
-            result = (test_dict == ref_dict)
+            result1 = (test_dict['gameID'] == ref_dict['gameID'])
+            vprint("              gameID: " + str(result1))
+            self.assertTrue(result1)
+            result2 = (test_dict['gameFinished'] == ref_dict['gameFinished'])
+            vprint("        gameFinished: " + str(result2))
+            self.assertTrue(result2)
+            result3 = (test_dict['turnCounter'] == ref_dict['turnCounter'])
+            vprint("         turnCounter: " + str(result3))
+            self.assertTrue(result3)
+            result4 = (test_dict['cardset'] == ref_dict['cardset'])
+            vprint("             cardset: " + str(result4))
+            self.assertTrue(result4)
+            result5 = (test_dict['steps'] == ref_dict['steps'])
+            vprint("               steps: " + str(result5))
+            self.assertTrue(result5)
             vprint("           ---------------")
+            result = result1 and result2 and result3 and result4 and result5
             vprint("              Global: " + str(result))
-            self.assertTrue(result)
 
     def test_deserialize(self):
         """

@@ -186,8 +186,11 @@ class Game:
                 # retrieves the players
                 self.players = []
                 for pDict in objDict["players"]:
-                    self.players.append( { 'playerID': ObjectId(pDict['playerID']),
-                        'nickname': pDict['nickname'], 'points': int(pDict['points'])})
+                    self.players.append( {
+                        'playerID': ObjectId(pDict['playerID']),
+                        'nickname': pDict['nickname'],
+                        'passwordHash': pDict['passwordHash'],
+                        'points': int(pDict['points'])})
                 # retrieves the cards
                 self.cards.deserialize(objDict["cardset"])
                 # retrieves the steps
