@@ -529,7 +529,10 @@ class Backend():
             while j > target_turn:
                 del(self.games[i].steps[j])
                 j -= 1
-                # resets the 'set' to empty
+            # resets the 'playerID', nickname' and 'set' to empty if the game is 
+            # not finished
+            self.games[i].steps[target_turn].playerID = None
+            self.games[i].steps[target_turn].nickname = ""
             self.games[i].steps[target_turn].set = []
             # set the player's points as from the reference test data
             # The only way to do so is actually to replay the game and add points to

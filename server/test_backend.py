@@ -9,7 +9,7 @@ import unittest
 from backend import Backend
 from connmongo import getGamesColl, getPlayersColl
 from game import Game 
-from test_utilities import cardsetDict_equality, stepDict_equality
+from test_utilities import cardsetDict_equality, stepDict_equality, step_equality
 from test_utilities import gameRef_compliant, game_compliant
 from test_utilities import refPlayers, refGames_Dict
 from test_utilities import vbar, vprint
@@ -458,7 +458,7 @@ class test_Backend(unittest.TestCase):
         vbar()
         print("Test backend.step")
         vbar()
-        # initialize test data, launch a game with 5 players
+        # initialize reference test data, launch a game with 5 players
         backend = self.setUp()
         vprint("We register the reference test players:")
         backend.ForTestOnly_RegisterRefPlayers()
@@ -656,20 +656,17 @@ class test_Backend(unittest.TestCase):
         vbar()
         # initiate a backend and load a reference game
         for test_data_index in (0,1):
+            # build the test data
             backend = self.setUp()
+            backend.ForTestOnly_RegisterRefPlayers()            
             backend.ForTestOnly_LoadRefGame(test_data_index)
-            # get back to turn 9
             backend.ForTestOnly_GetBackToTurn(test_data_index,9)
-            # compare the backend with the reference test data
+            # build the reference data
             game_ref = gameSetupAndProgress(test_data_index, 9)
+            # compare the test and reference test data
             result = game_compliant(backend.games[0], game_ref)
-            print("Bogus 12:", result)
-            
-            
-            
             self.assertEqual(backend.nextGameID, None)
             self.assertEqual(backend.playersWaitingList, [])
-            result = gameRef_compliant(backend.games[0], test_data_index)
             vprint("  > Index " + str(test_data_index) + ": " + str(result))
             self.assertTrue(result)
 
