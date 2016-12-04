@@ -35,7 +35,7 @@ class test_Setserver(unittest.TestCase):
             results sent back by the server are conform to expected answers. 
     """
     #subprocess.call(['./start_setserver.sh'])
-    players = []
+    players = Players()
     refPlayers = []
     gameID = None
     
@@ -87,12 +87,10 @@ class test_Setserver(unittest.TestCase):
         playersColl = getPlayersColl()
         playersColl.update_many({}, {'$set': {'gameID': None }} )
         # enlist reference players
-        list_ref = [str(self.players.getPlayerID("Donald")),
-                str(self.players.getPlayerID("Mickey")), 
-                str(self.players.getPlayerID("Riri")),
-                str(self.players.getPlayerID("Fifi")),
-                str(self.players.getPlayerID("Loulou")),
-                str(self.players.getPlayerID("Daisy")) ]
+        list_ref = []
+        for pp in refPlayers():
+            list_ref.append(str(pp['playerID']))
+        print("Bogus 99: ", list_ref)
         result = requests.get(path, params={'playerIDlist': list_ref})
         gameid_str = result.json()['gameID']
         vprint("We enlist the reference test players: gameID = " + gameid_str)
@@ -120,7 +118,7 @@ class test_Setserver(unittest.TestCase):
 
     def test_ForTestOnly_RegisterRefPlayers(self):
         """
-        Unit test for the method enabling to load reference test data.
+        Test test_setserver.setup_registerRefPlayers
         """
         vbar()
         print("Test test_setserver.setup_registerRefPlayers")
@@ -136,11 +134,26 @@ class test_Setserver(unittest.TestCase):
                    + " (" + str(pp['playerID']) + ") - " + pp['passwordHash'])
             self.assertTrue(p_db != None)
 
-    def test_enlistRefPlayers(self):
+    def test_ForTestOnly_enlistRefPlayers(self):
         """
-        Test test_setserver.enlistRefPlayers
+        Test test_setserver.setup_registerRefPlayers
         """
-        
+        vbar()
+        print("Test test_setserver.setup_enlistRefPlayers")
+        vbar()
+        # setup test data and environment
+        self.setup_reset()
+        self.setup_registerRefPlayers()
+        # enlist the players
+        gameid_str = self.setup_enlistRefPlayers()
+        print("Bogus 10:", gameid_str)
+        # check whether the players are enlisted
+        playersColl = getPlayersColl()
+        for pp in self.refPlayers:
+            p_db = playersColl.find_one({'_id': pp['playerID']})
+            gID_db_str = str(p_db['gameID'])
+            vprint("     Enlisted " + pp['nickname'] + " - " + gID_db_str)
+            self.assertEqual(gameid_str, gID_db_str)
         
     def test_ForTestOnly_LoadRefGame(self):
         """
@@ -249,6 +262,7 @@ class test_Setserver(unittest.TestCase):
         vbar()
         # build test data and context
         self.setup_reset()
+        self.refPlayers = refPlayers()
         # Here we must register few players, and then compare the playerID sent
         # back by the server wit the values in the DB.
         # We also try to register invalid nicknames and see the server answer.
@@ -265,10 +279,10 @@ class test_Setserver(unittest.TestCase):
                 vprint("    " + nickname +" is registered with playerID = '" 
                    + playerid_str + "'")
                 pp_db = self.players.getPlayer(ObjectId(playerid_str))
-                self.assertEqual(status, "ok")
+                self.assertEqual(pp_db['status'], "ok")
                 self.assertEqual(pp_db['nickname'], nickname)
                 self.assertEqual(playerid_str, str(pp_db['playerID']))
-            if status == "ko":
+            else:
                 # the test has failed.
                 self.assertTrue(False)
         # re-register the same players => should fail
@@ -458,24 +472,21 @@ class test_Setserver(unittest.TestCase):
         
         # We enlist a team of 5 players: it should succeed.
         vprint("    We enlist a team of 5 players: it should succeed.")
-        list_ref = [str(self.players.getPlayerID("Donald")),
-                str(self.players.getPlayerID("Mickey")), 
-                str(self.players.getPlayerID("Daisy")),
-                str(self.players.getPlayerID("Riri")),
-                str(self.players.getPlayerID("Fifi")) ]
+        list_ref = [str(self.players.getPlayerID("Donald")['playerID']),
+                str(self.players.getPlayerID("Mickey")['playerID']), 
+                str(self.players.getPlayerID("Daisy")['playerID']),
+                str(self.players.getPlayerID("Riri")['playerID']),
+                str(self.players.getPlayerID("Fifi")['playerID']) ]
         result = requests.get(path, params={'playerIDlist': list_ref})
-        print("Bogus 10: ", result)
         result = result.json()
-        print("Bogus 11: ", result)
         status = result['status']
         gameid_str = result['gameID']
         #collect equivalent information from the DB
-        gameID_db = self.players.getGameID(ObjectId(list_ref[0]))
-        list_db = self.players.inGame(gameID_db)
+        gameID_db = self.players.getGameID(ObjectId(list_ref[0]))['gameID']
+        list_db = self.players.inGame(gameID_db)['list']
         list_db_str = []
         for pid in list_db:
             list_db_str.append(str(pid))
-            pid = str(pid)
         # compare with the result of the 'get'
         vprint("    -> Donald + Mickey + Daisy + Riri + Fifi : " + status)
         self.assertEqual(status, "ok")
@@ -483,25 +494,25 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(len(list_db_str), len(list_ref))
         for pid_str in list_ref:
             self.assertTrue(pid_str in list_db_str)
+
         # delist all players
-        playersColl.update_many({}, {'$set': {'gameID': None }} )
-        
+        playersColl.update_many({}, {'$set': {'gameID': None }} )        
         # We enlist a team of 7 players with 2 duplicates: it should succeed.
         vprint("    We enlist a team of 7 players with 2 duplicates: it should succeed.")
-        list_ref = [str(self.players.getPlayerID("Donald")),
-                str(self.players.getPlayerID("Mickey")), 
-                str(self.players.getPlayerID("Daisy")),
-                str(self.players.getPlayerID("Mickey")), 
-                str(self.players.getPlayerID("Daisy")),
-                str(self.players.getPlayerID("Riri")),
-                str(self.players.getPlayerID("Fifi")) ]
+        list_ref = [str(self.players.getPlayerID("Donald")['playerID']),
+                str(self.players.getPlayerID("Mickey")['playerID']), 
+                str(self.players.getPlayerID("Daisy")['playerID']),
+                str(self.players.getPlayerID("Mickey")['playerID']), 
+                str(self.players.getPlayerID("Daisy")['playerID']),
+                str(self.players.getPlayerID("Riri")['playerID']),
+                str(self.players.getPlayerID("Fifi")['playerID']) ]
         result = requests.get(path, params={'playerIDlist': list_ref})
         result = result.json()
         status = result['status']
         gameid_str = result['gameID']
         #collect equivalent information from the DB
-        gameID_db = self.players.getGameID(ObjectId(list_ref[0]))
-        list_db = self.players.inGame(gameID_db)
+        gameID_db = self.players.getGameID(ObjectId(list_ref[0]))['gameID']
+        list_db = self.players.inGame(gameID_db)['list']
         list_db_str = []
         for pid in list_db:
             list_db_str.append(str(pid))
@@ -783,7 +794,10 @@ class test_Setserver(unittest.TestCase):
             game_dict = result.json()['game']
             players = []
             for pp in game_dict['players']:
-                temp = {'playerID': ObjectId(pp['playerID']), 'nickname': pp['nickname']}
+                temp = {
+                    'playerID': ObjectId(pp['playerID']), 
+                    'nickname': pp['nickname'],
+                    'passwordHash': pp['passwordHash']}
                 players.append(temp)
             game = Game(players)
             game.deserialize(game_dict)

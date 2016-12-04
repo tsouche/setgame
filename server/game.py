@@ -162,8 +162,11 @@ class Game:
         objDict["turnCounter"] = str(self.turnCounter)
         objDict["players"] = []
         for pp in self.players:
-            objDict["players"].append( { 'playerID': str(pp['playerID']), 
-                'nickname': pp['nickname'], 'points': str(pp['points'])})
+            objDict["players"].append( {
+                'playerID': str(pp['playerID']), 
+                'nickname': pp['nickname'],
+                'passwordHash': pp['passwordHash'],
+                'points': str(pp['points'])})
         objDict["cardset"] = self.cards.serialize()
         objDict["steps"] = []
         for s in self.steps:

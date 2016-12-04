@@ -12,7 +12,7 @@ from constants import version, oidIsValid
 
 """
 This script must be run in order to start the server. 
-Unitary test can be run with test_setserver.py, provided that the bottle server
+Unit test can be run with test_setserver.py, provided that the bottle server
 will have been started with the command line:
     > cd /
     > python /data/code/setgame/server/setserver.py
@@ -67,15 +67,12 @@ if __name__ == "__main__":
     def enlistTeam():
         pid_list = []
         result = request.query.getall('playerIDlist')
-        print("Bogus 14: ", result)
         # check that the strings passed are valid ObjectId, and if so
         # add them into the list of players to be enlisted.
         for playerid_str in result:
             if oidIsValid(playerid_str):
-                pid_list.append({'playerID': ObjectId(playerid_str)})
-        print("Bogus 17: ", pid_list)
+                    pid_list.append({'playerID': ObjectId(playerid_str)})
         result2 = backend.enlistTeam(pid_list)
-        print("Bogus 12: ", result2)
         if result2['status'] == "ok":
             gameid_str = str(result2['gameID'])
             result2 = {'status': "ok", 'gameID': gameid_str}
@@ -138,6 +135,7 @@ if __name__ == "__main__":
     def history(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.history(ObjectId(gameid_str))
+            print("Bogus 11: ", result)
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result

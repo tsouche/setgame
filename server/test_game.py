@@ -10,7 +10,7 @@ from connmongo import getPlayersColl
 from game import Game, invalidPlayerID
 from players import Players
 from test_utilities import cardsetToString, stepToString
-from test_utilities import cardset_equality, step_equality
+from test_utilities import cardset_equality, step_equality, stepDict_equality
 from test_utilities import refCardsets, refSteps, gameRef_compliant
 from test_utilities import refGameHeader_start, refGameHeader_Finished
 from test_utilities import refGames_Dict, refPlayers
@@ -448,13 +448,10 @@ class test_Game(unittest.TestCase):
             result = (test_dict['cardset'] == ref_dict['cardset'])
             vprint("             cardset: " + str(result))
             self.assertTrue(result)
-            result = (test_dict['steps'] == ref_dict['steps'])
-            vprint("               steps: " + str(result))
-            self.assertTrue(result)
-            result = (test_dict == ref_dict)
-            vprint("           ---------------")
-            vprint("              Global: " + str(result))
-            self.assertTrue(result)
+            for i in range(0, len(test_dict['steps'])):
+                result = stepDict_equality(test_dict['steps'][i], ref_dict['steps'][i])
+                vprint("               steps " + str(i) + ": "+ str(result))
+                self.assertTrue(result)
 
     
 if __name__ == '__main__':
