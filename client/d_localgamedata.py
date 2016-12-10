@@ -9,7 +9,11 @@ from server.step import Step
 class LocalGameData():
     """
     This class stores and make available to local client resources all the data
-    available on the game, refreshed periodically from the server.
+    available on the game.
+    These data can be refreshed on events or periodically, by pulling fresh data
+    from the server.
+    
+    This object is a data holder, and contains dat for only one game at a time.
     """
 
 
@@ -20,25 +24,28 @@ class LocalGameData():
         The player's details are stored in a local file. All other game related 
         information are retrieved from the server.
         """
-        # retrieve local persistent data from a file
-        self.me_playerID = None
-        self.me_nickname = None
-        self.me_password = None
+        # data describing the local player. It can be retrieved from a local 
+        # file and/or refreshed from the server.
+        self.localPlayer = {
+            'playerID': None, 
+            'nickname': None, 
+            'passwordHash': None,
+            'totalScore': 0
+            }
+        # data related to the on-going game: to be retrieved from the server
+        self.gameID = None
+        self.gameStarted = False
+        self.gameFinished = False
+        self.players = []           # list of {'nickname': str, 'points': int}
+        self.turnCounter = 0
+        self.cards = CardSet()
+        self.step = Step()
         # flag indicating to the GUI if data were refreshed, so that it can 
         # update the display and status of various buttons/command.
-        self.somethingNew = False
-        # structure other data which will be read from the server
-        self.totalScore = 0
-        self.players = []   # will retrieve the nicknames of the players and their score
-        self.gameID = None
-        self.cards = CardSet()
-        self.gameStarted = False
-        self.gameFinished = True
-        self.turnCounter = 0
-        self.step = Step()
-        
+        self.pullFromServer = False
+        self.pushToServer = False
     
-    def readNewGame(self):
+    def loadNewGame(self):
         """
         Retrieve the game information from the server and get ready to play. 
         """
@@ -46,7 +53,7 @@ class LocalGameData():
         # retrieve all informations from the Server
         pass
     
-    def refreshGameData(self):
+    def pullFromServer(self):
         """
         Check whether the data are updated, and reads an update if relevant.
         Also raise a flag for the GUI to react that the data were refreshed.
@@ -55,7 +62,7 @@ class LocalGameData():
         # turnCounter is equal to the server turnCounter.
         pass
     
-    def pushSetProposal(self):
+    def pushToServer(self):
         """
         Push a set proposal to the server, and checks the result.
         Raise flags according to the serve answer.

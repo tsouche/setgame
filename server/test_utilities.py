@@ -2,7 +2,7 @@
 Created on August 19th 2016
 @author: Thierry Souche
 
-This modules contains few constants which are useful to the Set gale.
+This modules contains few constants which are useful to test the Set game.
 '''
 
 from bson.objectid import ObjectId

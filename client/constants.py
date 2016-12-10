@@ -5,12 +5,26 @@ Created on Oct 15, 2016
 '''
 
 
+from bson.objectid import ObjectId
+
+def oidIsValid(oid):
+    """
+    This function checks that the argument is a valid ObjectID (i.e.
+    either a valid ObjectID, or a string representing a valid 
+    ObjectId).
+    """
+    try:
+        ObjectId(oid)
+        return True
+    except:
+        return False
+    
 """
 Data related constant values
 """
 
 encryption_algorithm = "sha512_crypt"
-backup_file = "./backup.ply"
+backup_file = "./backup.bkp"
 
 
 """

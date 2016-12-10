@@ -1,0 +1,5 @@
+systemctrl start mongodb
+python /data/code/setgame/server/setserver.py
+
+echo "Ready to start tests"
+
