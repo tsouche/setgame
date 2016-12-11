@@ -14,7 +14,7 @@ from test_utilities import gameRef_compliant, game_compliant
 from test_utilities import refPlayers, refGames_Dict
 from test_utilities import vbar, vprint
 from test_game import gameToString, gameSetup, gameSetupAndProgress
-from server.test_utilities import refPlayersDict
+from server.test_utilities import refPlayers_Dict
 
 
 def printRefPlayer():
@@ -74,6 +74,31 @@ class test_Backend(unittest.TestCase):
         # tear down the test data
         self.tearDown()
 
+    def test_isNicknameAvailable(self):
+        """
+        Test backend.isNicknameAvailable
+        """
+        vbar()
+        print("test backend.isNicknameAvailable")
+        vbar()
+        # initiate a backend
+        backend = self.setUp()
+        # check availability of nicknames before and after registering players
+        vprint("Initiate a backend with no players registered, and check nickname availaiblity")
+        vprint("before and after registering reference players:")
+        for pp in refPlayers(True):
+            # check the nickname is available before the player is registered
+            answer = backend.isNicknameAvailable(pp['nickname'])
+            self.assertEqual(answer['status'], "ok")
+            vprint("    > " + pp['nickname'] + " is available")
+            # register the player
+            result = backend.registerPlayer(pp['nickname'], pp['passwordHash'])
+            vprint("    - register " + pp['nickname'] + ": " + str(result['playerID']))
+            # check the nickname is not available after the player is registered
+            answer = backend.isNicknameAvailable(pp['nickname'])
+            self.assertEqual(answer['status'], "ko")
+            vprint("    > " + pp['nickname'] + " is not available anymore")
+    
     def test_registerPlayer(self):
         """
         Test backend.registerPlayer

@@ -57,7 +57,32 @@ class Backend():
         self.nextGameID = None
         # returns status update answer
         return {'status': "reset"}
+
+    def isNicknameAvailable(self, nickname):
+        """
+        This method checks if a nickname is still available so that a new player 
+        could register with this nickname.
+        
+        NB: there is no possible 'reservation' for a nickname, and they are 
+        assigned on a "first ask first served" basis.
+
+        The client need to request if a nickname is available: it will push a 
+        "nickname" to the server who will - if available - return a positive
+        answer:
+        - 
+            post: { "nickname": "str" }
+            answer: { "playerID": str(ObjectId) }
                 
+        The client need to parse the returned message to read the (stringified) 
+        playerID.
+        """
+        answer = self.players.isNicknameAvailable(nickname)
+        if answer['status'] == "ok":
+            result = {'status': "ok", 'nickname': answer['nickname']}
+        else:
+            result = {'status': "ko", 'reason': answer['reason']}
+        return result
+    
     def registerPlayer(self, nickname, passwordHash):
         """
         This method registers new players so that they can play and connect 
@@ -68,9 +93,9 @@ class Backend():
         
         The client need to request the creation of a player: it will push a 
         "nickname" to the server who will - if successful - return a player ID:
-        - POST https://server.org/set/player/
-            post: { "nickname": "str" }
-            answer: { "playerID": str(ObjectId) }
+            { 'status': "ok", 'playerID': "str(ObjectId) }
+            or
+            { 'status': "ko", 'reason': error_msg }
                 
         The client need to parse the returned message to read the (stringified) 
         playerID.
@@ -114,9 +139,9 @@ class Backend():
         # We assume here that the client will push a value named 'playerID' 
         # which is a valid player's ID, or will go through the form 'enlist_tpl'
         # check if the playerID is valid
-        if self.players.playerIDisValid(playerID):
+        if self.players.isPlayerIDValid(playerID):
             # check if the player is available to take part into a new game
-            if self.players.playerIsAvailableToPlay(playerID)['status'] == "ok":
+            if self.players.isPlayerAvailableToPlay(playerID)['status'] == "ok":
                 # check if the playerID  is in the waiting list
                 if (playerID in self.playersWaitingList):
                     # the player already enlisted but the game is not yet
@@ -187,8 +212,8 @@ class Backend():
         j = len(list_playerID)-1
         while j >= 0:
             pID = list_playerID[j]['playerID']
-            if self.players.playerIDisValid(pID):
-                if self.players.playerIsAvailableToPlay(pID)['status'] == "ko":
+            if self.players.isPlayerIDValid(pID):
+                if self.players.isPlayerAvailableToPlay(pID)['status'] == "ko":
                     del(list_playerID[j])
             else:
                 del(list_playerID[j])
@@ -229,7 +254,7 @@ class Backend():
         # I should find a way to catch errors in case the playerID/gameID are 
         # not valid ObjectId.
         list_names = []
-        if self.players.playerIDisValid(playerID):
+        if self.players.isPlayerIDValid(playerID):
             gameID = self.players.getGameID(playerID)['gameID']
             if gameID != None:
                 list_pID = self.players.inGame(gameID)['list']
@@ -410,7 +435,7 @@ class Backend():
             
         if oidIsValid(playerID):
             #check if playerID exist 
-            if self.players.playerIDisValid(playerID):
+            if self.players.isPlayerIDValid(playerID):
                 # check if the set syntax is valid (3 integers between 0 and 11)
                 if setSyntax(setlist):
                     # find the game
@@ -480,6 +505,20 @@ class Backend():
         result = self.enlistTeam(list_pid)
         return result
 
+    def ForTestOnly_DelistAllPlayers(self):
+        """
+        FOR TEST PURPOSE ONLY.
+        This method delist all players from any on-going game. If used unwisely, 
+        this may induce inconsistency within the server (especially since this
+        will not stop the on-going games, but only delist the players).
+        
+        It returns the number of players which were actually delisted from a 
+        game.
+        """
+        # delist all the players by overwriting the gameID field with 'None'.
+        modified = self.playersColl.update_many({}, {'$set': {'gameID': None}})
+        return modified.modified_count
+    
     def ForTestOnly_LoadRefGame(self, test_data_index):
         """
         FOR TEST PURPOSE ONLY.

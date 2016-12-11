@@ -5,12 +5,14 @@ Created on August 19th 2016
 This modules contains few constants which are useful to test the Set game.
 '''
 
+from csv import DictReader, DictWriter
 from bson.objectid import ObjectId
 from passlib.context import CryptContext
 
-from constants import encryption_algorithm
-from cardset import CardSet
+from constants import encryption_algorithm, client_data_backup_file
+from constants import client_data_one_player_backup_file, client_data_all_players_backup_file
 from constants import cardsMax
+from cardset import CardSet
 from step import Step
 
 
@@ -41,49 +43,96 @@ def checkPassword(password, passwordHash):
     context = CryptContext(schemes=[encryption_algorithm])
     return context.verify(password, passwordHash)
     
-def refPlayersDict():
+def refPlayers_Dict():
+    """
+    Reference test data for players who are used to test the set client.
+    
+    This is the ONLY place where we keep the passwords of the reference players
+    in order to enable the test of passwords and creation of new players in the
+    client side.
+    """
     return [
-            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald", 
-             'passwordHash': "$6$rounds=656000$9J3qlvOuPqVAB1h3$29401w.r.1qLeLqGwTklcQ5oixPJGXyYrZetUnV3WdjGEeqAbEZE1MSXtUWZ6cI1u/2.YYH9/.9BlWs29deWM.",
+            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': "Donald",
+             'password': "A342Fzf'zT4Z%7yG", 
+             'passwordHash': "$6$rounds=656000$Bec6g0wKzAMnZpNu$LK1tDMHvkTvVV/MpmuhVom20PAmUsiJU8YQlII/3Bvkql9VAvtY9r/QU2oFLeXuVZVDJPTmyYD1eQ/bwKsPer/",
              'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845a'},
             {'playerID': '57b9a003124e9b13e6759bda', 'nickname': "Mickey", 
-             'passwordHash': "$6$rounds=656000$x184Sb1.AgeFH09L$xMTg28wbdIx1CFTxw5H7oa2MRTkyw4wwdNElEYlxwlovVKwh0vbPIm8rN4FKyUQwJQHEbnlvWJZzqL1HLYkbu0",
+             'password': "qEDQ3f_9-234rDqd",
+             'passwordHash': "$6$rounds=656000$G7eCMrOtusksn2e8$hfb0Uf5ccdhLJKh5l1MZyl3xTFwZFOwIJtuDWYdwT8AtPTxmLjCVhaJRpUPac61rAXHmyel4g07XE.HryomEy0",
              'totalScore': '30', 'gameID': 'None'},
             {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': "Riri", 
-             'passwordHash': "$6$rounds=656000$bcxUoDEZ1EoOAHHb$fmljI4QsoUxQSrevuUMO4jD5mRj3TnaeRj87w3dkjcEHjc9iTqXyxUrmRz4gx7y0FeAg2UD.Ufi/4dWjBHfbL1",
+             'password': "eDQ2[(2rsdER%&dz",
+             'passwordHash': "$6$rounds=656000$nLsLBMbZJolXcfjG$37ww3A6UBw060j5Vg5pGhpj1tAP9jHo7LXdETMp6OHTJ.Tr3B3NpjIusmor0wnT9P1c8P/K/GgtO5TFyO8L1F0",
              'totalScore': '18', 'gameID': '57bf224df9a2f36dd206845b'},
             {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': "Fifi", 
-             'passwordHash': "$6$rounds=656000$21XpxSD3UWiR/GDG$8TMRQm1SlXy7h.I0mq6i.LZocPOZCbofjwD/hF2P4kQbXmaRfL03PYpXXTU1jc6afQSiVYMqToFm4OXgCVWGt0",
+             'password': "#123rZAderwFFW5(",
+             'passwordHash': "$6$rounds=656000$bGhE6T09lldCAo0X$ZeEPwgIIRjqfwoNKTB7iKWXBr4ON/Ymbh3EyrWDNFy5a.D5PLYQm/dHbFE0p.8m4jHGLOZYoOMM6YHeUYemFz0",
              'totalScore': '0', 'gameID': '57bf224df9a2f36dd206845b'},
             {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': "Loulou", 
-             'passwordHash': "$6$rounds=656000$VB0Nc3c12tpo90En$W2QT/xYn/opvWhDJfJ2bM9wIB1CT6K2Wevlb5qGWdU85.dgu4NObmJxJGMVwelhx/NSBn66.VWjQYXgopAEyn/",
+             'password': "5Tggeé2225-fs'%3",
+             'passwordHash': "$6$rounds=656000$i216x5CatW3PmTc9$6ZTxlLMrKGhJoD6Fw2RpfFK8G0idxPZb191OULWVfe8lgGI9iKMhSBrujZBfp5bALzDVnJXakw1/jALxuCld11",
              'totalScore': '33', 'gameID': '57bf224df9a2f36dd206845b'},
             {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': "Daisy", 
-             'passwordHash': "$6$rounds=656000$iLID3I10RENiuZPy$Rmo48wznR9Yqb6i9/SNDUa.hslEyycZ2UYZV0bX6ChdtSA5MGCmN3BrF1xoZG4TMRzEmwmppY/W3.ZzT4ogRL/",
+             'password': "qdRETg-75uyUU_r%",
+             'passwordHash': "$6$rounds=656000$ZvwHQZsvkr4OIFi2$S1UxtArZILJryeBD1ak18eE4TX/AYUP/hg9qssLwT8kRpL.kWsp3Y.yakfga0YnPr7doeGJPK3Ui9Q6smT7Yy1",
              'totalScore': '45', 'gameID': '57bf224df9a2f36dd206845a'}
             ]
 
-def refPlayers(fill_none = False):
+def refPlayers(fillGameIDNone = False):
     """
     This methods returns populated players from the reference dictionary above.
-    Depending on the argument 'fill_none':
+    Depending on the argument 'fillGameIDNone':
       True: the 'gameID' is populated with 'None'
       False: the 'gameID' is populated with the reference data
     """
     list_pp = []
-    for pp_dict in refPlayersDict():
+    for pp_dict in refPlayers_Dict():
         gameID = pp_dict['gameID']
-        if (gameID == "None") or (fill_none == True):
+        if (gameID == "None") or (fillGameIDNone == True):
             gameID = None
         else:
             gameID = ObjectId(gameID)
-        list_pp.append({'playerID': ObjectId(pp_dict['playerID']),
-                        'nickname': pp_dict['nickname'], 
-                        'passwordHash': pp_dict['passwordHash'],
-                        'totalScore': int(pp_dict['totalScore']), 
-                        'gameID': gameID
-                        })
+        list_pp.append({
+            'playerID': ObjectId(pp_dict['playerID']),
+            'nickname': pp_dict['nickname'], 
+            'passwordHash': pp_dict['passwordHash'],
+            'totalScore': int(pp_dict['totalScore']), 
+            'gameID': gameID
+            })
     return list_pp
+
+def writeOnePlayerBackupTestFile(filename=client_data_one_player_backup_file):
+    """
+    This function (over)writes a test file containing one single player 
+    description.
+    """
+    pp = refPlayers_Dict()[0]
+    Donald = {
+        'playerID': pp['playerID'], 
+        'nickname': pp['nickname'], 
+        'passwordHash': pp['passwordHash']
+        }
+    with open(filename, "w") as file:
+        fieldNames = ['playerID', 'nickname', 'passwordHash']
+        writer = DictWriter(file, fieldnames = fieldNames)
+        writer.writerow(Donald)
+
+def writeAllPlayersBackupTestFile(filename=client_data_all_players_backup_file):
+    """
+    This function (over)writes a test file containing one single player 
+    description.
+    """
+    ref_players = refPlayers_Dict()
+    with open(filename, "w") as file:
+        fieldNames = ['playerID', 'nickname', 'passwordHash']
+        writer = DictWriter(file, fieldnames = fieldNames)
+        for pp in ref_players:
+            item = {
+                'playerID': pp['playerID'], 
+                'nickname': pp['nickname'], 
+                'passwordHash': pp['passwordHash']
+                }
+            writer.writerow(item)
 
 def cardsList(nb):
     """
@@ -110,18 +159,30 @@ def refGames_Dict():
         'gameFinished': 'True', 
         'turnCounter': '25', 
         'players': [
-            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': 'Donald', 'points': '18',
-             'passwordHash': "$6$rounds=656000$9J3qlvOuPqVAB1h3$29401w.r.1qLeLqGwTklcQ5oixPJGXyYrZetUnV3WdjGEeqAbEZE1MSXtUWZ6cI1u/2.YYH9/.9BlWs29deWM."}, 
-            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': 'Mickey', 'points': '15',
-             'passwordHash': "$6$rounds=656000$x184Sb1.AgeFH09L$xMTg28wbdIx1CFTxw5H7oa2MRTkyw4wwdNElEYlxwlovVKwh0vbPIm8rN4FKyUQwJQHEbnlvWJZzqL1HLYkbu0"}, 
-            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': 'Riri', 'points': '3',
-             'passwordHash': "$6$rounds=656000$bcxUoDEZ1EoOAHHb$fmljI4QsoUxQSrevuUMO4jD5mRj3TnaeRj87w3dkjcEHjc9iTqXyxUrmRz4gx7y0FeAg2UD.Ufi/4dWjBHfbL1"}, 
-            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': 'Fifi', 'points': '12',
-             'passwordHash': "$6$rounds=656000$21XpxSD3UWiR/GDG$8TMRQm1SlXy7h.I0mq6i.LZocPOZCbofjwD/hF2P4kQbXmaRfL03PYpXXTU1jc6afQSiVYMqToFm4OXgCVWGt0"}, 
-            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': 'Loulou', 'points': '6',
-             'passwordHash': "$6$rounds=656000$VB0Nc3c12tpo90En$W2QT/xYn/opvWhDJfJ2bM9wIB1CT6K2Wevlb5qGWdU85.dgu4NObmJxJGMVwelhx/NSBn66.VWjQYXgopAEyn/"}, 
-            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': 'Daisy', 'points': '21',
-             'passwordHash': "$6$rounds=656000$iLID3I10RENiuZPy$Rmo48wznR9Yqb6i9/SNDUa.hslEyycZ2UYZV0bX6ChdtSA5MGCmN3BrF1xoZG4TMRzEmwmppY/W3.ZzT4ogRL/"}
+            {'playerID': refPlayers_Dict()[0]['playerID'],   # Donald
+             'nickname': refPlayers_Dict()[0]['nickname'],
+             'passwordHash': refPlayers_Dict()[0]['passwordHash'], 
+             'points': '18'},
+            {'playerID': refPlayers_Dict()[1]['playerID'],   # Mickey
+             'nickname': refPlayers_Dict()[1]['nickname'],
+             'passwordHash': refPlayers_Dict()[1]['passwordHash'], 
+             'points': '15'},
+            {'playerID': refPlayers_Dict()[2]['playerID'],   # Riri
+             'nickname': refPlayers_Dict()[2]['nickname'],
+             'passwordHash': refPlayers_Dict()[2]['passwordHash'], 
+             'points': '3'},
+            {'playerID': refPlayers_Dict()[3]['playerID'],   # Fifi
+             'nickname': refPlayers_Dict()[3]['nickname'],
+             'passwordHash': refPlayers_Dict()[3]['passwordHash'], 
+             'points': '12'},
+            {'playerID': refPlayers_Dict()[4]['playerID'],   # Loulou
+             'nickname': refPlayers_Dict()[4]['nickname'],
+             'passwordHash': refPlayers_Dict()[4]['passwordHash'], 
+             'points': '6'},
+            {'playerID': refPlayers_Dict()[5]['playerID'],   # Daisy
+             'nickname': refPlayers_Dict()[5]['nickname'],
+             'passwordHash': refPlayers_Dict()[5]['passwordHash'], 
+             'points': '21'}
             ], 
         'cardset': {
             '__class__': 'SetCardset',
@@ -138,7 +199,8 @@ def refGames_Dict():
             }, 
         'steps': 
             [
-                {   '__class__': 'SetStep', 'turnCounter': '0', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '0', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-00', '01-01', '02-02', '03-03', '04-04', '05-05', '06-06', '07-07', '08-08', '09-09', '10-10', '11-12'], 
                     'set':   ['01', '06', '11'],
                     'pick':  ['00-13', '01-14', '02-15', '03-16', '04-17', '05-18', '06-19', '07-20', '08-21', '09-22', '10-23', '11-24', 
@@ -148,7 +210,8 @@ def refGames_Dict():
                               '48-61', '49-62', '50-63', '51-64', '52-65', '53-66', '54-67', '55-68', '56-69', '57-70', '58-71', '59-72', 
                               '60-73', '61-74', '62-75', '63-76', '64-77', '65-78', '66-79', '67-80', '68-11'],
                     'used':  [] },
-                {   '__class__': 'SetStep', 'turnCounter': '1', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda',  
+                {   '__class__': 'SetStep', 'turnCounter': '1', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-00', '01-15', '02-02', '03-03', '04-04', '05-05', '06-14', '07-07', '08-08', '09-09', '10-10', '11-13'], 
                     'set':   ['01', '04', '05'],
                     'pick':  ['00-16', '01-17', '02-18', '03-19', '04-20', '05-21', '06-22', '07-23', '08-24', '09-25', '10-26', '11-27', 
@@ -158,7 +221,8 @@ def refGames_Dict():
                               '48-64', '49-65', '50-66', '51-67', '52-68', '53-69', '54-70', '55-71', '56-72', '57-73', '58-74', '59-75', 
                               '60-76', '61-77', '62-78', '63-79', '64-80', '65-11'], 
                     'used':  ['00-01', '01-06', '02-12'] },
-                {   '__class__': 'SetStep', 'turnCounter': '2', 'nickname': 'Fifi', 'playerID': '57b9a003124e9b13e6759bdc',
+                {   '__class__': 'SetStep', 'turnCounter': '2', 
+                    'playerID': refPlayers_Dict()[3]['playerID'], 'nickname': refPlayers_Dict()[3]['nickname'],   # Fifi
                     'table': ['00-00', '01-18', '02-02', '03-03', '04-17', '05-16', '06-14', '07-07', '08-08', '09-09', '10-10', '11-13'], 
                     'set':   ['00', '05', '08'],
                     'pick':  ['00-19', '01-20', '02-21', '03-22', '04-23', '05-24', '06-25', '07-26', '08-27', '09-28', '10-29', '11-30', 
@@ -168,7 +232,8 @@ def refGames_Dict():
                               '48-67', '49-68', '50-69', '51-70', '52-71', '53-72', '54-73', '55-74', '56-75', '57-76', '58-77', '59-78', 
                               '60-79', '61-80', '62-11'], 
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05'] },
-                {   '__class__': 'SetStep', 'turnCounter': '3', 'nickname': 'Daisy', 'playerID': '57b9bffb124e9b2e056a765d', 
+                {   '__class__': 'SetStep', 'turnCounter': '3', 
+                    'playerID': refPlayers_Dict()[5]['playerID'], 'nickname': refPlayers_Dict()[5]['nickname'],   # Daisy
                     'table': ['00-21', '01-18', '02-02', '03-03', '04-17', '05-20', '06-14', '07-07', '08-19', '09-09', '10-10', '11-13'], 
                     'set':   ['00', '01', '09'],
                     'pick':  ['00-22', '01-23', '02-24', '03-25', '04-26', '05-27', '06-28', '07-29', '08-30', '09-31', '10-32', '11-33', 
@@ -178,7 +243,7 @@ def refGames_Dict():
                               '48-70', '49-71', '50-72', '51-73', '52-74', '53-75', '54-76', '55-77', '56-78', '57-79', '58-80', '59-11'], 
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08'] },
                 {   '__class__': 'SetStep', 'turnCounter': '4', 
-                    'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
+                    'playerID': refPlayers_Dict()[4]['playerID'], 'nickname': refPlayers_Dict()[4]['nickname'],   # Loulou
                     'table': ['00-24', '01-23', '02-02', '03-03', '04-17', '05-20', '06-14', '07-07', '08-19', '09-22', '10-10', '11-13'], 
                     'set':   ['00', '03', '04'],
                     'pick':  ['00-25', '01-26', '02-27', '03-28', '04-29', '05-30', '06-31', '07-32', '08-33', '09-34', '10-35', '11-36', 
@@ -187,7 +252,8 @@ def refGames_Dict():
                               '36-61', '37-62', '38-63', '39-64', '40-65', '41-66', '42-67', '43-68', '44-69', '45-70', '46-71', '47-72', 
                               '48-73', '49-74', '50-75', '51-76', '52-77', '53-78', '54-79', '55-80', '56-11'], 
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08', '09-21', '10-18', '11-09'] },
-                {   '__class__': 'SetStep', 'turnCounter': '5', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '5', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-27', '01-23', '02-02', '03-26', '04-25', '05-20', '06-14', '07-07', '08-19', '09-22', '10-10', '11-13'], 
                     'set':   ['02', '03', '08'],
                     'pick':  ['00-28', '01-29', '02-30', '03-31', '04-32', '05-33', '06-34', '07-35', '08-36', '09-37', '10-38', '11-39', 
@@ -197,7 +263,8 @@ def refGames_Dict():
                               '48-76', '49-77', '50-78', '51-79', '52-80', '53-11'], 
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08', '09-21', '10-18', '11-09', 
                               '12-24', '13-03', '14-17'] },
-                {   '__class__': 'SetStep', 'turnCounter': '6', 'nickname': 'Riri', 'playerID': '57b9a003124e9b13e6759bdb', 
+                {   '__class__': 'SetStep', 'turnCounter': '6', 
+                    'playerID': refPlayers_Dict()[2]['playerID'], 'nickname': refPlayers_Dict()[2]['nickname'],   # Riri
                     'table': ['00-27', '01-23', '02-30', '03-29', '04-25', '05-20', '06-14', '07-07', '08-28', '09-22', '10-10', '11-13'], 
                     'set':   ['02', '03', '04'],
                     'pick':  ['00-31', '01-32', '02-33', '03-34', '04-35', '05-36', '06-37', '07-38', '08-39', '09-40', '10-41', '11-42', 
@@ -207,7 +274,8 @@ def refGames_Dict():
                               '48-79', '49-80', '50-11'], 
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08', '09-21', '10-18', '11-09', 
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19'] },
-                {   '__class__': 'SetStep', 'turnCounter': '7', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+                {   '__class__': 'SetStep', 'turnCounter': '7', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-27', '01-23', '02-33', '03-32', '04-31', '05-20', '06-14', '07-07', '08-28', '09-22', '10-10', '11-13'], 
                     'set':   ['05', '06', '11'],
                     'pick':  ['00-34', '01-35', '02-36', '03-37', '04-38', '05-39', '06-40', '07-41', '08-42', '09-43', '10-44', '11-45', 
@@ -216,7 +284,8 @@ def refGames_Dict():
                               '36-70', '37-71', '38-72', '39-73', '40-74', '41-75', '42-76', '43-77', '44-78', '45-79', '46-80', '47-11'], 
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08', '09-21', '10-18', '11-09', 
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25'] },
-                {   '__class__': 'SetStep', 'turnCounter': '8', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '8', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-27', '01-23', '02-33', '03-32', '04-31', '05-36', '06-35', '07-07', '08-28', '09-22', '10-10', '11-34'], 
                     'set':   ['00', '06', '08'],
                     'pick':  ['00-37', '01-38', '02-39', '03-40', '04-41', '05-42', '06-43', '07-44', '08-45', '09-46', '10-47', '11-48', 
@@ -225,7 +294,8 @@ def refGames_Dict():
                               '36-73', '37-74', '38-75', '39-76', '40-77', '41-78', '42-79', '43-80', '44-11'], 
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08', '09-21', '10-18', '11-09', 
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25', '21-20', '22-14', '23-13'] },
-                {   '__class__': 'SetStep', 'turnCounter': '9', 'nickname': 'Fifi', 'playerID': '57b9a003124e9b13e6759bdc', 
+                {   '__class__': 'SetStep', 'turnCounter': '9', 
+                    'playerID': refPlayers_Dict()[3]['playerID'], 'nickname': refPlayers_Dict()[3]['nickname'],   # Fifi
                     'table': ['00-39', '01-23', '02-33', '03-32', '04-31', '05-36', '06-38', '07-07', '08-37', '09-22', '10-10', '11-34'], 
                     'set':   ['00', '06', '08'],
                     'pick':  ['00-40', '01-41', '02-42', '03-43', '04-44', '05-45', '06-46', '07-47', '08-48', '09-49', '10-50', '11-51', 
@@ -235,7 +305,8 @@ def refGames_Dict():
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08', '09-21', '10-18', '11-09', 
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25', '21-20', '22-14', '23-13', 
                               '24-27', '25-35', '26-28'] },
-                {   '__class__': 'SetStep', 'turnCounter': '10', 'nickname': 'Daisy', 'playerID': '57b9bffb124e9b2e056a765d', 
+                {   '__class__': 'SetStep', 'turnCounter': '10', 
+                    'playerID': refPlayers_Dict()[5]['playerID'], 'nickname': refPlayers_Dict()[5]['nickname'],   # Daisy
                     'table': ['00-42', '01-23', '02-33', '03-32', '04-31', '05-36', '06-41', '07-07', '08-40', '09-22', '10-10', '11-34'], 
                     'set':   ['00', '01', '04'],
                     'pick':  ['00-43', '01-44', '02-45', '03-46', '04-47', '05-48', '06-49', '07-50', '08-51', '09-52', '10-53', '11-54', 
@@ -245,7 +316,8 @@ def refGames_Dict():
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08', '09-21', '10-18', '11-09', 
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25', '21-20', '22-14', '23-13', 
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37'] },
-                {   '__class__': 'SetStep', 'turnCounter': '11', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+                {   '__class__': 'SetStep', 'turnCounter': '11', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-45', '01-44', '02-33', '03-32', '04-43', '05-36', '06-41', '07-07', '08-40', '09-22', '10-10', '11-34'], 
                     'set':   ['00', '05', '07'],
                     'pick':  ['00-46', '01-47', '02-48', '03-49', '04-50', '05-51', '06-52', '07-53', '08-54', '09-55', '10-56', '11-57', 
@@ -254,7 +326,8 @@ def refGames_Dict():
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08', '09-21', '10-18', '11-09', 
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25', '21-20', '22-14', '23-13', 
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31'] },
-                {   '__class__': 'SetStep', 'turnCounter': '12', 'nickname': 'Daisy', 'playerID': '57b9bffb124e9b2e056a765d', 
+                {   '__class__': 'SetStep', 'turnCounter': '12', 
+                    'playerID': refPlayers_Dict()[5]['playerID'], 'nickname': refPlayers_Dict()[5]['nickname'],   # Daisy
                     'table': ['00-48', '01-44', '02-33', '03-32', '04-43', '05-47', '06-41', '07-46', '08-40', '09-22', '10-10', '11-34'], 
                     'set':   ['00', '01', '08'],
                     'pick':  ['00-49', '01-50', '02-51', '03-52', '04-53', '05-54', '06-55', '07-56', '08-57', '09-58', '10-59', '11-60', 
@@ -263,7 +336,8 @@ def refGames_Dict():
                     'used':  ['00-01', '01-06', '02-12', '03-15', '04-04', '05-05', '06-00', '07-16', '08-08', '09-21', '10-18', '11-09', 
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25', '21-20', '22-14', '23-13', 
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31', '33-45', '34-36', '35-07'] },
-                {   '__class__': 'SetStep', 'turnCounter': '13', 'nickname': 'Daisy', 'playerID': '57b9bffb124e9b2e056a765d', 
+                {   '__class__': 'SetStep', 'turnCounter': '13', 
+                    'playerID': refPlayers_Dict()[5]['playerID'], 'nickname': refPlayers_Dict()[5]['nickname'],   # Daisy
                     'table': ['00-51', '01-50', '02-33', '03-32', '04-43', '05-47', '06-41', '07-46', '08-49', '09-22', '10-10', '11-34'], 
                     'set':   ['01', '04', '08'],
                     'pick':  ['00-52', '01-53', '02-54', '03-55', '04-56', '05-57', '06-58', '07-59', '08-60', '09-61', '10-62', '11-63', 
@@ -273,7 +347,8 @@ def refGames_Dict():
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25', '21-20', '22-14', '23-13', 
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31', '33-45', '34-36', '35-07', 
                               '36-48', '37-44', '38-40'] },
-                {   '__class__': 'SetStep', 'turnCounter': '14', 'nickname': 'Daisy', 'playerID': '57b9bffb124e9b2e056a765d', 
+                {   '__class__': 'SetStep', 'turnCounter': '14', 
+                    'playerID': refPlayers_Dict()[5]['playerID'], 'nickname': refPlayers_Dict()[5]['nickname'],   # Daisy
                     'table': ['00-51', '01-54', '02-33', '03-32', '04-53', '05-47', '06-41', '07-46', '08-52', '09-22', '10-10', '11-34'], 
                     'set':   ['00', '04', '07'],
                     'pick':  ['00-55', '01-56', '02-57', '03-58', '04-59', '05-60', '06-61', '07-62', '08-63', '09-64', '10-65', '11-66', 
@@ -283,7 +358,8 @@ def refGames_Dict():
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25', '21-20', '22-14', '23-13', 
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31', '33-45', '34-36', '35-07', 
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49'] },
-                {   '__class__': 'SetStep', 'turnCounter': '15', 'nickname': 'Fifi', 'playerID': '57b9a003124e9b13e6759bdc', 
+                {   '__class__': 'SetStep', 'turnCounter': '15', 
+                    'playerID': refPlayers_Dict()[3]['playerID'], 'nickname': refPlayers_Dict()[3]['nickname'],   # Fifi
                     'table': ['00-57', '01-54', '02-33', '03-32', '04-56', '05-47', '06-41', '07-55', '08-52', '09-22', '10-10', '11-34'], 
                     'set':   ['00', '03', '06'],
                     'pick':  ['00-58', '01-59', '02-60', '03-61', '04-62', '05-63', '06-64', '07-65', '08-66', '09-67', '10-68', '11-69', 
@@ -292,7 +368,8 @@ def refGames_Dict():
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25', '21-20', '22-14', '23-13', 
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31', '33-45', '34-36', '35-07', 
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49', '42-51', '43-53', '44-46'] },
-                {   '__class__': 'SetStep', 'turnCounter': '16', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '16', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-60', '01-54', '02-33', '03-59', '04-56', '05-47', '06-58', '07-55', '08-52', '09-22', '10-10', '11-34'], 
                     'set':   ['02', '07', '10'],
                     'pick':  ['00-61', '01-62', '02-63', '03-64', '04-65', '05-66', '06-67', '07-68', '08-69', '09-70', '10-71', '11-72', 
@@ -301,7 +378,8 @@ def refGames_Dict():
                               '12-24', '13-03', '14-17', '15-02', '16-26', '17-19', '18-30', '19-29', '20-25', '21-20', '22-14', '23-13', 
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31', '33-45', '34-36', '35-07', 
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49', '42-51', '43-53', '44-46', '45-57', '46-32', '47-41'] },
-                {   '__class__': 'SetStep', 'turnCounter': '17', 'nickname': 'Fifi', 'playerID': '57b9a003124e9b13e6759bdc', 
+                {   '__class__': 'SetStep', 'turnCounter': '17', 
+                    'playerID': refPlayers_Dict()[3]['playerID'], 'nickname': refPlayers_Dict()[3]['nickname'],   # Fifi
                     'table': ['00-60', '01-54', '02-63', '03-59', '04-56', '05-47', '06-58', '07-62', '08-52', '09-22', '10-61', '11-34'], 
                     'set':   ['01', '03', '07'],
                     'pick':  ['00-64', '01-65', '02-66', '03-67', '04-68', '05-69', '06-70', '07-71', '08-72', '09-73', '10-74', '11-75', 
@@ -311,7 +389,8 @@ def refGames_Dict():
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31', '33-45', '34-36', '35-07', 
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49', '42-51', '43-53', '44-46', '45-57', '46-32', '47-41', 
                               '48-33', '49-55', '50-10'] },
-                {   '__class__': 'SetStep', 'turnCounter': '18', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+                {   '__class__': 'SetStep', 'turnCounter': '18', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-60', '01-66', '02-63', '03-65', '04-56', '05-47', '06-58', '07-64', '08-52', '09-22', '10-61', '11-34'], 
                     'set':   ['02', '03', '05'],
                     'pick':  ['00-67', '01-68', '02-69', '03-70', '04-71', '05-72', '06-73', '07-74', '08-75', '09-76', '10-77', '11-78', 
@@ -321,7 +400,8 @@ def refGames_Dict():
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31', '33-45', '34-36', '35-07', 
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49', '42-51', '43-53', '44-46', '45-57', '46-32', '47-41', 
                               '48-33', '49-55', '50-10', '51-54', '52-59', '53-62'] },
-                {   '__class__': 'SetStep', 'turnCounter': '19', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+                {   '__class__': 'SetStep', 'turnCounter': '19', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-60', '01-66', '02-69', '03-68', '04-56', '05-67', '06-58', '07-64', '08-52', '09-22', '10-61', '11-34'], 
                     'set':   ['03', '07', '08'],
                     'pick':  ['00-70', '01-71', '02-72', '03-73', '04-74', '05-75', '06-76', '07-77', '08-78', '09-79', '10-80', '11-11'], 
@@ -330,7 +410,8 @@ def refGames_Dict():
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31', '33-45', '34-36', '35-07', 
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49', '42-51', '43-53', '44-46', '45-57', '46-32', '47-41', 
                               '48-33', '49-55', '50-10', '51-54', '52-59', '53-62', '54-63', '55-65', '56-47'] },
-                {   '__class__': 'SetStep', 'turnCounter': '20', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '20', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-60', '01-66', '02-69', '03-73', '04-56', '05-67', '06-58', '07-71', '08-70', '09-22', '10-61', '11-34'], 
                     'set':   ['00', '03', '06'],
                     'pick':  ['00-72', '01-74', '02-75', '03-76', '04-77', '05-78', '06-79', '07-80', '08-11'], 
@@ -339,7 +420,8 @@ def refGames_Dict():
                               '24-27', '25-35', '26-28', '27-39', '28-38', '29-37', '30-42', '31-23', '32-31', '33-45', '34-36', '35-07', 
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49', '42-51', '43-53', '44-46', '45-57', '46-32', '47-41', 
                               '48-33', '49-55', '50-10', '51-54', '52-59', '53-62', '54-63', '55-65', '56-47', '57-68', '58-64', '59-52'] },
-                {   '__class__': 'SetStep', 'turnCounter': '21', 'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
+                {   '__class__': 'SetStep', 'turnCounter': '21', 
+                    'playerID': refPlayers_Dict()[4]['playerID'], 'nickname': refPlayers_Dict()[4]['nickname'],   # Loulou
                     'table': ['00-75', '01-66', '02-69', '03-74', '04-56', '05-67', '06-72', '07-71', '08-70', '09-22', '10-61', '11-34'], 
                     'set':   ['00', '06', '09'],
                     'pick':  ['00-76', '01-77', '02-78', '03-79', '04-80', '05-11'], 
@@ -349,7 +431,8 @@ def refGames_Dict():
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49', '42-51', '43-53', '44-46', '45-57', '46-32', '47-41', 
                               '48-33', '49-55', '50-10', '51-54', '52-59', '53-62', '54-63', '55-65', '56-47', '57-68', '58-64', '59-52', 
                               '60-60', '61-73', '62-58'] },
-                {   '__class__': 'SetStep', 'turnCounter': '22', 'nickname': 'Daisy', 'playerID': '57b9bffb124e9b2e056a765d',  
+                {   '__class__': 'SetStep', 'turnCounter': '22', 
+                    'playerID': refPlayers_Dict()[5]['playerID'], 'nickname': refPlayers_Dict()[5]['nickname'],   # Daisy
                     'table': ['00-78', '01-66', '02-69', '03-74', '04-56', '05-67', '06-77', '07-71', '08-70', '09-76', '10-61', '11-34'], 
                     'set':   ['00', '02', '08'],
                     'pick':  ['00-79', '01-80', '02-11'], 
@@ -359,7 +442,8 @@ def refGames_Dict():
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49', '42-51', '43-53', '44-46', '45-57', '46-32', '47-41', 
                               '48-33', '49-55', '50-10', '51-54', '52-59', '53-62', '54-63', '55-65', '56-47', '57-68', '58-64', '59-52', 
                               '60-60', '61-73', '62-58', '63-75', '64-72', '65-22'] },
-                {   '__class__': 'SetStep', 'turnCounter': '23', 'nickname': 'Daisy', 'playerID': '57b9bffb124e9b2e056a765d', 
+                {   '__class__': 'SetStep', 'turnCounter': '23', 
+                    'playerID': refPlayers_Dict()[5]['playerID'], 'nickname': refPlayers_Dict()[5]['nickname'],   # Daisy
                     'table': ['00-11', '01-66', '02-80', '03-74', '04-56', '05-67', '06-77', '07-71', '08-79', '09-76', '10-61', '11-34'], 
                     'set':   ['00', '01', '09'],
                     'pick':  [], 
@@ -369,7 +453,8 @@ def refGames_Dict():
                               '36-48', '37-44', '38-40', '39-50', '40-43', '41-49', '42-51', '43-53', '44-46', '45-57', '46-32', '47-41', 
                               '48-33', '49-55', '50-10', '51-54', '52-59', '53-62', '54-63', '55-65', '56-47', '57-68', '58-64', '59-52', 
                               '60-60', '61-73', '62-58', '63-75', '64-72', '65-22', '66-78', '67-69', '68-70'] },
-                {   '__class__': 'SetStep', 'turnCounter': '24', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '24', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00--1', '01--1', '02-80', '03-74', '04-56', '05-67', '06-77', '07-71', '08-79', '09--1', '10-61', '11-34'], 
                     'set':   ['03', '05', '06'],
                     'pick':  [], 
@@ -400,18 +485,30 @@ def refGames_Dict():
         'gameFinished': 'True', 
         'turnCounter': '24', 
         'players': [
-            {'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': 'Donald', 'points': '15',
-             'passwordHash': "$6$rounds=656000$9J3qlvOuPqVAB1h3$29401w.r.1qLeLqGwTklcQ5oixPJGXyYrZetUnV3WdjGEeqAbEZE1MSXtUWZ6cI1u/2.YYH9/.9BlWs29deWM."}, 
-            {'playerID': '57b9a003124e9b13e6759bda', 'nickname': 'Mickey', 'points': '18',
-             'passwordHash': "$6$rounds=656000$x184Sb1.AgeFH09L$xMTg28wbdIx1CFTxw5H7oa2MRTkyw4wwdNElEYlxwlovVKwh0vbPIm8rN4FKyUQwJQHEbnlvWJZzqL1HLYkbu0"}, 
-            {'playerID': '57b9a003124e9b13e6759bdb', 'nickname': 'Riri', 'points': '6',
-             'passwordHash': "$6$rounds=656000$bcxUoDEZ1EoOAHHb$fmljI4QsoUxQSrevuUMO4jD5mRj3TnaeRj87w3dkjcEHjc9iTqXyxUrmRz4gx7y0FeAg2UD.Ufi/4dWjBHfbL1"}, 
-            {'playerID': '57b9a003124e9b13e6759bdc', 'nickname': 'Fifi', 'points': '6',
-             'passwordHash': "$6$rounds=656000$21XpxSD3UWiR/GDG$8TMRQm1SlXy7h.I0mq6i.LZocPOZCbofjwD/hF2P4kQbXmaRfL03PYpXXTU1jc6afQSiVYMqToFm4OXgCVWGt0"}, 
-            {'playerID': '57b9bffb124e9b2e056a765c', 'nickname': 'Loulou', 'points': '21',
-             'passwordHash': "$6$rounds=656000$VB0Nc3c12tpo90En$W2QT/xYn/opvWhDJfJ2bM9wIB1CT6K2Wevlb5qGWdU85.dgu4NObmJxJGMVwelhx/NSBn66.VWjQYXgopAEyn/"}, 
-            {'playerID': '57b9bffb124e9b2e056a765d', 'nickname': 'Daisy', 'points': '6',
-             'passwordHash': "$6$rounds=656000$iLID3I10RENiuZPy$Rmo48wznR9Yqb6i9/SNDUa.hslEyycZ2UYZV0bX6ChdtSA5MGCmN3BrF1xoZG4TMRzEmwmppY/W3.ZzT4ogRL/"}
+            {'playerID': refPlayers_Dict()[0]['playerID'],   # Donald
+             'nickname': refPlayers_Dict()[0]['nickname'],
+             'passwordHash': refPlayers_Dict()[0]['passwordHash'], 
+             'points': '15'},
+            {'playerID': refPlayers_Dict()[1]['playerID'],   # Mickey
+             'nickname': refPlayers_Dict()[1]['nickname'],
+             'passwordHash': refPlayers_Dict()[1]['passwordHash'], 
+             'points': '18'},
+            {'playerID': refPlayers_Dict()[2]['playerID'],   # Riri
+             'nickname': refPlayers_Dict()[2]['nickname'],
+             'passwordHash': refPlayers_Dict()[2]['passwordHash'], 
+             'points': '6'},
+            {'playerID': refPlayers_Dict()[3]['playerID'],   # Fifi
+             'nickname': refPlayers_Dict()[3]['nickname'],
+             'passwordHash': refPlayers_Dict()[3]['passwordHash'], 
+             'points': '6'},
+            {'playerID': refPlayers_Dict()[4]['playerID'],   # Loulou
+             'nickname': refPlayers_Dict()[4]['nickname'],
+             'passwordHash': refPlayers_Dict()[4]['passwordHash'], 
+             'points': '21'},
+            {'playerID': refPlayers_Dict()[5]['playerID'],   # Daisy
+             'nickname': refPlayers_Dict()[5]['nickname'],
+             'passwordHash': refPlayers_Dict()[5]['passwordHash'], 
+             'points': '6'}
             ], 
         'cardset': {
             '__class__': 'SetCardset',
@@ -428,7 +525,8 @@ def refGames_Dict():
             }, 
         'steps':
             [
-                {   '__class__': 'SetStep', 'turnCounter': '0', 'playerID': '57b8529a124e9b6187cf6c2a', 'nickname': 'Donald', 
+                {   '__class__': 'SetStep', 'turnCounter': '0',
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-00', '01-01', '02-02', '03-03', '04-04', '05-05', '06-06', '07-07', '08-08', '09-09', '10-10', '11-11'], 
                     'set':   ['00', '03', '09'],
                     'pick':  ['00-12', '01-13', '02-14', '03-15', '04-16', '05-17', '06-18', '07-19', '08-20', '09-21', '10-22', '11-23', 
@@ -438,7 +536,8 @@ def refGames_Dict():
                               '48-60', '49-61', '50-62', '51-63', '52-64', '53-65', '54-66', '55-67', '56-68', '57-69', '58-70', '59-71', 
                               '60-72', '61-73', '62-74', '63-75', '64-76', '65-77', '66-78', '67-79', '68-80'],
                     'used':  [] },
-                {   '__class__': 'SetStep', 'turnCounter': '1', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+                {   '__class__': 'SetStep', 'turnCounter': '1',
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-14', '01-01', '02-02', '03-13', '04-04', '05-05', '06-06', '07-07', '08-08', '09-12', '10-10', '11-11'], 
                     'set': ['00', '01', '09'], 
                     'pick': ['00-15', '01-16', '02-17', '03-18', '04-19', '05-20', '06-21', '07-22', '08-23', '09-24', '10-25', '11-26', 
@@ -448,7 +547,8 @@ def refGames_Dict():
                              '48-63', '49-64', '50-65', '51-66', '52-67', '53-68', '54-69', '55-70', '56-71', '57-72', '58-73', '59-74', 
                              '60-75', '61-76', '62-77', '63-78', '64-79', '65-80'], 
                     'used':  ['00-00', '01-03', '02-09'] },
-                {   '__class__': 'SetStep', 'turnCounter': '2', 'nickname': 'Daisy', 'playerID': '57b9bffb124e9b2e056a765d', 
+                {   '__class__': 'SetStep', 'turnCounter': '2', 
+                    'playerID': refPlayers_Dict()[5]['playerID'], 'nickname': refPlayers_Dict()[5]['nickname'],   # Daisy
                     'table': ['00-17', '01-16', '02-02', '03-13', '04-04', '05-05', '06-06', '07-07', '08-08', '09-15', '10-10', '11-11'],
                     'set':   ['00', '06', '11'], 
                     'pick':  ['00-18', '01-19', '02-20', '03-21', '04-22', '05-23', '06-24', '07-25', '08-26', '09-27', '10-28', '11-29', 
@@ -458,7 +558,8 @@ def refGames_Dict():
                               '48-66', '49-67', '50-68', '51-69', '52-70', '53-71', '54-72', '55-73', '56-74', '57-75', '58-76', '59-77', 
                               '60-78', '61-79', '62-80'], 
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12'] },
-                {   '__class__': 'SetStep', 'turnCounter': '3', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+                {   '__class__': 'SetStep', 'turnCounter': '3', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-20', '01-16', '02-02', '03-13', '04-04', '05-05', '06-19', '07-07', '08-08', '09-15', '10-10', '11-18'],
                     'set':   ['01', '04', '11'], 
                     'pick':  ['00-21', '01-22', '02-23', '03-24', '04-25', '05-26', '06-27', '07-28', '08-29', '09-30', '10-31', '11-32', 
@@ -467,7 +568,8 @@ def refGames_Dict():
                               '36-57', '37-58', '38-59', '39-60', '40-61', '41-62', '42-63', '43-64', '44-65', '45-66', '46-67', '47-68', 
                               '48-69', '49-70', '50-71', '51-72', '52-73', '53-74', '54-75', '55-76', '56-77', '57-78', '58-79', '59-80'], 
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11'] },
-                {   '__class__': 'SetStep', 'turnCounter': '4', 'nickname': 'Riri', 'playerID': '57b9a003124e9b13e6759bdb', 
+                {   '__class__': 'SetStep', 'turnCounter': '4', 
+                    'playerID': refPlayers_Dict()[2]['playerID'], 'nickname': refPlayers_Dict()[2]['nickname'],   # Riri
                     'table': ['00-20', '01-23', '02-02', '03-13', '04-22', '05-05', '06-19', '07-07', '08-08', '09-15', '10-10', '11-21'],
                     'set':   ['01', '04', '08'], 
                     'pick':  ['00-24', '01-25', '02-26', '03-27', '04-28', '05-29', '06-30', '07-31', '08-32', '09-33', '10-34', '11-35', 
@@ -476,7 +578,8 @@ def refGames_Dict():
                               '36-60', '37-61', '38-62', '39-63', '40-64', '41-65', '42-66', '43-67', '44-68', '45-69', '46-70', '47-71', 
                               '48-72', '49-73', '50-74', '51-75', '52-76', '53-77', '54-78', '55-79', '56-80'], 
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18'] },
-                {   '__class__': 'SetStep', 'turnCounter': '5', 'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
+                {   '__class__': 'SetStep', 'turnCounter': '5', 
+                    'playerID': refPlayers_Dict()[4]['playerID'], 'nickname': refPlayers_Dict()[4]['nickname'],   # Loulou
                     'table': ['00-20', '01-26', '02-02', '03-13', '04-25', '05-05', '06-19', '07-07', '08-24', '09-15', '10-10', '11-21'],
                     'set':   ['05', '06', '07'], 
                     'pick':  ['00-27', '01-28', '02-29', '03-30', '04-31', '05-32', '06-33', '07-34', '08-35', '09-36', '10-37', '11-38', 
@@ -486,7 +589,8 @@ def refGames_Dict():
                               '48-75', '49-76', '50-77', '51-78', '52-79', '53-80'], 
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18', 
                               '12-23', '13-22', '14-08'] },
-                {   '__class__': 'SetStep', 'turnCounter': '6', 'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
+                {   '__class__': 'SetStep', 'turnCounter': '6', 
+                    'playerID': refPlayers_Dict()[4]['playerID'], 'nickname': refPlayers_Dict()[4]['nickname'],   # Loulou
                     'table': ['00-20', '01-26', '02-02', '03-13', '04-25', '05-29', '06-28', '07-27', '08-24', '09-15', '10-10', '11-21'],
                     'set':   ['02', '05', '11'], 
                     'pick':  ['00-30', '01-31', '02-32', '03-33', '04-34', '05-35', '06-36', '07-37', '08-38', '09-39', '10-40', '11-41', 
@@ -496,7 +600,8 @@ def refGames_Dict():
                               '48-78', '49-79', '50-80'], 
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18', 
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07'] },
-               {    '__class__': 'SetStep', 'turnCounter': '7', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+               {    '__class__': 'SetStep', 'turnCounter': '7', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-20', '01-26', '02-32', '03-13', '04-25', '05-31', '06-28', '07-27', '08-24', '09-15', '10-10', '11-30'],
                     'set':   ['00', '02', '06'], 
                     'pick':  ['00-33', '01-34', '02-35', '03-36', '04-37', '05-38', '06-39', '07-40', '08-41', '09-42', '10-43', '11-44', 
@@ -505,7 +610,8 @@ def refGames_Dict():
                               '36-69', '37-70', '38-71', '39-72', '40-73', '41-74', '42-75', '43-76', '44-77', '45-78', '46-79', '47-80'], 
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18', 
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21'] },
-                {   '__class__': 'SetStep', 'turnCounter': '8', 'nickname': 'Riri', 'playerID': '57b9a003124e9b13e6759bdb', 
+                {   '__class__': 'SetStep', 'turnCounter': '8', 
+                    'playerID': refPlayers_Dict()[2]['playerID'], 'nickname': refPlayers_Dict()[2]['nickname'],   # Riri
                     'table': ['00-35', '01-26', '02-34', '03-13', '04-25', '05-31', '06-33', '07-27', '08-24', '09-15', '10-10', '11-30'],
                     'set':   ['02', '04', '08'], 
                     'pick':  ['00-36', '01-37', '02-38', '03-39', '04-40', '05-41', '06-42', '07-43', '08-44', '09-45', '10-46', '11-47', 
@@ -514,7 +620,8 @@ def refGames_Dict():
                               '36-72', '37-73', '38-74', '39-75', '40-76', '41-77', '42-78', '43-79', '44-80'], 
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18', 
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28'] },
-                {   '__class__': 'SetStep', 'turnCounter': '9', 'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
+                {   '__class__': 'SetStep', 'turnCounter': '9', 
+                    'playerID': refPlayers_Dict()[4]['playerID'], 'nickname': refPlayers_Dict()[4]['nickname'],   # Loulou
                     'table': ['00-35', '01-26', '02-38', '03-13', '04-37', '05-31', '06-33', '07-27', '08-36', '09-15', '10-10', '11-30'],
                     'set':   ['00', '02', '05'], 
                     'pick':  ['00-39', '01-40', '02-41', '03-42', '04-43', '05-44', '06-45', '07-46', '08-47', '09-48', '10-49', '11-50', 
@@ -524,7 +631,8 @@ def refGames_Dict():
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18', 
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28', 
                               '24-34', '25-25', '26-24'] },
-                {   '__class__': 'SetStep', 'turnCounter': '10', 'nickname': 'Fifi', 'playerID': '57b9a003124e9b13e6759bdc', 
+                {   '__class__': 'SetStep', 'turnCounter': '10', 
+                    'playerID': refPlayers_Dict()[3]['playerID'], 'nickname': refPlayers_Dict()[3]['nickname'],   # Fifi
                     'table': ['00-41', '01-26', '02-40', '03-13', '04-37', '05-39', '06-33', '07-27', '08-36', '09-15', '10-10', '11-30'],
                     'set':   ['00', '01', '10'], 
                     'pick':  ['00-42', '01-43', '02-44', '03-45', '04-46', '05-47', '06-48', '07-49', '08-50', '09-51', '10-52', '11-53', 
@@ -534,7 +642,8 @@ def refGames_Dict():
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18', 
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28', 
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31'] },
-                {   '__class__': 'SetStep', 'turnCounter': '11', 'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
+                {   '__class__': 'SetStep', 'turnCounter': '11', 
+                    'playerID': refPlayers_Dict()[4]['playerID'], 'nickname': refPlayers_Dict()[4]['nickname'],   # Loulou
                     'table': ['00-44', '01-43', '02-40', '03-13', '04-37', '05-39', '06-33', '07-27', '08-36', '09-15', '10-42', '11-30'],
                     'set':   ['00', '02', '06'], 
                     'pick':  ['00-45', '01-46', '02-47', '03-48', '04-49', '05-50', '06-51', '07-52', '08-53', '09-54', '10-55', '11-56', 
@@ -543,7 +652,8 @@ def refGames_Dict():
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18', 
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28', 
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10'] },
-                {   '__class__': 'SetStep', 'turnCounter': '12', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '12', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-47', '01-43', '02-46', '03-13', '04-37', '05-39', '06-45', '07-27', '08-36', '09-15', '10-42', '11-30'],
                     'set':   ['00', '02', '03'], 
                     'pick':  ['00-48', '01-49', '02-50', '03-51', '04-52', '05-53', '06-54', '07-55', '08-56', '09-57', '10-58', '11-59', 
@@ -552,7 +662,8 @@ def refGames_Dict():
                     'used':  ['00-00', '01-03', '02-09', '03-14', '04-01', '05-12', '06-17', '07-06', '08-11', '09-16', '10-04', '11-18', 
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28', 
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10', '33-44', '34-40', '35-33'] },
-                {   '__class__': 'SetStep', 'turnCounter': '13', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+                {   '__class__': 'SetStep', 'turnCounter': '13', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-50', '01-43', '02-49', '03-48', '04-37', '05-39', '06-45', '07-27', '08-36', '09-15', '10-42', '11-30'],
                     'set':   ['01', '08', '11'], 
                     'pick':  ['00-51', '01-52', '02-53', '03-54', '04-55', '05-56', '06-57', '07-58', '08-59', '09-60', '10-61', '11-62', 
@@ -562,7 +673,8 @@ def refGames_Dict():
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28', 
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10', '33-44', '34-40', '35-33', 
                               '36-47', '37-46', '38-13'] },
-                {   '__class__': 'SetStep', 'turnCounter': '14', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '14', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-50', '01-53', '02-49', '03-48', '04-37', '05-39', '06-45', '07-27', '08-52', '09-15', '10-42', '11-51'],
                     'set':   ['04', '05', '08'], 
                     'pick':  ['00-54', '01-55', '02-56', '03-57', '04-58', '05-59', '06-60', '07-61', '08-62', '09-63', '10-64', '11-65', 
@@ -572,7 +684,8 @@ def refGames_Dict():
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28', 
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10', '33-44', '34-40', '35-33', 
                               '36-47', '37-46', '38-13', '39-43', '40-36', '41-30'] },
-                {   '__class__': 'SetStep', 'turnCounter': '15', 'nickname': 'Daisy', 'playerID': '57b9bffb124e9b2e056a765d', 
+                {   '__class__': 'SetStep', 'turnCounter': '15', 
+                    'playerID': refPlayers_Dict()[5]['playerID'], 'nickname': refPlayers_Dict()[5]['nickname'],   # Daisy
                     'table': ['00-50', '01-53', '02-49', '03-48', '04-56', '05-55', '06-45', '07-27', '08-54', '09-15', '10-42', '11-51'],
                     'set':   ['03', '04', '06'], 
                     'pick':  ['00-57', '01-58', '02-59', '03-60', '04-61', '05-62', '06-63', '07-64', '08-65', '09-66', '10-67', '11-68', 
@@ -581,7 +694,8 @@ def refGames_Dict():
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28', 
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10', '33-44', '34-40', '35-33', 
                               '36-47', '37-46', '38-13', '39-43', '40-36', '41-30', '42-37', '43-39', '44-52'] },
-                {   '__class__': 'SetStep', 'turnCounter': '16', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '16', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-50', '01-53', '02-49', '03-59', '04-58', '05-55', '06-57', '07-27', '08-54', '09-15', '10-42', '11-51'],
                     'set':   ['00', '03', '11'], 
                     'pick':  ['00-60', '01-61', '02-62', '03-63', '04-64', '05-65', '06-66', '07-67', '08-68', '09-69', '10-70', '11-71', 
@@ -590,7 +704,8 @@ def refGames_Dict():
                               '12-23', '13-22', '14-08', '15-05', '16-19', '17-07', '18-02', '19-29', '20-21', '21-20', '22-32', '23-28', 
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10', '33-44', '34-40', '35-33', 
                               '36-47', '37-46', '38-13', '39-43', '40-36', '41-30', '42-37', '43-39', '44-52', '45-48', '46-56', '47-45'] },
-                {   '__class__': 'SetStep', 'turnCounter': '17', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+                {   '__class__': 'SetStep', 'turnCounter': '17', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-62', '01-53', '02-49', '03-61', '04-58', '05-55', '06-57', '07-27', '08-54', '09-15', '10-42', '11-60'],
                     'set':   ['01', '06', '09'], 
                     'pick':  ['00-63', '01-64', '02-65', '03-66', '04-67', '05-68', '06-69', '07-70', '08-71', '09-72', '10-73', '11-74', 
@@ -600,7 +715,8 @@ def refGames_Dict():
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10', '33-44', '34-40', '35-33', 
                               '36-47', '37-46', '38-13', '39-43', '40-36', '41-30', '42-37', '43-39', '44-52', '45-48', '46-56', '47-45', 
                               '48-50', '49-59', '50-51'] },
-                {   '__class__': 'SetStep', 'turnCounter': '18', 'nickname': 'Fifi', 'playerID': '57b9a003124e9b13e6759bdc', 
+                {   '__class__': 'SetStep', 'turnCounter': '18', 
+                    'playerID': refPlayers_Dict()[3]['playerID'], 'nickname': refPlayers_Dict()[3]['nickname'],   # Fifi
                     'table': ['00-62', '01-65', '02-49', '03-61', '04-58', '05-55', '06-64', '07-27', '08-54', '09-63', '10-42', '11-60'],
                     'set':   ['01', '07', '08'], 
                     'pick':  ['00-66', '01-67', '02-68', '03-69', '04-70', '05-71', '06-72', '07-73', '08-74', '09-75', '10-76', '11-77', 
@@ -610,7 +726,8 @@ def refGames_Dict():
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10', '33-44', '34-40', '35-33', 
                               '36-47', '37-46', '38-13', '39-43', '40-36', '41-30', '42-37', '43-39', '44-52', '45-48', '46-56', '47-45', 
                               '48-50', '49-59', '50-51', '51-53', '52-57', '53-15'] },
-                {   '__class__': 'SetStep', 'turnCounter': '19', 'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
+                {   '__class__': 'SetStep', 'turnCounter': '19', 
+                    'playerID': refPlayers_Dict()[4]['playerID'], 'nickname': refPlayers_Dict()[4]['nickname'],   # Loulou
                     'table': ['00-62', '01-68', '02-49', '03-61', '04-58', '05-55', '06-64', '07-67', '08-66', '09-63', '10-42', '11-60'],
                     'set':   ['02', '05', '11'], 
                     'pick':  ['00-69', '01-70', '02-71', '03-72', '04-73', '05-74', '06-75', '07-76', '08-77', '09-78', '10-79', '11-80'], 
@@ -619,7 +736,8 @@ def refGames_Dict():
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10', '33-44', '34-40', '35-33', 
                               '36-47', '37-46', '38-13', '39-43', '40-36', '41-30', '42-37', '43-39', '44-52', '45-48', '46-56', '47-45', 
                               '48-50', '49-59', '50-51', '51-53', '52-57', '53-15', '54-65', '55-27', '56-54'] },
-                {   '__class__': 'SetStep', 'turnCounter': '20', 'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
+                {   '__class__': 'SetStep', 'turnCounter': '20', 
+                    'playerID': refPlayers_Dict()[4]['playerID'], 'nickname': refPlayers_Dict()[4]['nickname'],   # Loulou
                     'table': ['00-62', '01-68', '02-71', '03-61', '04-58', '05-70', '06-64', '07-67', '08-66', '09-63', '10-42', '11-69'],
                     'set':   ['01', '02', '07'], 
                     'pick':  ['00-72', '01-73', '02-74', '03-75', '04-76', '05-77', '06-78', '07-79', '08-80'], 
@@ -628,7 +746,8 @@ def refGames_Dict():
                               '24-34', '25-25', '26-24', '27-35', '28-38', '29-31', '30-41', '31-26', '32-10', '33-44', '34-40', '35-33', 
                               '36-47', '37-46', '38-13', '39-43', '40-36', '41-30', '42-37', '43-39', '44-52', '45-48', '46-56', '47-45', 
                               '48-50', '49-59', '50-51', '51-53', '52-57', '53-15', '54-65', '55-27', '56-54', '57-49', '58-55', '59-60'] },
-                 {  '__class__': 'SetStep', 'turnCounter': '21', 'nickname': 'Mickey', 'playerID': '57b9a003124e9b13e6759bda', 
+                 {  '__class__': 'SetStep', 'turnCounter': '21', 
+                    'playerID': refPlayers_Dict()[1]['playerID'], 'nickname': refPlayers_Dict()[1]['nickname'],   # Mickey
                     'table': ['00-62', '01-74', '02-73', '03-61', '04-58', '05-70', '06-64', '07-72', '08-66', '09-63', '10-42', '11-69'],
                     'set':   ['01', '02', '04'], 
                     'pick':  ['00-75', '01-76', '02-77', '03-78', '04-79', '05-80'], 
@@ -638,7 +757,8 @@ def refGames_Dict():
                               '36-47', '37-46', '38-13', '39-43', '40-36', '41-30', '42-37', '43-39', '44-52', '45-48', '46-56', '47-45', 
                               '48-50', '49-59', '50-51', '51-53', '52-57', '53-15', '54-65', '55-27', '56-54', '57-49', '58-55', '59-60', 
                               '60-68', '61-71', '62-67'] },
-                {   '__class__': 'SetStep', 'turnCounter': '22', 'nickname': 'Loulou', 'playerID': '57b9bffb124e9b2e056a765c', 
+                {   '__class__': 'SetStep', 'turnCounter': '22', 
+                    'playerID': refPlayers_Dict()[4]['playerID'], 'nickname': refPlayers_Dict()[4]['nickname'],   # Loulou
                     'table': ['00-62', '01-77', '02-76', '03-61', '04-75', '05-70', '06-64', '07-72', '08-66', '09-63', '10-42', '11-69'],
                     'set':   ['03', '08', '10'], 
                     'pick':  ['00-78', '01-79', '02-80'], 
@@ -648,7 +768,8 @@ def refGames_Dict():
                               '36-47', '37-46', '38-13', '39-43', '40-36', '41-30', '42-37', '43-39', '44-52', '45-48', '46-56', '47-45', 
                               '48-50', '49-59', '50-51', '51-53', '52-57', '53-15', '54-65', '55-27', '56-54', '57-49', '58-55', '59-60', 
                               '60-68', '61-71', '62-67', '63-74', '64-73', '65-58'] },
-                {   '__class__': 'SetStep', 'turnCounter': '23', 'nickname': 'Donald', 'playerID': '57b8529a124e9b6187cf6c2a', 
+                {   '__class__': 'SetStep', 'turnCounter': '23', 
+                    'playerID': refPlayers_Dict()[0]['playerID'], 'nickname': refPlayers_Dict()[0]['nickname'],   # Donald
                     'table': ['00-62', '01-77', '02-76', '03-80', '04-75', '05-70', '06-64', '07-72', '08-79', '09-63', '10-78', '11-69'],
                     'set':   ['02', '04', '10'], 
                     'pick':  [], 
@@ -690,7 +811,7 @@ def refCardsets():
     cardsets_ref.append(CardSet())  # cardset 0
     cardsets_ref.append(CardSet())  # cardset 1
     cardsets_ref.append(CardSet())  # cardset init
-    # overwrite the cardsets 0 and 1
+    # overwrite the cardsets 0 and 1 with reference data read from refGamesDict
     for i in range(0,2):
         cc = cardsets_ref[i].cards
         for code in Dict[i]['cardset']['cards']:
@@ -800,16 +921,16 @@ def refGameHeader_turnN(n):
     This function returns 2 reference Game headers, enabling to pass the 
     'game_equality' properly at the indicated turn 'n'
     """
-    Dict_games = []
-    # Header for the reference test data 0
-    Dict_games.append({ 'gameID': '57b9bec5124e9b2d2503b72b',
-                        'gameFinished': 'False',
-                        'turnCounter': str(n)})
-    # Header for the reference test data 0
-    Dict_games.append({ 'gameID': '57ba0a72124e9b6a4c4298c4',
-                        'gameFinished': 'False',
-                        'turnCounter': str(n)})
-    return Dict_games
+    return [
+        # Header for the reference test data 0
+        {   'gameID': refGames_Dict()[0]['gameID'],
+            'gameFinished': 'False',
+            'turnCounter': str(n)},
+        # Header for the reference test data 1
+        {   'gameID': refGames_Dict()[1]['gameID'],
+            'gameFinished': 'False',
+            'turnCounter': str(n)}
+        ]
 
 def refGameHeader_start():
     return refGameHeader_turnN(0)
@@ -819,16 +940,16 @@ def refGameHeader_Finished():
     This function returns 2 reference Game headers, enabling to pass the 
     'game_equality' properly
     """
-    Dict_games = []
-    # Header for the reference test data 0
-    Dict_games.append({ 'gameID': '57b9bec5124e9b2d2503b72b',
-                        'gameFinished': 'True',
-                        'turnCounter': '25'})
-    # Header for the reference test data 0
-    Dict_games.append({ 'gameID': '57ba0a72124e9b6a4c4298c4',
-                        'gameFinished': 'True',
-                        'turnCounter': '24'})
-    return Dict_games
+    return [
+        # Header for the reference test data 0
+        {   'gameID': refGames_Dict()[0]['gameID'],
+            'gameFinished': refGames_Dict()[0]['gameFinished'],
+            'turnCounter': refGames_Dict()[0]['turnCounter']},
+        # Header for the reference test data 1
+        {   'gameID': refGames_Dict()[1]['gameID'],
+            'gameFinished': refGames_Dict()[1]['gameFinished'],
+            'turnCounter': refGames_Dict()[1]['turnCounter']}
+        ] 
     
 def displayCardList(cardset, cardsList, wide, tab=""):
     """
@@ -918,6 +1039,10 @@ def stepToString(step, cardset, tab=""):
 def playersDict_equality(players1, players2):
     """
     This function returns True if the two steps contain similar/equivalent data.
+    
+    We don't compare the two password hash because they could be different and 
+    yet both valid. The only way to check would be to verify the hash with the 
+    password... but we don't know the password.
     """
     equal = True
     equal = equal and (players1['__class__'] == players2['__class__'])

@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 
 from backend import Backend
 from constants import setserver_address, setserver_port
-from constants import version, oidIsValid
+from constants import server_version, oidIsValid
 
 """
 This script must be run in order to start the server. 
@@ -22,7 +22,7 @@ will have been started with the command line:
 if __name__ == "__main__":
 
     def url(path):
-        return '/' + version + path
+        return '/' + server_version + path
 
     # initiate the server class
     backend = Backend()
@@ -43,7 +43,12 @@ if __name__ == "__main__":
         return backend.reset()
 
     # this route enable to register players to the Set game server
-    @webserver.route(url('/register/<nickname>'))
+    @webserver.route(url('/register/available/<nickname>'))
+    def isNicknameAvailable(nickname):
+        passwordHash = request.query.get('passwordHash')
+        return backend.registerPlayer(nickname, passwordHash)
+
+    @webserver.route(url('/register/nickname/<nickname>'))
     def registerPlayer(nickname):
         passwordHash = request.query.get('passwordHash')
         return backend.registerPlayer(nickname, passwordHash)
@@ -170,7 +175,14 @@ if __name__ == "__main__":
         # registers the 6 reference test players.
         result = backend.ForTestOnly_EnlistRefPlayers()
         return result
-    
+
+    # this route enable test cases (delist all players)
+    @webserver.route(url('/test/delist_all_players'))
+    def ForTestOnly_DelistAllPlayers():
+        # registers the 6 reference test players.
+        result = backend.ForTestOnly_DelistAllPlayers()
+        return {'status': "ok", 'number_delisted': result}
+        
     # this route enable to load and play to its end a reference test game
     @webserver.route(url('/test/load_ref_game'))
     def ForTestOnly_LoadRefGame():

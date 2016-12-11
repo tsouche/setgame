@@ -57,7 +57,7 @@ class Game:
         valid = True
         temp_players = Players()
         for pp in players:
-            valid = valid and temp_players.playerIDisValid(pp['playerID'])
+            valid = valid and temp_players.isPlayerIDValid(pp['playerID'])
         del(temp_players)
         if valid:
             for pp in players:

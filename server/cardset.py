@@ -5,7 +5,8 @@ Created on August 2nd 2016
 
 from random import randint
 
-import constants as constants
+from constants import cardsMax
+
 
 
 class CardSet:
@@ -50,7 +51,7 @@ class CardSet:
         """
         Randomizes the card set, which is supposed to be a valid 81 cards set.
         """
-        cmax = constants.cardsMax
+        cmax = cardsMax
         for i in range(0, cmax*10):
             a = randint(1,cmax)-1
             b = randint(1,cmax)-1
@@ -122,7 +123,7 @@ class CardSet:
         cardsetDict["__class__"] = "SetCardset"
         cardsetDict["cards"] = []
         i = 0
-        while i < constants.cardsMax:
+        while i < cardsMax:
             msg = str(i).zfill(2) + "-" + self.getCardCode(i)
             cardsetDict["cards"].append(msg)
             i += 1
@@ -148,6 +149,6 @@ class CardSet:
                     n = int(msg[6])
                     self.cards[i] = [c,s,f,n]
                     nbcards += 1
-            if nbcards == constants.cardsMax:
+            if nbcards == cardsMax:
                 resultOk = True
         return resultOk

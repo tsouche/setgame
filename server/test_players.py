@@ -9,7 +9,7 @@ import unittest
 from connmongo import getPlayersColl
 from players import Players
 from test_utilities import playersDict_equality
-from test_utilities import refPlayersDict, refPlayers
+from test_utilities import refPlayers_Dict, refPlayers
 from test_utilities import vprint, vbar, encryptPassword, checkPassword
 
 
@@ -218,7 +218,7 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
 
-    def test_playerIDisValid(self):
+    def test_isPlayerIDValid(self):
         """
         Test players.playerIDisValid
         """
@@ -234,7 +234,7 @@ class TestPlayers(unittest.TestCase):
         for pp in refPlayers():
             playerID_ref = pp['playerID']
             # test if the 'reference' playerID are recognized
-            result = players.playerIDisValid(playerID_ref)
+            result = players.isPlayerIDValid(playerID_ref)
             vprint("    " + pp['nickname'] + ": playerID = " + str(playerID_ref)
                    + " is considered valid : " + str(result))
             self.assertTrue(result)
@@ -244,19 +244,19 @@ class TestPlayers(unittest.TestCase):
             {'playerID': '57b9a003124e9b13e6757bdc'}, {'playerID': '57b9fffb124e9b2e056a765c'},
             {'playerID': '57b9bffb124e9b2eb56a765d'}, {'playerID': '5748529a124e9b6187cf6c2a'} ]
         for pID in invalid_IDs:
-            result = players.playerIDisValid(pID['playerID'])
+            result = players.isPlayerIDValid(pID['playerID'])
             vprint("    playerID " + str(pID['playerID']) +
                    " is considered invalid : " + str(result))
             self.assertFalse(result)
         # end of the test
         self.teardown(players)
 
-    def test_playerIsAvailableToPlay(self):
+    def test_isPlayerAvailableToPlay(self):
         """
-        Test players.playerIsAvailableToPlay
+        Test players.isPlayerAvailableToPlay
         """
         vbar()
-        print("Test players.playerIsAvailableToPlay")
+        print("Test players.isPlayerAvailableToPlay")
         vbar()
         vprint("We check which players are available to play and compare with the")
         vprint("reference data :")
@@ -277,53 +277,53 @@ class TestPlayers(unittest.TestCase):
         players.enlist(id_Fifi, gameID2)
         players.enlist(id_Loulou, gameID2)
         vprint("  > First round, only kids are playing:")
-        result = players.playerIsAvailableToPlay(id_Donald)
+        result = players.isPlayerAvailableToPlay(id_Donald)
         print("Bogus: ", result)
         vprint("      Donald: " + str(result))
         self.assertTrue(result['status'] == "ok")
-        result = players.playerIsAvailableToPlay(id_Mickey)
+        result = players.isPlayerAvailableToPlay(id_Mickey)
         vprint("      Mickey: " + str(result))
         self.assertTrue(result['status'] == "ok")
-        result = players.playerIsAvailableToPlay(id_Riri)
+        result = players.isPlayerAvailableToPlay(id_Riri)
         vprint("      Riri  : " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "player is not available")
-        result = players.playerIsAvailableToPlay(id_Fifi)
+        result = players.isPlayerAvailableToPlay(id_Fifi)
         vprint("      Fifi  : " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "player is not available")
-        result = players.playerIsAvailableToPlay(id_Loulou)
+        result = players.isPlayerAvailableToPlay(id_Loulou)
         vprint("      Loulou: " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "player is not available")
-        result = players.playerIsAvailableToPlay(id_Daisy)
+        result = players.isPlayerAvailableToPlay(id_Daisy)
         vprint("      Daisy : " + str(result))
         self.assertTrue(result['status'] == "ok")
         # second round of test
         players.enlist(id_Daisy, gameID1)
         players.enlist(id_Donald, gameID1)
         vprint("  > Second round, two parents are also playing:")
-        result = players.playerIsAvailableToPlay(id_Donald)
+        result = players.isPlayerAvailableToPlay(id_Donald)
         vprint("      Donald: " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "player is not available")
-        result = players.playerIsAvailableToPlay(id_Mickey)
+        result = players.isPlayerAvailableToPlay(id_Mickey)
         vprint("      Mickey: " + str(result))
         self.assertTrue(result['status'] == "ok")
-        result = players.playerIsAvailableToPlay(id_Riri)
+        result = players.isPlayerAvailableToPlay(id_Riri)
         vprint("      Riri  : " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "player is not available")
-        result = players.playerIsAvailableToPlay(id_Fifi)
+        result = players.isPlayerAvailableToPlay(id_Fifi)
         vprint("      Fifi  : " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "player is not available")
-        result = players.playerIsAvailableToPlay(id_Loulou)
+        result = players.isPlayerAvailableToPlay(id_Loulou)
         vprint("      Loulou: " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "player is not available")
-        result = players.playerIsAvailableToPlay(id_Daisy)
+        result = players.isPlayerAvailableToPlay(id_Daisy)
         vprint("      Daisy : " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "player is not available")
         # test inexistant or invalid playerID
         vprint("  > Third round, with invalid or unknown playerIDs:")
-        result = players.playerIsAvailableToPlay(ObjectId())
+        result = players.isPlayerAvailableToPlay(ObjectId())
         vprint("      Unknown player: " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "unknown playerID")
-        result = players.playerIsAvailableToPlay("stupid")
+        result = players.isPlayerAvailableToPlay("stupid")
         vprint("      Invalid playerID: " + str(result))
         self.assertTrue(result['status'] == "ko" and result['reason'] == "invalid playerID")
 
@@ -436,6 +436,33 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
 
+    def test_isNicknameAvailable(self):
+        """
+        Test players.isNicknameAvailable
+        """
+        # test that the new player is actually added both in memory and in DB
+        vbar()
+        print("Test players.isNicknameAvailable")
+        vbar()
+        vprint("We register players and check that their nickname are not available anymore.")
+        # empty the database
+        playersColl = getPlayersColl()
+        playersColl.drop()
+        # setup the test data
+        players = Players()
+        for pp in refPlayers():
+            # test that the nickname is available
+            vprint("   > " + pp['nickname'] + ":")
+            answer = players.isNicknameAvailable(pp['nickname'])
+            self.assertEqual(answer['status'], "ok")
+            vprint("         * nickname is available")
+            # register the player and test that the nickname is not available anymore.
+            players.register(pp['nickname'], pp['passwordHash'])
+            vprint("         * register " + pp['nickname'])
+            answer = players.isNicknameAvailable(pp['nickname'])
+            self.assertEqual(answer['status'], "ko")
+            vprint("         * nickname is not available anymore")
+        
     def test_register(self):
         """
         Test players.register
@@ -698,9 +725,16 @@ class TestPlayers(unittest.TestCase):
         """
         Test players.serialize
         """
-        # build the reference data
-        target = {'__class__': 'SetPlayers'}
-        target['players'] = refPlayersDict()
+        # build the reference data (without the passwrds)
+        target = {'__class__': 'SetPlayers', 'players': []}
+        for pp in refPlayers_Dict():
+            target['players'].append({
+                'playerID': pp['playerID'],
+                'nickname': pp['nickname'],
+                'passwordHash': pp['passwordHash'],
+                'totalScore': pp['totalScore'],
+                'gameID': pp['gameID']
+                })
         # setup the test data
         self.setUp()
         players = Players()
@@ -730,7 +764,17 @@ class TestPlayers(unittest.TestCase):
         # setup the test data
         self.setUp()
         players = Players()
-        target = {'__class__': 'SetPlayers', 'players': refPlayersDict()}
+        # We copy in 'target' the reference players (as in 'refPlayersDict')
+        # without the password 
+        target = {'__class__': 'SetPlayers', 'players': []}
+        for pp in refPlayers_Dict():
+            target['players'].append({
+                'playerID': pp['playerID'],
+                'nickname': pp['nickname'],
+                'passwordHash': pp['passwordHash'],
+                'totalScore': pp['totalScore'],
+                'gameID': pp['gameID']
+                })
         players.deserialize(target)
         # runs the test
         vbar()

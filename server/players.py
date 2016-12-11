@@ -160,7 +160,7 @@ class Players:
             result = {'status': "ko", 'reason': "invalid playerID"}
         return result
         
-    def playerIDisValid(self, playerID):
+    def isPlayerIDValid(self, playerID):
         """
         This method checks that the playerID is valid (ie. it is a valid 
         ObjectId and the corresponding player exists in the DB).
@@ -172,7 +172,7 @@ class Players:
             result = (pp != None)
         return result
 
-    def playerIsAvailableToPlay(self, playerID):
+    def isPlayerAvailableToPlay(self, playerID):
         """
         This method checks that the playerID is valid (ie. it is a valid 
         ObjectId and the corresponding player exists in the DB) and that the 
@@ -192,6 +192,22 @@ class Players:
             result = {'status': "ko", 'reason': "invalid playerID"}
         return result
 
+    def isNicknameAvailable(self, nickname):
+        """
+        This method return a positive answer if the given nickname is still
+        available for a new player to register with this nickname (i.e. it does 
+        not exist in the database yet).
+        """
+        # test the validity of the nickname
+        
+        # test if the nickname already is in the database
+        pp = self.playersColl.find_one({'nickname': nickname})
+        if pp == None:
+            result = {'status': "ok", 'nickname': nickname}
+        else:
+            result = {'status': "ko", 'reason': "nickname already used"}
+        return result
+    
     def register(self, nickname, passwordHash):
         """
         This method enable to create a new player in the DB with a unique 
@@ -314,7 +330,7 @@ class Players:
         Return True if the increment operation was successful.
         """
         result = False
-        if self.playerIDisValid(playerID):
+        if self.isPlayerIDValid(playerID):
             modified = self.playersColl.update_one({'_id': playerID}, 
                 {'$inc': {'totalScore': points}})
             result = (modified.modified_count == 1)

@@ -9,17 +9,14 @@ import unittest
 
 from connmongo import getPlayersColl, getGamesColl
 from constants import setserver_address, setserver_port
-from constants import version, oidIsValid
+from constants import server_version, oidIsValid, _url
 from game import Game
 from players import Players
 from test_utilities import cardsetDict_equality, stepDict_equality
 from test_utilities import gameRef_compliant
-from test_utilities import refPlayersDict, refPlayers, refGames_Dict
+from test_utilities import refPlayers_Dict, refPlayers, refGames_Dict
 from test_utilities import vbar, vprint
 
-
-def _url(path):
-    return "http://" + setserver_address + ":" + str(setserver_port) + '/' + version + path
 
 def printRefPlayer():
     playersColl = getPlayersColl()
@@ -253,6 +250,40 @@ class test_Setserver(unittest.TestCase):
         # removes residual test data
         self.teardown()
 
+    def test_isNicknameAvailable(self):
+        """
+        Test Setserver.registerPlayer
+        """
+        vbar()
+        print("Test setserver.registerPlayer")
+        vbar()
+        # build test data and context
+        self.setup_reset()
+        self.refPlayers = refPlayers()
+        # check the process for all reference test players
+        for pp in self.refPlayers:
+            nickname = pp['nickname']
+            passwordHash = pp['passwordHash']
+            # check availability before the player is registered
+            vprint("We check availability of '" + nickname + "':")
+            path = _url('/register/available/' + nickname)
+            result = requests.get(path)
+            result = result.json()
+            self.assertEqual(result['status'], "ok")
+            vprint("    > nickname is available: " + path)
+            # we register the player
+            path = _url('/register/nickname/' + nickname)
+            result = requests.get(path, params={'passwordHash': passwordHash})
+            vprint("    > we register " + nickname + ": " + path)
+            # we check again and the nickname should not be available
+            path = _url('/register/available/' + nickname)
+            result = requests.get(path)
+            result = result.json()
+            self.assertEqual(result['status'], "ko")
+            vprint("    > nickname is not available anymore: " + path)
+        # removes residual test data
+        self.teardown()
+
     def test_registerPlayer(self):
         """
         Test Setserver.registerPlayer
@@ -270,7 +301,7 @@ class test_Setserver(unittest.TestCase):
         for pp in self.refPlayers:
             nickname = pp['nickname']
             passwordHash = pp['passwordHash']
-            path = _url('/register/' + nickname)
+            path = _url('/register/nickname/' + nickname)
             vprint("We poll " + path)
             result = requests.get(path, params={'passwordHash': passwordHash})
             status = result.json()['status']
@@ -286,10 +317,10 @@ class test_Setserver(unittest.TestCase):
                 # the test has failed.
                 self.assertTrue(False)
         # re-register the same players => should fail
-        for pp in refPlayersDict():
+        for pp in refPlayers_Dict():
             nickname = pp['nickname']
             passwordHash = pp['passwordHash']
-            path = _url('/register/' + nickname)
+            path = _url('/register/nickname/' + nickname)
             vprint("We poll again " + path)
             result = requests.get(path, params={'passwordHash': passwordHash})
             status = result.json()['status']

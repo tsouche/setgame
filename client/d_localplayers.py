@@ -7,9 +7,11 @@ Created on Nov 2, 2016
 from passlib.context import CryptContext
 from csv import DictReader, DictWriter
 from bson.objectid import ObjectId
+import requests
 
-from client.constants import oidIsValid
-from client.constants import encryption_algorithm, backup_file
+
+from server.constants import oidIsValid, _url
+from server.constants import encryption_algorithm, client_data_backup_file
 
 def encryptPassword(password):
     """
@@ -46,7 +48,6 @@ class LocalPlayers():
         - it is not possible to change passwords.
     """
 
-
     def __init__(self):
         """
         The local profiles are retrieved from the local backup file and stored
@@ -70,7 +71,7 @@ class LocalPlayers():
         """
         del(self.playersList)
         self.playersList = []
-        with open(backup_file, "r") as file:
+        with open(client_data_backup_file, "r") as file:
             fieldNames = ['playerID', 'nickname', 'passwordHash']
             backup_data = DictReader(file, fieldnames = fieldNames)
             for row in backup_data:
@@ -86,19 +87,31 @@ class LocalPlayers():
         This method erases the existing backup file and saves all players in
         memory to the (new) backup file.
         """
-        with open(backup_file, "w") as file:
+        with open(client_data_backup_file, "w") as file:
             fieldNames = ['playerID', 'nickname', 'passwordHash']
             writer = DictWriter(file, fieldnames = fieldNames)
             for pp in self.playersList:
                 writer.writerow(pp)
 
-    def validatePlayer(self, nickname, passwordHash):
+    def checkNicknameIsAvailable(self, nickname):
         """
-        This method validates that a couple (nickname, passwordHash) is valid.
-        It returns a boolean: True or False.
+        This method checks if a nickname is available (i.e. it does not exists
+        yet in the database) so that the client could create a player with this 
+        nickname.
+        
+        The method returns;
+            if successful: {'status': "ok", 'nickname': nickname}
+            if failed:     {'status': "ko", 'reason': msg (str) }
+            The possible messages are:
+                "invalid password" (i.e. the nickname already exist)
+
         """
-        pass
-    
+        path = _url('/register/available/' + nickname)
+        result = requests.get(path)
+        result = result.json()
+        return result
+
+        
     def addPlayer(self, nickname, password):
         """
         This method enable to add a new player in the memory list and saves a 
@@ -111,7 +124,6 @@ class LocalPlayers():
             if failed:     {'status': "ko", 'reason': msg (str) }
             The possible messages are:
                 "invalid password" (i.e. the nickname already exist)
-                ""
 
         TO BE CARIFIED: not sure yet that the creation of this player into the 
             server database is included into this method. It would require to
@@ -123,7 +135,20 @@ class LocalPlayers():
         """
         pass
 
-    def removePlayer(self, nickname):
+    def validatePlayer(self, nickname, passwordHash):
         """
+        This method validates that a couple (nickname, passwordHash) is valid.
+        It returns a boolean: True or False.
         """
         pass
+    
+    def removePlayer(self, nickname):
+        """
+        This method enable to remove an existing player from teh local client.
+        
+        BEWARE: this does NOT remove the player from the server database, it 
+        only removes it from the local backup, and from the list of players 
+        which are loaded in the client memory.
+        """
+        pass
+

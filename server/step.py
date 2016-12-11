@@ -6,7 +6,7 @@ Created on August 5th 2016
 from bson.objectid import ObjectId
 from operator import itemgetter
 
-import constants as constants
+from constants import tableMax, cardsMax
 
 
 class Step:
@@ -138,8 +138,8 @@ class Step:
         list is left empty, and the counter is left at 0 (as this is the first 
         Step of the game).
         """
-        tmax = constants.tableMax
-        cmax = constants.cardsMax
+        tmax = tableMax
+        cmax = cardsMax
         # Fills the table with 11 cards only
         self.table = []
         i = 0
