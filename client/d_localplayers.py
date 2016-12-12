@@ -13,13 +13,6 @@ import requests
 from constants import encryption_algorithm, oidIsValid, _url
 from client_constants import client_data_backup_file
 
-def encryptPassword(password):
-    """
-    This function encrypts a password and returns a hash.
-    """
-    context = CryptContext(schemes=[encryption_algorithm])
-    return context.encrypt(password)
-    
 def verifyPassword(password, passwordHash):
     """
     This function verify that the hash corresponds to the password.
@@ -51,10 +44,14 @@ class LocalPlayers():
     def __init__(self):
         """
         The local profiles are retrieved from the local backup file and stored
-        in memory.
-        The players can then start/join games.
+        in memory (in 'self.playersList'), so that the client keeps a history of 
+        all players who logged in successfully on the client.
+        
+        The player currently logged into the client is indicated by 
+        'currentPlayer' (int).
         """
         self.playersList = []
+        self.currentPlayer = None
         # read the existing players from the backup file
         self.readAll()
 
@@ -92,7 +89,79 @@ class LocalPlayers():
             writer = DictWriter(file, fieldnames = fieldNames)
             for pp in self.playersList:
                 writer.writerow(pp)
+    
+    def createPlayer(self, nickname, password):
+        """
+        This method add a new player in the client:
+            - if the player already exist in the local players list, it will 
+                only check that the password matches the passwordHash, and will
+                register the player.
+            - if the player does not exist in the local players list, it will
+                request the database to register the player:
+                - if the nickname was already registered in the server database,
+                    it will retrieve the playerID and password hash, so that we
+                    can go back to the previous case: check the password and 
+                    log in the player if it matches the password hash.
+                - if the nickname does not exist in the server database, it will
+                    be remotely registered, and a hash will be stored both in 
+                    the server database, in the local memory and in the local 
+                    backup file.
 
+        The method returns;
+            if successful: {'status': "ok", 'playerID': ObjectID}
+            if failed:     {'status': "ko", 'reason': "invalid password" }
+
+        NB: for the moment, we don't handle here a connection problem between 
+            the client and the server. We assume that the connection is well
+            established.             
+        """
+        def encryptPassword(password):
+            """
+            This function encrypts a password and returns a hash.
+            """
+            context = CryptContext(schemes=[encryption_algorithm])
+            return context.encrypt(password)
+
+        # first check if the nickname appears in the local players list
+        pass
+
+
+    def login(self, nickname, password):
+        """
+        This method will log an existing player (i.e. a player already stored
+        in the local players list) if the password matches the hash. 
+        
+        Possible answers are:
+            {'status': "ok"}
+            {'status': "ko", 'reason': "unknown nickname"}
+            {'status': "ko", 'reason': "invalid password"}
+        """
+        # look for the player in the players list
+        found = False
+        for pp in self.playersList:
+            if pp['nickname'] == nickname:
+                found = True
+                break
+        if found:
+            if verifyPassword(password, pp['passwordHash']):
+                self.currentPlayer = {
+                    'playerID': pp['playerID'],
+                    'nickname': pp['nickname']
+                    }
+                result = {'status': "ok"}
+            else:
+                result = {'status': "ko", 'reason': "invalid password"}
+        else:
+            result = {'status': "ko", 'reason': "unknown nickname"}
+        return result
+            
+    def logout(self):
+        """
+        This method enable to log out a current player (whether a player was 
+        logged in or not).
+        """
+        self.currentPlayer = None
+        
     def checkNicknameIsAvailable(self, nickname):
         """
         This method checks if a nickname is available (i.e. it does not exists
@@ -111,32 +180,47 @@ class LocalPlayers():
         result = result.json()
         return result
     
-    def addPlayer(self, nickname, password):
+    def getPlayer(self):
         """
-        This method enable to add a new player in the memory list and saves a 
-        new local backup file which includes this new player.
-        It is the only moment when a password is transmitted from the user to 
-        the data methods.
+        This method returns the current player details if a player is currently 
+        logged in the client.
         
-        The method returns;
-            if successful: {'status': "ok", 'playerID': ObjectID}
-            if failed:     {'status': "ko", 'reason': msg (str) }
-            The possible messages are:
-                "invalid password" (i.e. the nickname already exist)
-
-        TO BE CARIFIED: not sure yet that the creation of this player into the 
-            server database is included into this method. It would require to
-            already have coded the server interrogation class.
-            It is however clear that only with such a capability will we be able
-            to insert a 'playerID' value in memory and in the local backup  
-            file.
+        Two possible answers:
+            if a player is logged in:
+                {   'status': "ok", 
+                    'nickname': str, 
+                    'playerID': ObjectId,
+                    'passwordHash': str
+                }   
+            if no player is logged in:
+                {'status': "ko"}        
+        """
+        if self.currentPlayer == None:
+            result = {'status': "ko"}
+        else:
+            result = self.playersList[self.currentPlayer]
+            result['status'] = "ok"
+        return result
             
+    def getNickname(self):
         """
-        pass
+        This method returns the current player if a player is currently logged 
+        in the client.
+        
+        Two possible answers:
+            {'status': "ok", 'nickname': str}   if a player is logged in
+            {'status': "ko"}                    if no player is logged in        
+        """
+        if self.currentPlayer == None:
+            result = {'status': "ko"}
+        else:
+            pp = self.playersList[self.currentPlayer]
+            result = {'status': "ok", 'nickname': pp['nickname']}
+        return result
 
-    def validatePlayer(self, nickname, passwordHash):
+    def validatePlayer(self, nickname, password):
         """
-        This method validates that a couple (nickname, passwordHash) is valid.
+        This method validates that a couple (nickname, password) is valid.
         It returns a boolean: True or False.
         """
         pass
