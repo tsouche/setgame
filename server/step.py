@@ -6,8 +6,8 @@ Created on August 5th 2016
 from bson.objectid import ObjectId
 from operator import itemgetter
 
-from constants import tableMax, cardsMax
-
+from cardset import CardSet
+from server_constants import cardsMax, tableMax
 
 class Step:
     """
@@ -64,6 +64,40 @@ class Step:
         self.table = []
         self.used = []
         self.set = []
+
+    def toString(self, cardset, tab=""):
+        """
+        This methods returns a string showing the status of the Step. The 
+        associated set of cards is passed as argument so that it can display
+        the correspondence between the Step (positions in the pick, table...) 
+        and the cards it points to.
+        """
+        # set the header
+        msg  = tab+"- turnCounter: " + str(self.turnCounter) + " :\n"
+        # add the 3 cards lists
+        msg += tab+"- player: "
+        if self.playerID == None:
+            msg += "XXXX\n"
+        else:
+            msg += self.nickname +" ("+ str(self.playerID) + ")\n"
+        msg += tab+"- table:\n" + cardset.displayCardList(self.table,6, "      ") + "\n"
+        msg += tab+"- pick:\n"  + cardset.displayCardList(self.pick, 6, "      ") + "\n"
+        msg += tab+"- used:\n"  + cardset.displayCardList(self.used, 6, "      ") + "\n"
+        # build the substring showing the 'set' list, both with the position of the 
+        # cards on the Table and with the corresponding cards in the 'cardset'.
+        if self.nickname != "":
+            set_msg  = tab+"- "+ self.nickname + " proposed this set: "
+        else:
+            set_msg  = tab+"- set: "
+        setCardsList = []
+        if len(self.set)>0:
+            for pos in self.set:
+                setCardsList.append(self.table[pos])
+        set_msg += "table positions " + str(self.set) + "\n"
+        set_msg += tab+"    referring to cards " + \
+            cardset.displayCardList(setCardsList,6)
+        msg += set_msg + "\n"
+        return msg
 
     def validateSetFromTable(self, cards, positionsOnTable, populate=False, player=None):
         """

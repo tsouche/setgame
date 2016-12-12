@@ -9,58 +9,12 @@ import unittest
 from connmongo import getPlayersColl
 from game import Game, invalidPlayerID
 from players import Players
-from test_utilities import cardsetToString, stepToString
-from test_utilities import cardset_equality, step_equality, stepDict_equality
-from test_utilities import refCardsets, refSteps, gameRef_compliant
-from test_utilities import refGameHeader_start, refGameHeader_Finished
-from test_utilities import refGames_Dict, refPlayers
-from test_utilities import vprint, vbar
+from test_utilities import vprint, vbar, refPlayers
+from server_test_utilities import cardset_equality, step_equality, stepDict_equality
+from server_test_utilities import refCardsets, refSteps, gameRef_compliant
+from server_test_utilities import refGameHeader_start, refGameHeader_Finished
+from server_test_utilities import refGames_Dict
 
-
-def gameToString_header(game):
-    """
-    This function returns a string showing the header of a 'gameToString', i.e.:
-    - generic details
-    - players
-    - cardset
-    """
-    msg  = "Generic details:\n"
-    msg += "           gameID = " + str(game.gameID) + "\n"
-    msg += "     turn counter = " + str(game.turnCounter) + "\n"
-    msg += "    game finished = " + str(game.gameFinished) + "\n"
-    msg += "Players:\n"
-    for pp in game.players:
-        msg += "    nickname: " + pp['nickname']
-        msg += " - (" + str(pp['playerID']) + ") - "
-        msg += str(pp['points']) + " points in this game\n"
-    msg += "Cards:\n"
-    msg += cardsetToString(game.cards)
-    return msg
-
-def gameToString_step(game, n):
-    """
-    This function returns a string showing the n-th step from the game, 
-    typically a part of a complete 'gameToString'
-    """
-    # brings 'turn' in an acceptable range
-    n = max(0, min(game.turnCounter, n))
-    # then reuse most of the code of 'gameToString'
-    msg  = "Step # " + str(n) + ":\n"
-    msg += stepToString(game.steps[n], game.cards, "    ")
-    return msg
-
-def gameToString(game):
-    """
-    This function returns a string showing the total view on the game, i.e.:
-    - generic details
-    - players
-    - cardset
-    - all steps played to that moment
-    """
-    msg = gameToString_header(game)
-    for n in range(0, game.turnCounter+1):
-        msg += gameToString_step(game, n)
-    return msg
 
 def getValidSetFromTable(game):
     """
@@ -264,7 +218,36 @@ class test_Game(unittest.TestCase):
         vprint("  > Step[0] is compliant: "+str(result))
         self.assertTrue(result)
         # This concludes the test on __init__: we can't test so much more here.
-        
+
+    def toString(self):
+        """
+        This function returns a string showing the total view on the game, i.e.:
+        - generic details
+        - players
+        - cardset
+        - all steps played to that moment
+        """
+        # header message
+        msg  = "Generic details:\n"
+        msg += "           gameID = " + str(self.gameID) + "\n"
+        msg += "     turn counter = " + str(self.turnCounter) + "\n"
+        msg += "    game finished = " + str(self.gameFinished) + "\n"
+        msg += "Players:\n"
+        for pp in self.players:
+            msg += "    nickname: " + pp['nickname']
+            msg += " - (" + str(pp['playerID']) + ") - "
+            msg += str(pp['points']) + " points in this game\n"
+        msg += "Cards:\n"
+        msg += self.cards.toString()
+        # steps messages
+        for n in range(0, self.turnCounter+1):
+            # build the line message
+            step_msg  = "Step # " + str(n) + ":\n"
+            step_msg += self.steps[n].toString(self.cards, "    ")
+            # concatenate with the main message
+            msg += step_msg
+        return msg
+
     def test_getGameID(self):
         """
         Test game.getGameID
@@ -324,7 +307,7 @@ class test_Game(unittest.TestCase):
         vprint("    Game over: we now compare the outcome with reference data")
         vprint("    turn = " + str(partie.turnCounter+1)
                        + ": set = [--,--,--], here is the final status:")
-        vprint(stepToString(partie.steps[partie.turnCounter], partie.cards, "    "))
+        vprint(partie.steps[partie.turnCounter].toString(partie.cards, "    "))
         vprint("    We check the compliance with reference data:")
         valid = gameRef_compliant(partie, 0, "    -> ")
         self.assertTrue(valid)
@@ -336,7 +319,7 @@ class test_Game(unittest.TestCase):
         vprint("    Game over: we now compare the outcome with reference data")
         vprint("    turn = " + str(partie.turnCounter+1)
                        + ": set = [--,--,--], here is the final status:")
-        vprint(stepToString(partie.steps[partie.turnCounter], partie.cards, "    "))
+        vprint(partie.steps[partie.turnCounter].toString(partie.cards, "    "))
         vprint("    We check the compliance with reference data:")
         valid = gameRef_compliant(partie, 1, "    ")
         self.assertTrue(valid)

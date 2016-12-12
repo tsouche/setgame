@@ -11,10 +11,11 @@ from bson.objectid import ObjectId
 import requests
 
 from d_localplayers import LocalPlayers, encryptPassword, verifyPassword
-from server.constants import oidIsValid, client_data_backup_file, _url
-from server.test_utilities import refPlayers_Dict, refPlayers, vbar, vprint
-from server.test_utilities import writeOnePlayerBackupTestFile
-from server.test_utilities import writeAllPlayersBackupTestFile
+from constants import oidIsValid, _url
+from client_constants import client_data_backup_file
+from test_utilities import refPlayers_Dict, refPlayers, vbar, vprint
+from client_test_utilities import writeOnePlayerBackupTestFile
+from client_test_utilities import writeAllPlayersBackupTestFile
 
 
 class Test_d_localplayers(unittest.TestCase):
@@ -23,8 +24,6 @@ class Test_d_localplayers(unittest.TestCase):
     It relies on a test file for players profiles saved under the name 
     "backup_test.ply".
     """
-
-    #refPlayers = LocalPlayers()
 
     def setup(self):
         """
@@ -75,7 +74,6 @@ class Test_d_localplayers(unittest.TestCase):
         gameid_str = result.json()['gameID']
         return gameid_str
 
-                    
     def test_init(self):
         # test d_localplayers.LocalPlayers.__init__
         vbar()
@@ -155,16 +153,28 @@ class Test_d_localplayers(unittest.TestCase):
     def test_checkNicknameIsAvailable(self):
         # test d_localplayers.LocalPlayers.saveAll
         vbar()
-        vprint("Test d_localplayer.saveAll")
+        vprint("Test d_localplayer.checkNicknameIsAvailable")
         vbar()
         # create a LocalPlayers
         self.setUp()
         lp = LocalPlayers()
         # resets the server
-        
-        
-        
-        
+        self.resetSetserver()
+        # test nickname availability for all reference test server
+        vprint("Reference test players are not yet registered:")
+        for pp in refPlayers_Dict():
+            nickname = pp['nickname']
+            answer = lp.checkNicknameIsAvailable(nickname)
+            self.assertEqual(answer['status'], "ok")
+            vprint("    > '" + nickname + "' is available")
+        # register the players and test again
+        vprint("We register the players and test again their nickname availability:")        
+        self.registerRefPlayers()
+        for pp in refPlayers_Dict():
+            nickname = pp['nickname']
+            answer = lp.checkNicknameIsAvailable(nickname)
+            self.assertEqual(answer['status'], "ko")
+            vprint("    > '" + nickname + "' is not available anymore")
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

@@ -6,10 +6,10 @@ Created on August 2nd 2016
 import unittest
 
 from cardset import CardSet
-from constants import cardsMax
-from test_utilities import cardsList
-from test_utilities import displayCardList, vprint, vbar
-from test_utilities import refGames_Dict, refCardsets
+from server_constants import cardsMax
+from test_utilities import vprint, vbar
+from server_test_utilities import cardsList
+from server_test_utilities import refGames_Dict, refCardsets
 
 
 class test_CardSet(unittest.TestCase):
@@ -38,11 +38,11 @@ class test_CardSet(unittest.TestCase):
         vprint("Here are the test data:")
         vbar()
         vprint("Test Cardset 0:")
-        vprint(displayCardList(cards_ref[0], cardsList(cardsMax), 6,"    "))
+        vprint(cards_ref[0].displayCardList(cardsList(cardsMax), 6,"    "))
         vprint("Test Cardset 1:")
-        vprint(displayCardList(cards_ref[1], cardsList(cardsMax), 6,"    "))
+        vprint(cards_ref[1].displayCardList(cardsList(cardsMax), 6,"    "))
         vprint("Test Cardset 2:")
-        vprint(displayCardList(cards_ref[2], cardsList(cardsMax), 6,"    "))
+        vprint(cards_ref[2].displayCardList(cardsList(cardsMax), 6,"    "))
         # runs the test
         vbar()
         print("Test cardset.__init__")
@@ -50,7 +50,7 @@ class test_CardSet(unittest.TestCase):
         vprint("Newly generated cardset should be equal to Cardset 2:")
         cards_test = self.setup()[2]
         vprint("New Cardset (only 6 cards displayed):")
-        vprint(displayCardList(cards_test, cardsList(6), 6,"    "))
+        vprint(cards_test.displayCardList(cardsList(6), 6,"    "))
         self.assertEqual(cards_test.cards, cards_ref[2].cards)
         # end of the test
         self.teardown()
@@ -96,10 +96,10 @@ class test_CardSet(unittest.TestCase):
         # test switching cards on a not randomized game
         vprint("Here is the Cardset not yet randomized (12 cards displayed only):")
         cards_test = CardSet()
-        vprint(displayCardList(cards_test, cardsList(12), 6,"    "))
+        vprint(cards_test.displayCardList(cardsList(12), 6,"    "))
         cards_test.randomize()
         vprint("Here is the same Cardset, after randomize (12 cards displayed only):")
-        vprint(displayCardList(cards_test, cardsList(12), 6,"    "))
+        vprint(cards_test.displayCardList(cardsList(12), 6,"    "))
         val = 0
         for i in range(0,cardsMax):
             if cards_ref[2].cards[i] == cards_test.cards[i]:
@@ -131,17 +131,17 @@ class test_CardSet(unittest.TestCase):
         vbar()
         # detect set in randomized cards
         vprint("From Cardset 1:")
-        vprint("   "+displayCardList(cards_ref[1], [0,3,9], 3)+" is a valid Set")
+        vprint("   "+cards_ref[1].displayCardList([0,3,9], 3)+" is a valid Set")
         self.assertTrue(cards_ref[1].setIsValid(0,3,9))
-        vprint("   "+displayCardList(cards_ref[1], [0,3,8], 3)+" is not a valid Set")
+        vprint("   "+cards_ref[1].displayCardList([0,3,8], 3)+" is not a valid Set")
         self.assertFalse(cards_ref[1].setIsValid(0,3,8))
         # detect set in non-randomized cards
         vprint("From Cardset 2:")
-        vprint("   "+displayCardList(cards_ref[2], [0,1,2], 3)+" is a valid Set")
+        vprint("   "+cards_ref[2].displayCardList([0,1,2], 3)+" is a valid Set")
         self.assertTrue(cards_ref[2].setIsValid(0,1,2))
-        vprint("   "+displayCardList(cards_ref[2], [1,3,8], 3)+" is a valid Set")
+        vprint("   "+cards_ref[2].displayCardList([1,3,8], 3)+" is a valid Set")
         self.assertTrue(cards_ref[2].setIsValid(1,3,8))
-        vprint("   "+displayCardList(cards_ref[2], [0,4,9], 3)+" is not a valid Set")
+        vprint("   "+cards_ref[2].displayCardList([0,4,9], 3)+" is not a valid Set")
         self.assertFalse(cards_ref[2].setIsValid(0,4,9))
         # end of the test
         self.teardown()
@@ -159,12 +159,12 @@ class test_CardSet(unittest.TestCase):
         vprint("We test the existence of a valid Set of 3 cards in a list of cards.")
         cardslist = [0,1,2,3,4,5,6,7,8,9,10,11]
         vprint("From Cardset 2, we choose:")
-        vprint(displayCardList(cards_ref[2], cardslist, 6, "    "))
+        vprint(cards_ref[2].displayCardList(cardslist, 6, "    "))
         vprint("    > a set exist and should be detected")
         self.assertTrue(cards_ref[2].validSetExist(cardslist))
         cardslist = [0,1,3,5,9,10]
         vprint("From Cardset 2, we choose:")
-        vprint(displayCardList(cards_ref[2], cardslist, 6, "    "))
+        vprint(cards_ref[2].displayCardList(cardslist, 6, "    "))
         vprint("    > no set exist")
         self.assertFalse(cards_ref[2].validSetExist(cardslist))
         # end of the test
@@ -208,14 +208,14 @@ class test_CardSet(unittest.TestCase):
         vprint("  > Cardset 0: reference followed by test (first 6 cards only)")
         dict_ref = refGames_Dict()[0]['cardset']
         cards_test[0].deserialize(dict_ref)
-        vprint(displayCardList(cards_ref[0], cardsList(6), 6, "     "))
-        vprint(displayCardList(cards_test[0], cardsList(6), 6, "     "))
+        vprint(cards_ref[0].displayCardList(cardsList(6), 6, "     "))
+        vprint(cards_test[0].displayCardList(cardsList(6), 6, "     "))
         self.assertEqual(cards_test[0].cards, cards_ref[0].cards)
         vprint("  > Cardset 1: reference followed by test cardset (first 6 cards only)")
         dict_ref = refGames_Dict()[1]['cardset']
         cards_test[1].deserialize(dict_ref)
-        vprint(displayCardList(cards_ref[1], cardsList(6), 6, "     "))
-        vprint(displayCardList(cards_test[1], cardsList(6), 6, "     "))
+        vprint(cards_ref[1].displayCardList(cardsList(6), 6, "     "))
+        vprint(cards_test[1].displayCardList(cardsList(6), 6, "     "))
         self.assertEqual(cards_test[1].cards, cards_ref[1].cards)
         
         # end of the test

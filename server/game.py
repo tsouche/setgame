@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 
 from cardset import CardSet
 from connmongo import getGamesColl
-import constants
+from server_constants import pointsPerStep
 from players import Players
 from step import Step
 
@@ -139,7 +139,7 @@ class Game:
                 #    list in the 'previous' Step.
                 valid = True
                 # add points to the player
-                good_player['points'] += constants.pointsPerStep
+                good_player['points'] += pointsPerStep
                 self.steps.append(Step())
                 self.turnCounter += 1
                 # Populate this new Step from the previous one

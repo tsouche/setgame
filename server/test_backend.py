@@ -9,12 +9,11 @@ import unittest
 from backend import Backend
 from connmongo import getGamesColl, getPlayersColl
 from game import Game 
-from test_utilities import cardsetDict_equality, stepDict_equality, step_equality
-from test_utilities import gameRef_compliant, game_compliant
-from test_utilities import refPlayers, refGames_Dict
-from test_utilities import vbar, vprint
-from test_game import gameToString, gameSetup, gameSetupAndProgress
-from server.test_utilities import refPlayers_Dict
+from test_game import gameSetup, gameSetupAndProgress
+from test_utilities import vbar, vprint, refPlayers, refPlayers_Dict
+from server_test_utilities import refGames_Dict
+from server_test_utilities import cardsetDict_equality, stepDict_equality, step_equality
+from server_test_utilities import gameRef_compliant, game_compliant
 
 
 def printRefPlayer():

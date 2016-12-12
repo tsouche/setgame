@@ -11,9 +11,9 @@ connect to the 'production DB' or to the 'test DB'.
 
 from pymongo import MongoClient
 
-from constants import mongoserver_prod_address, mongoserver_prod_port
-from constants import mongoserver_test_address, mongoserver_test_port
-from constants import production
+from server_constants import mongoserver_prod_address, mongoserver_prod_port
+from server_constants import mongoserver_test_address, mongoserver_test_port
+from server_constants import production
 
 
 def getSetDB():

@@ -8,9 +8,9 @@ import unittest
 
 from connmongo import getPlayersColl
 from players import Players
-from test_utilities import playersDict_equality
-from test_utilities import refPlayers_Dict, refPlayers
-from test_utilities import vprint, vbar, encryptPassword, checkPassword
+from test_utilities import vprint, vbar, refPlayers_Dict, refPlayers
+from test_utilities import encryptPassword, checkPassword
+from server_test_utilities import playersDict_equality
 
 
 def player_format_DB(p):

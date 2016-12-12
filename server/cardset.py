@@ -5,9 +5,7 @@ Created on August 2nd 2016
 
 from random import randint
 
-from constants import cardsMax
-
-
+from server_constants import cardsMax
 
 class CardSet:
     """
@@ -35,6 +33,57 @@ class CardSet:
                     for number in acceptedValues:
                         self.cards.append([color, shape, filling, number])
 
+    def toString(self):
+        """
+        This method returns a string showing the whole card set on 4 raw, with 
+        the successive codes per vertical column.
+        It is a very compact way to display the whole cardset.
+        """
+        c = s = f = n = ""
+        for i in range(0, cardsMax):
+            card = self.cards[i]
+            c += str(card[0])    # adds the card i color value to the string
+            s += str(card[1])    # adds the card i shape value to the string
+            f += str(card[2])    # adds the card i filling value to the string
+            n += str(card[3])    # adds the card i number value to the string
+        msg  = "   - colors   : " + c + "\n"
+        msg += "   - shapes   : " + s + "\n"
+        msg += "   - fillings : " + f + "\n"
+        msg += "   - numbers  : " + n + "\n"
+        return msg
+
+    def displayCardList(self, cardsList, wide, tab=""):
+        """
+        This method get as arguments:
+            - 'cardset', a valid CardSet from which we fetch the card codes
+            - 'cardslist', a list of indexes of cards pointing at cards in the 
+                CardSet
+            - 'wide', an integer specifying on how many columns the list of
+                cards should be displayed, in order to make it convenient to 
+                read
+        It returns a string showing a list of cards (with their card code) on
+        the specified number of columns. Mostly useful for tests.
+        """
+        msg = tab+"["
+        nb = 0
+        for c in cardsList:
+            if c==-1:
+                msg += "--"
+            else:
+                msg += str(c).zfill(2)
+            msg += " (" + self.getCardCode(c) + "), "
+            if (nb+1)%wide==0 and nb>0:
+                msg += "\n"+tab+" "
+            nb += 1
+        if nb%wide==0 and nb>1:
+            # remove the last newline when the number of value fit the width
+            msg = msg[0 : len(msg)-2-len(tab)]
+        # remove the extra ", " before the last "]"
+        if len(cardsList)>0:
+            msg = msg[0 : len(msg)-2]
+        msg += "]"
+        return msg
+    
     def getCardCode(self, i):
         """
         This method return the 4 values (from 0 to 2) describing the color, 

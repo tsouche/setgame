@@ -10,8 +10,8 @@ from bson.objectid import ObjectId
 import requests
 
 
-from server.constants import oidIsValid, _url
-from server.constants import encryption_algorithm, client_data_backup_file
+from constants import encryption_algorithm, oidIsValid, _url
+from client_constants import client_data_backup_file
 
 def encryptPassword(password):
     """
@@ -110,8 +110,7 @@ class LocalPlayers():
         result = requests.get(path)
         result = result.json()
         return result
-
-        
+    
     def addPlayer(self, nickname, password):
         """
         This method enable to add a new player in the memory list and saves a 

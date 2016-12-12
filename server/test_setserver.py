@@ -12,10 +12,9 @@ from constants import setserver_address, setserver_port
 from constants import server_version, oidIsValid, _url
 from game import Game
 from players import Players
-from test_utilities import cardsetDict_equality, stepDict_equality
-from test_utilities import gameRef_compliant
-from test_utilities import refPlayers_Dict, refPlayers, refGames_Dict
-from test_utilities import vbar, vprint
+from test_utilities import vbar, vprint, refPlayers_Dict, refPlayers
+from server_test_utilities import cardsetDict_equality, stepDict_equality
+from server_test_utilities import gameRef_compliant, refGames_Dict
 
 
 def printRefPlayer():

@@ -6,11 +6,11 @@ Created on August 5th 2016
 import unittest
 
 from step import Step
-from test_utilities import refCardsets
-from test_utilities import refGames_Dict, refSteps
-from test_utilities import refSetsAndPlayers
-from test_utilities import step_equality, stepDict_equality
-from test_utilities import vprint, vbar, stepToString, stepDict_to_Step
+from test_utilities import vprint, vbar
+from server_test_utilities import refCardsets, stepDict_to_Step
+from server_test_utilities import refGames_Dict, refSteps
+from server_test_utilities import refSetsAndPlayers
+from server_test_utilities import step_equality, stepDict_equality
 
 
 class test_Step(unittest.TestCase):
@@ -231,10 +231,10 @@ class test_Step(unittest.TestCase):
         stepStarts_test[0].start(cardsets_ref[0])
         stepStarts_test[1].start(cardsets_ref[1])
         vprint("Cardset 0: the step should be equal to:")
-        vprint(stepToString(stepStart_ref[0], cardsets_ref[0], "  "))
+        vprint(stepStart_ref[0].toString(cardsets_ref[0], "  "))
         self.assertTrue(step_equality(stepStart_ref[0], stepStarts_test[0]))
         vprint("Cardset 1: the step should be equal to:")
-        vprint(stepToString(stepStart_ref[1], cardsets_ref[1], "  "))
+        vprint(stepStart_ref[1].toString(cardsets_ref[1], "  "))
         self.assertTrue(step_equality(stepStart_ref[1], stepStarts_test[1]))
 
     def test_validateSetFromTable(self):
@@ -341,12 +341,12 @@ class test_Step(unittest.TestCase):
         vprint("    apply 'from previous' on stepStartBis  =  stepSecond")
         vprint()
         vprint("  > Cardset 0: the result should look like")
-        vprint(stepToString(stepSeconds_ref[0], cardsets_ref[0], "    "))
+        vprint(stepSeconds_ref[0].toString(cardsets_ref[0], "    "))
         stepSeconds_test[0].fromPrevious(stepStartBis_ref[0][0], cardsets_ref[0])        
         self.assertTrue(step_equality(stepSeconds_ref[0], stepSeconds_test[0]))
 
         vprint("  > Cardset 1: the result should look like")
-        vprint(stepToString(stepSeconds_ref[1], cardsets_ref[1], "    "))
+        vprint(stepSeconds_ref[1].toString(cardsets_ref[1], "    "))
         stepSeconds_test[1].fromPrevious(stepStartBis_ref[1][0], cardsets_ref[1])
         self.assertTrue(step_equality(stepSeconds_ref[1], stepSeconds_test[1]))
 
@@ -430,14 +430,14 @@ class test_Step(unittest.TestCase):
         vprint()
         step_test.deserialize(dictStart_ref[0])
         vprint("  > Cardets 0 - Step 0 - stepStart:")
-        vprint("       Target: " + stepToString(stepStarts_ref[0], cardsets_ref[0], "     "))
-        vprint("       Result: " + stepToString(step_test, cardsets_ref[0], "     "))
+        vprint("       Target: " + stepStarts_ref[0].toString(cardsets_ref[0], "     "))
+        vprint("       Result: " + step_test.toString(cardsets_ref[0], "     "))
         self.assertTrue(step_equality(step_test, stepStarts_ref[0]))
         vprint()
         step_test.deserialize(dictStartBis_ref0)
         vprint("  > Cardets 0 - Step 0 - stepStartBis:")
-        vprint("       Target: " + stepToString(stepStartBis_ref[0][0], cardsets_ref[0], "     "))
-        vprint("       Result: " + stepToString(step_test, cardsets_ref[0], "     "))
+        vprint("       Target: " + stepStartBis_ref[0][0].toString(cardsets_ref[0], "     "))
+        vprint("       Result: " + step_test.toString(cardsets_ref[0], "     "))
         self.assertTrue(step_equality(step_test, stepStartBis_ref[0][0]))
 
 
