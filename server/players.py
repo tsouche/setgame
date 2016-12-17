@@ -235,17 +235,20 @@ class Players:
             result = {'status': "ko", 'reason': "invalid nickname"}
         return result
     
-    def deregister(self, playerID):
+    def deRegister(self, playerID):
         """
         This method check that the playerID exists, and if so removes it from 
         both the memory and the DB.
         Returns True if the playerID was successfully removed from the DB.
         """
-        valid = False
         if oidIsValid(playerID):
             if self.playersColl.find_one_and_delete({'_id': playerID}) != None:
-                valid = True
-        return valid
+                result = {'status': "ok"}
+            else:
+                result = {'status': "ko", 'reason': "unknown playerID"}
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
+        return result
         
     def enlist(self, playerID, gameID):
         """

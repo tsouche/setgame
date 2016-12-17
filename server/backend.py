@@ -12,6 +12,7 @@ from game import Game
 from players import Players
 from test_utilities import refPlayers
 from server_test_utilities import refGames_Dict
+from multiprocessing.connection import answer_challenge
 
 
 class Backend():
@@ -83,7 +84,33 @@ class Backend():
         else:
             result = {'status': "ko", 'reason': answer['reason']}
         return result
-    
+
+    def getPlayerLoginDetails(self, nickname):
+        """
+        This method returns the details enabling a local client to log-in a 
+        player.
+        To date (v100), the required details are a nickname, a playerID and a 
+        password hash.
+
+        The result can be:
+        - if successful: {  'result': "ok", 'nickname': str,
+                            'playerID': str(ObjectId), 'passwordHash': str }
+        - if not successful: { 'result': "ko", 'reason': str }
+        """
+        answer = self.players.getPlayerID(nickname)
+        if answer['status'] == "ok":
+            playerID = answer['playerID']
+            passwordHash = self.players.getHash(playerID)['passwordHash']
+            result = {
+                'status': "ok",
+                'nickname': nickname,
+                'playerID': str(playerID),
+                'passwordHash': passwordHash
+                }
+        else:
+            result = {'status': "ko", 'reason': answer['reason']}
+        return result
+
     def registerPlayer(self, nickname, passwordHash):
         """
         This method registers new players so that they can play and connect 
@@ -111,6 +138,24 @@ class Backend():
         else:
             result = {'status': "ko", 'reason': answer['reason']}
         return result
+
+    def deRegisterPlayer(self, playerID):
+        """
+        This method de-registers a player so that we remove it from the 
+        database.
+        
+        It will also remove the player from any game it would be part of.
+        
+        If returns:
+            { 'status': "ok" }
+            or
+            { 'status': "ko", 'reason': error_msg }
+        """
+        # remove the player from all the games
+        for gg in self.games:
+            gg.delistPlayer(playerID)
+        # remove the player from the database.
+        return self.players.deRegister(playerID)
 
     def enlistPlayer(self, playerID):
         """
@@ -243,6 +288,33 @@ class Backend():
             return {'status': "ok", 'gameID': gameID}
         else:
             return {'status': "ko"}
+    
+    def delistPlayer(self, playerID):
+        """
+        This function enable to delist a player from the database and also from
+        the game he might be part of.
+        
+        The returned result can be:
+            { 'status': "ok" }
+        or
+            {'status': "ko", 'reason': message }
+        """
+        # retrieve the player's detail
+        answer = self.players.getPlayer(playerID)
+        if answer['status'] == "ok":
+            pp = {
+                'playerID': answer['playerID'],
+                'nickname': answer['nickname'],
+                'passwordHash': answer['passwordHash']
+                }
+            # remove the player from all possible games
+            for game in self.games:
+                game.delistPlayer(playerID)
+            # delist the player from the players list
+            result = self.players.delist(playerID)
+        else:
+            result = answer
+        return result
     
     def getNicknames(self, playerID):
         """

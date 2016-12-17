@@ -332,6 +332,50 @@ class test_Setserver(unittest.TestCase):
         # removes residual test data
         self.teardown()
 
+    def test_deRegisterPlayer(self):
+        """
+        Test Setserver.deRegisterPlayer
+        """
+        vbar()
+        print("Test setserver.deRegisterPlayer")
+        vbar()
+        # Here we register all reference players and then we de-register them
+        # one by one.
+        
+        # build test data and context
+        self.setup_reset()
+        self.setup_registerRefPlayers()
+        playersColl = getPlayersColl()
+        vprint("We have registered all reference test players.")
+        # de-registering an invalid playerID
+        vprint("    > try de-registering an invalid playerID:")
+        playerid_str = "thisisnotavalidobjectid"
+        path = _url('/deregister/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
+        result = result.json()
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "invalid playerID")
+        vprint("        compliant: " + result['reason'])
+        # de-registering an unknown playerID
+        vprint("    > try de-registering an unknown player:")
+        playerid_str = str(ObjectId)
+        path = _url('/deregister/' + playerid_str)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
+        result = result.json()
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "unkown playerID")
+        vprint("        compliant: " + result['reasons'])
+        # start de-registering players and check answers
+        for pp in refPlayers_Dict:
+            playerid_str = pp['playerID']
+            path = _url('/deregister/' + playerid_str)
+            result = requests.get(path)
+            result = result.json()
+            self.assertEqual(result['status'], "ok")
+            vprint("    > de-register " + pp['nickname'] + ": success")
+        
     def test_enlistPlayer(self):
         """
         Test Setserver.enlistPlayer

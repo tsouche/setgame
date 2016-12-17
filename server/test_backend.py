@@ -98,6 +98,37 @@ class test_Backend(unittest.TestCase):
             self.assertEqual(answer['status'], "ko")
             vprint("    > " + pp['nickname'] + " is not available anymore")
     
+    def test_getPlayerLoginDetail(self):
+        """
+        Test backend.getPlayerLoginDetail
+        """
+        vbar()
+        print("test backend.getPlayerLoginDetail")
+        vbar()
+        # initiate a backend
+        backend = self.setUp()
+        # There is no player registered yet: test that it is impossible to 
+        # retrieve the players' details.
+        vprint("Initiate a backend with no players registered: check that we cant retrieve")
+        vprint("the players' details:")
+        for pp in refPlayers(True):
+            # try to retrieve the player's details
+            answer = backend.getPlayerLoginDetails(pp['nickname'])
+            self.assertEqual(answer['status'], "ko")
+            self.assertEqual(answer['reason'], "unknown nickname")
+            vprint("    > " + pp['nickname'] + ": unknown nickname")
+        # register the reference players and then retrieve their details
+        vprint("Register the reference test players, and retrieve their details:")
+        backend.ForTestOnly_RegisterRefPlayers()
+        for pp in refPlayers(True):
+            # try to retrieve the player's details
+            answer = backend.getPlayerLoginDetails(pp['nickname'])
+            self.assertEqual(answer['status'], "ok")
+            self.assertEqual(answer['playerID'], str(pp['playerID']))
+            self.assertEqual(answer['nickname'], str(pp['nickname']))
+            self.assertEqual(answer['passwordHash'], str(pp['passwordHash']))
+            vprint("    > " + pp['nickname'] + ": player is recognized and compliant")
+    
     def test_registerPlayer(self):
         """
         Test backend.registerPlayer
@@ -270,7 +301,90 @@ class test_Backend(unittest.TestCase):
         result = backend.enlistTeam(list_pid)
         vprint("Enlist 4 valid, only 1 available: " + str(result['status']))
         self.assertEqual(result['status'], "ko")
-        
+
+    def test_delistPlayer(self):
+        """
+        Test backend.delistPlayer
+        """
+        vbar()
+        print("test backend.delistPlayer")
+        vbar()
+        # initiate a backend and register reference players
+        backend = self.setUp()
+        vprint("We register the reference test players:")
+        backend.ForTestOnly_RegisterRefPlayers()
+        pp_test = refPlayers(True)
+        # enlist a team of 5 players: it should succeed
+        list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                    {'playerID': pp_test[1]['playerID']},
+                    {'playerID': pp_test[2]['playerID']},
+                    {'playerID': pp_test[3]['playerID']},
+                    {'playerID': pp_test[4]['playerID']}]
+        result = backend.enlistTeam(list_pid)
+        vprint("Enlist 5 players: " + str(result['status']) 
+               + " (" + str(result['gameID']) + ")")
+        # delist all players one after the other
+        playersColl = getPlayersColl()
+        gamesColl = getGamesColl()
+        vprint("Now, we delist the players one after the other:")
+        for pp in pp_test:
+            backend.delistPlayer(pp['playerID'])
+            # check that the player is still registered in the database
+            result = playersColl.find_one({'_id': pp['playerID']})
+            self.assertEqual(pp['playerID'], result['_id'])
+            self.assertEqual(pp['nickname'], result['nickname'])
+            # check that the player is not anymore listed in the game
+            result = backend.games[0].getPlayer(pp['playerID'])
+            self.assertEqual(result['status'], "ko")
+            vprint("    > " + pp['nickname'] + ": was delisted but is still registered")
+    
+    def test_deRegisterPlayer(self):
+        """
+        Test backend.deRegisterPlayer
+        """
+        vbar()
+        print("test backend.deRegisterPlayer")
+        vbar()
+        # initiate a backend and register reference players
+        backend = self.setUp()
+        vprint("We register the reference test players:")
+        backend.ForTestOnly_RegisterRefPlayers()
+        pp_test = refPlayers(True)
+        playersColl = getPlayersColl()
+        gamesColl = getGamesColl()
+        # enlist a team of 5 players: it should succeed
+        list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                    {'playerID': pp_test[1]['playerID']},
+                    {'playerID': pp_test[2]['playerID']},
+                    {'playerID': pp_test[3]['playerID']},
+                    {'playerID': pp_test[4]['playerID']}]
+        result = backend.enlistTeam(list_pid)
+        vprint("Enlist 5 players: " + str(result['status']) 
+               + " (" + str(result['gameID']) + ")")
+        # deregister an invalid playerID
+        vprint("Try de-registering an invalid playerID:")
+        result = backend.deRegisterPlayer("thisisnotavalidobjectid")
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "invalid playerID")
+        vprint("    > could not de-register: " + result['reason'])
+        # deregister an unknown playerID
+        vprint("Try de-registering an unknown playerID:")
+        result = backend.deRegisterPlayer(ObjectId())
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "unknown playerID")
+        vprint("    > could not de-register: " + result['reason'])
+        # deregister all players one after the other
+        vprint("Now, we de-register the players one after the other:")
+        for pp in pp_test:
+            backend.deRegisterPlayer(pp['playerID'])
+            # check that the player is not anymore listed n the database
+            result = playersColl.find_one({'_id': pp['playerID']})
+            self.assertEqual(result, None)
+            # check that the player is not anymore listed in the game
+            result = backend.games[0].getPlayer(pp['playerID'])
+            self.assertEqual(result['status'], "ko")
+            vprint("    > " + pp['nickname'] + ": was de-registered")
+    
     def test_getNicknames(self):
         """
         Test backend.getNicknames
@@ -653,6 +767,9 @@ class test_Backend(unittest.TestCase):
             self.assertEqual(pp['gameID'], gameID)
             vprint("    - enlisted successfully " + pp['nickname'])
 
+    def test_ForTestOnly_DelistAllPlayers(self):
+        pass
+    
     def test_ForTestOnly_LoadRefGame(self):
         """
         Test backend.ForTestOnly_LoadRefGame

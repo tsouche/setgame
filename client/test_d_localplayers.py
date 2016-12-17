@@ -10,7 +10,7 @@ from csv import DictReader, DictWriter
 from bson.objectid import ObjectId
 import requests
 
-from d_localplayers import LocalPlayers, encryptPassword, verifyPassword
+from d_localplayers import LocalPlayers, verifyPassword
 from constants import oidIsValid, _url
 from client_constants import client_data_backup_file
 from test_utilities import refPlayers_Dict, refPlayers, vbar, vprint
@@ -41,7 +41,7 @@ class Test_d_localplayers(unittest.TestCase):
         path = _url('/reset')
         requests.get(path)
 
-    def registerRefPlayers(self):
+    def registerRefPlayer(self):
         """
         This method registers the reference test players on the setserver, which 
         is needed in order to execute some tests with a clean starting point on 
@@ -51,6 +51,13 @@ class Test_d_localplayers(unittest.TestCase):
         path = _url('/test/register_ref_players')
         requests.get(path)
 
+    def delistPlayer(self):
+        """
+        This method delists a player on the setserver from any on-going game.
+        """
+        path = _url('/test/delist_all_players')
+        requests.get(path)
+    
     def delistAllPlayers(self):
         """
         This method delists all players on the setserver from any on-going game.
@@ -149,7 +156,7 @@ class Test_d_localplayers(unittest.TestCase):
             hashOk = verifyPassword(pp_ref['password'], pp['passwordHash'])
             self.assertTrue(hashOk)
             vprint("    > playerID & nickname of " + pp['nickname'] + " are valid, passwordHash compliant")
-        
+
     def test_checkNicknameIsAvailable(self):
         # test d_localplayers.LocalPlayers.saveAll
         vbar()
@@ -175,6 +182,55 @@ class Test_d_localplayers(unittest.TestCase):
             answer = lp.checkNicknameIsAvailable(nickname)
             self.assertEqual(answer['status'], "ko")
             vprint("    > '" + nickname + "' is not available anymore")
+
+    def test_registerPlayer(self):
+        # test d_localplayers.LocalPlayers.registerPlayer
+        vbar()
+        vprint("Test d_localplayer.registerPlayer")
+        vbar()
+        # create a LocalPlayers
+        self.setUp()
+        lp = LocalPlayers()
+        # resets the server so that we can create new players
+        self.resetSetserver()
+        # register and de-register the reference players
+        vprint("We will create all reference test players both locally and on the server:") 
+        for pp in refPlayers_Dict():
+            # create the player on the server side, and on the client side (in
+            # memory and in local backup file).
+            lp.registerPlayer(pp['nickname'], pp['password'])
+            answer = lp.checkNicknameIsAvailable(pp['nickname'])
+            self.assertEqual(answer['status'], "ko")
+            self.assertEqual(pp['nickname'], lp.currentPlayer()['nickname'])
+            self.assertEqual(pp['playerID'], str(lp.currentPlayer()['playerID']))
+
+    def test_login_logout(self):
+        # test d_localplayers.LocalPlayers.login
+        # test d_localplayers.LocalPlayers.getCurrentPlayer
+        # test d_localplayers.LocalPlayers.logout
+        vbar()
+        vprint("Test d_localplayer.login, getCurrentPlayer & logout")
+        vbar()
+        # create a 'LocalPlayers' (loading all reference test players from the 
+        # local backup file)
+        self.setUp()
+        lp = LocalPlayers()
+        # try to log a loaded player
+        vprint("We log in and then out all reference test players into the client:")
+        for pp in refPlayers_Dict():
+            # test the login
+            self.assertEqual(lp.currentPlayer, None)
+            lp.login(pp['nickname'], pp['password'])
+            self.assertEqual(str(lp.currentPlayer['playerID']), pp['playerID'])
+            self.assertEqual(lp.currentPlayer['nickname'], pp['nickname'])
+            # test the getPlayer
+            currentPlayer = lp.getCurrentPlayer()
+            self.assertEqual(lp.currentPlayer['playerID'], currentPlayer['playerID'])
+            self.assertEqual(lp.currentPlayer['nickname'], currentPlayer['nickname'])
+            # test the logout
+            lp.logout()
+            self.assertEqual(lp.currentPlayer, None)
+            vprint("    > " + pp['nickname'] + ": successful 'log-in', 'retrieve details' and 'log-out'")
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

@@ -12,6 +12,7 @@ import requests
 
 from constants import encryption_algorithm, oidIsValid, _url
 from client_constants import client_data_backup_file
+from pymongo import results
 
 def verifyPassword(password, passwordHash):
     """
@@ -90,7 +91,24 @@ class LocalPlayers():
             for pp in self.playersList:
                 writer.writerow(pp)
     
-    def createPlayer(self, nickname, password):
+    def checkNicknameIsAvailable(self, nickname):
+        """
+        This method checks if a nickname is available (i.e. it does not exists
+        yet in the database) so that the client could create a player with this 
+        nickname.
+        
+        The method returns;
+            if the nickname is available:
+                {'status': "ok", 'nickname': nickname}
+            if not:
+                {'status': "ko", 'reason': msg (str) }
+        """
+        path = _url('/register/available/' + nickname)
+        result = requests.get(path)
+        result = result.json()
+        return result
+
+    def registerPlayer(self, nickname, password):
         """
         This method add a new player in the client:
             - if the player already exist in the local players list, it will 
@@ -121,10 +139,25 @@ class LocalPlayers():
             """
             context = CryptContext(schemes=[encryption_algorithm])
             return context.encrypt(password)
-
-        # first check if the nickname appears in the local players list
-        pass
-
+        # proceed with the registering
+        if self.currentPlayer == None:
+            avail = self.checkNicknameIsAvailable(nickname)
+            if avail['status'] == "ok":
+                # check if the nickname appears in the local players list
+                # (if so, this means that the local list need to be synchronized
+                # between this client and the server - which is the reference)
+                
+                
+                pass
+            else:
+                # retrieve details of the player from the server
+                
+                # store locally and request that the player authenticate
+                
+                pass
+        else:
+            result = {'status': "ko", 'reason': "player already logged in"}
+        return result
 
     def login(self, nickname, password):
         """
@@ -146,7 +179,7 @@ class LocalPlayers():
             if verifyPassword(password, pp['passwordHash']):
                 self.currentPlayer = {
                     'playerID': pp['playerID'],
-                    'nickname': pp['nickname']
+                    'nickname': pp['nickname'],
                     }
                 result = {'status': "ok"}
             else:
@@ -154,7 +187,7 @@ class LocalPlayers():
         else:
             result = {'status': "ko", 'reason': "unknown nickname"}
         return result
-            
+
     def logout(self):
         """
         This method enable to log out a current player (whether a player was 
@@ -162,25 +195,7 @@ class LocalPlayers():
         """
         self.currentPlayer = None
         
-    def checkNicknameIsAvailable(self, nickname):
-        """
-        This method checks if a nickname is available (i.e. it does not exists
-        yet in the database) so that the client could create a player with this 
-        nickname.
-        
-        The method returns;
-            if successful: {'status': "ok", 'nickname': nickname}
-            if failed:     {'status': "ko", 'reason': msg (str) }
-            The possible messages are:
-                "invalid password" (i.e. the nickname already exist)
-
-        """
-        path = _url('/register/available/' + nickname)
-        result = requests.get(path)
-        result = result.json()
-        return result
-    
-    def getPlayer(self):
+    def getCurrentPlayer(self):
         """
         This method returns the current player details if a player is currently 
         logged in the client.
@@ -189,8 +204,7 @@ class LocalPlayers():
             if a player is logged in:
                 {   'status': "ok", 
                     'nickname': str, 
-                    'playerID': ObjectId,
-                    'passwordHash': str
+                    'playerID': ObjectId
                 }   
             if no player is logged in:
                 {'status': "ko"}        
@@ -198,26 +212,10 @@ class LocalPlayers():
         if self.currentPlayer == None:
             result = {'status': "ko"}
         else:
-            result = self.playersList[self.currentPlayer]
+            result = self.currentPlayer
             result['status'] = "ok"
         return result
             
-    def getNickname(self):
-        """
-        This method returns the current player if a player is currently logged 
-        in the client.
-        
-        Two possible answers:
-            {'status': "ok", 'nickname': str}   if a player is logged in
-            {'status': "ko"}                    if no player is logged in        
-        """
-        if self.currentPlayer == None:
-            result = {'status': "ko"}
-        else:
-            pp = self.playersList[self.currentPlayer]
-            result = {'status': "ok", 'nickname': pp['nickname']}
-        return result
-
     def validatePlayer(self, nickname, password):
         """
         This method validates that a couple (nickname, password) is valid.

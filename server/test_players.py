@@ -497,19 +497,20 @@ class TestPlayers(unittest.TestCase):
         # end of the test
         self.teardown(players)
 
-    def test_deregister(self):
+    def test_deRegister(self):
         """
-        Test players.deregister
+        Test players.deRegister
         """
         # setup the test data
         self.setUp()
         players = Players()
         # removes a player
         vbar()
-        print("Test players.deregister")
+        print("Test players.deRegister")
         vbar()
+        vprint("We first register all 6 reference test players.")
         pp = players.playersColl.find_one({'nickname': "Donald"})
-        self.assertTrue(players.deregister(pp['_id']))
+        self.assertTrue(players.deRegister(pp['_id']))
         self.assertEqual(players.playersColl.count(), 5)
         pp = players.playersColl.find_one({'nickname': "Donald"})
         self.assertEqual(pp, None)

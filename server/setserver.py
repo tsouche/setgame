@@ -6,7 +6,6 @@ Created on August 11th 2016
 from bottle import Bottle, route, request, run
 from bson.objectid import ObjectId
 
-
 from backend import Backend
 from constants import setserver_address, setserver_port
 from constants import server_version, oidIsValid
@@ -43,17 +42,28 @@ if __name__ == "__main__":
     def reset():
         return backend.reset()
 
-    # this route enable to register players to the Set game server
+    # this route enable to check if a nickname is still available to register a 
+    # new player to the Set game server
     @webserver.route(url('/register/available/<nickname>'))
     def isNicknameAvailable(nickname):
         passwordHash = request.query.get('passwordHash')
         return backend.registerPlayer(nickname, passwordHash)
 
+    # this route enable to register players to the Set game server
     @webserver.route(url('/register/nickname/<nickname>'))
     def registerPlayer(nickname):
         passwordHash = request.query.get('passwordHash')
         return backend.registerPlayer(nickname, passwordHash)
 
+    # this route enable to de-register isolated players to a yet-to-start game
+    @webserver.route(url('/deregister/<playerid_str>'))
+    def deRegisterPlayer(playerid_str):
+        if oidIsValid(playerid_str):
+            result = backend.deRegisterPlayer(ObjectId(playerid_str))
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
+        return result
+    
     # this route enable register isolated players to a yet-to-start game
     @webserver.route(url('/enlist/<playerid_str>'))
     def enlistPlayer(playerid_str):

@@ -366,6 +366,31 @@ class test_Game(unittest.TestCase):
             vprint("        Overall: result is compliant: " + str(valid))
             self.assertTrue(valid)
                              
+    def test_delistPlayer(self):
+        """
+        Test game.getPoints
+        """
+        vbar()
+        print("Test game.delistPlayer")
+        vbar()
+        # load the reference data
+        Donald = refPlayers()[0]
+        for test_data_index in range(0,2):
+            # load the reference game
+            partie = self.setup(test_data_index)
+            vprint("We load the reference game " + str(test_data_index) + ": Donald is enlisted")
+            # delist Donad and check the result
+            answer = partie.delistPlayer(Donald['playerID'])
+            self.assertEqual(answer['status'], "ok")
+            vprint("    > we delist Donald")
+            for pp in partie.players:
+                self.assertFalse(pp['playerID'] == Donald['playerID'])
+            vprint("    > Donald is not in the players' list anymore")
+            # we try delisting an unknown player
+            answer = partie.delistPlayer(ObjectId())
+            self.assertEqual(answer['status'], "ko")
+            vprint("    > we delist an unkown player: it fails")
+            
     def test_serialize(self):
         """
         Test game.serialize

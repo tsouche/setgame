@@ -112,6 +112,47 @@ class Game:
                 'points': pp['points'] })
         return dict_players
 
+    def getPlayer(self, playerID):
+        """
+        This method returns the details of a player if he is enlisted on the 
+        game.
+        
+        Possible answers are:
+            { 'status': "ok", 'playerID': ObjectId, 'nickname': str,
+              'passwordHash': str, 'points': int }
+        or
+            { 'status': "ko", 'reason': message }
+        """
+        unknown = True
+        for pp in self.players:
+            if pp['playerID'] == playerID:
+                unknown = False
+                result = pp
+                result['status'] = "ok"
+                break
+        if unknown:
+            result = {'status': "ko", 'reason': "unknown playerID"}
+        return result
+        
+    def delistPlayer(self, playerID):
+        """
+        This method removes a player from the game if he was enlisted.
+        It will not remove the player's detail from the game history, so it 
+        might lead to a difficulty to consult the details of the player later 
+        on.
+        """
+        found = False
+        for i in range(0,len(self.players)):
+            if self.players[i]['playerID'] == playerID:
+                found = True
+                del(self.players[i])
+                break
+        if found:
+            result = {'status': "ok"}
+        else:
+            result = {'status': "ko", 'reason': "unknown playerID"}
+        return result
+
     def receiveSetProposal(self, playerID, positionsOnTable):
         """
         This methods collect 'positionsOnTable', a list of 3 indexes which are 
