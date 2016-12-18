@@ -1,7 +1,10 @@
 '''
 Created on Nov 2, 2016
 
-@author: thierry
+P@author: thierry
+
+We follow a MCV (Model-Control-View) pattern for the client.
+This class belongs to the Model, hence its name starts with 'm_'.
 '''
 
 from passlib.context import CryptContext
@@ -159,6 +162,22 @@ class LocalPlayers():
             result = {'status': "ko", 'reason': "player already logged in"}
         return result
 
+    def getPlayerLoginDetails(self, nickname):
+        """
+        This method returns the details enabling a player to use on this client 
+        the profile which was used on another client: it retrieves the details 
+        from the database if that nickname was already used.
+        
+        Possible answers are:
+            { 'status': "ok", 'playerID': ObjectId,
+              'nickname': str, 'passwordHash': str }
+        or
+            { 'status': "ko", 'reason': "unknown nickname" }
+        """
+        path = _url('/player/' + nickname)
+        result = requests.get(path)
+        return result.json()
+        
     def login(self, nickname, password):
         """
         This method will log an existing player (i.e. a player already stored
@@ -216,13 +235,6 @@ class LocalPlayers():
             result['status'] = "ok"
         return result
             
-    def validatePlayer(self, nickname, password):
-        """
-        This method validates that a couple (nickname, password) is valid.
-        It returns a boolean: True or False.
-        """
-        pass
-    
     def removePlayer(self, nickname):
         """
         This method enable to remove an existing player from teh local client.
@@ -231,5 +243,19 @@ class LocalPlayers():
         only removes it from the local backup, and from the list of players 
         which are loaded in the client memory.
         """
-        pass
+        found = False
+        i = 0
+        while i < len(self.playersList):
+            if self.playersList[i]['nickname'] == nickname:
+                found = True
+                break
+            else:
+                i += 1
+        if found:
+            del(self.playersList[i])
+            result = {'status': "ok"}
+        else:
+            result = {'status': "ko", 'reason': "unknown nickname"}
+        return result
+
 

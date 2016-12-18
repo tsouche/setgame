@@ -64,7 +64,13 @@ if __name__ == "__main__":
             result = {'status': "ko", 'reason': "invalid playerID"}
         return result
     
-    # this route enable register isolated players to a yet-to-start game
+
+    # this route enable to return the login details of a player from its nickname
+    @webserver.route(url('/player/<nickname>'))
+    def getPlayerLoginDetails(nickname):
+        return backend.getPlayerLoginDetails(nickname)
+    
+    # this route enable enlist isolated players to a yet-to-start game
     @webserver.route(url('/enlist/<playerid_str>'))
     def enlistPlayer(playerid_str):
         # check that the string passed is a valid ObjectId, and if so

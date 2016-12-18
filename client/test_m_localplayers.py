@@ -10,7 +10,7 @@ from csv import DictReader, DictWriter
 from bson.objectid import ObjectId
 import requests
 
-from d_localplayers import LocalPlayers, verifyPassword
+from m_localplayers import LocalPlayers, verifyPassword
 from constants import oidIsValid, _url
 from client_constants import client_data_backup_file
 from test_utilities import refPlayers_Dict, refPlayers, vbar, vprint
@@ -18,7 +18,7 @@ from client_test_utilities import writeOnePlayerBackupTestFile
 from client_test_utilities import writeAllPlayersBackupTestFile
 
 
-class Test_d_localplayers(unittest.TestCase):
+class Test_m_localplayers(unittest.TestCase):
     """
     This class enable to unit test the "d_players" class.
     It relies on a test file for players profiles saved under the name 

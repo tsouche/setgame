@@ -2,7 +2,11 @@
 Created on Nov 1, 2016
 
 @author: thierry
+
+We follow a MCV (Model-Control-View) pattern for the client.
+This class belongs to the Model, hence its name starts with 'm_'.
 '''
+
 from server.cardset import CardSet
 from server.step import Step
 

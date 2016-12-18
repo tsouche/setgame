@@ -375,6 +375,42 @@ class test_Setserver(unittest.TestCase):
             result = result.json()
             self.assertEqual(result['status'], "ok")
             vprint("    > de-register " + pp['nickname'] + ": success")
+
+    def test_getPlayerLoginDetail(self):
+        """
+        Test Setserver.getPlayerLoginDetail
+        """
+        vbar()
+        print("Test setserver.getPlayerLoginDetail")
+        vbar()
+        # Here we register all reference players and then we will retrieve 
+        # their details one by one.
+        self.setup_reset()
+        self.setup_registerRefPlayers()
+        playersColl = getPlayersColl()
+        vprint("We have registered all reference test players.")
+        # retrieve the details of an unknown player
+        vprint("    > try getting the details of an unknown player:")
+        nickname = "peterpan"
+        path = _url('/player/' + nickname)
+        vprint("    path = '" + path + "'")
+        result = requests.get(path)
+        result = result.json()
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "unknown nickname")
+        vprint("        compliant: " + result['reason'])
+        # retrieve the details of an unknown player
+        vprint("We now get the details of all reference test players:")
+        for pp in refPlayers_Dict():
+            nickname = pp['nickname']
+            path = _url('/player/' + nickname)
+            result = requests.get(path)
+            result = result.json()
+            self.assertEqual(result['status'], "ok")
+            self.assertEqual(result['nickname'], nickname)
+            self.assertEqual(result['playerID'], pp['playerID'])
+            self.assertEqual(result['passwordHash'], pp['passwordHash'])
+            vprint("    > " + nickname + ": " + result['status'])
         
     def test_enlistPlayer(self):
         """
@@ -1018,3 +1054,4 @@ class test_Setserver(unittest.TestCase):
 if __name__ == "__main__":
 
     unittest.main()
+
