@@ -351,7 +351,7 @@ class test_Setserver(unittest.TestCase):
         vprint("    > try de-registering an invalid playerID:")
         playerid_str = "thisisnotavalidobjectid"
         path = _url('/deregister/' + playerid_str)
-        vprint("    path = '" + path + "'")
+        vprint("        path = '" + path + "'")
         result = requests.get(path)
         result = result.json()
         self.assertEqual(result['status'], "ko")
@@ -359,16 +359,16 @@ class test_Setserver(unittest.TestCase):
         vprint("        compliant: " + result['reason'])
         # de-registering an unknown playerID
         vprint("    > try de-registering an unknown player:")
-        playerid_str = str(ObjectId)
+        playerid_str = str(ObjectId())
         path = _url('/deregister/' + playerid_str)
-        vprint("    path = '" + path + "'")
+        vprint("        path = '" + path + "'")
         result = requests.get(path)
         result = result.json()
         self.assertEqual(result['status'], "ko")
-        self.assertEqual(result['reason'], "unkown playerID")
-        vprint("        compliant: " + result['reasons'])
+        self.assertEqual(result['reason'], "unknown playerID")
+        vprint("        compliant: " + result['reason'])
         # start de-registering players and check answers
-        for pp in refPlayers_Dict:
+        for pp in refPlayers_Dict():
             playerid_str = pp['playerID']
             path = _url('/deregister/' + playerid_str)
             result = requests.get(path)
@@ -392,18 +392,18 @@ class test_Setserver(unittest.TestCase):
         # retrieve the details of an unknown player
         vprint("    > try getting the details of an unknown player:")
         nickname = "peterpan"
-        path = _url('/player/' + nickname)
+        path = _url('/player/details/' + nickname)
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         result = result.json()
         self.assertEqual(result['status'], "ko")
         self.assertEqual(result['reason'], "unknown nickname")
         vprint("        compliant: " + result['reason'])
-        # retrieve the details of an unknown player
+        # retrieve the details of the reference test players
         vprint("We now get the details of all reference test players:")
         for pp in refPlayers_Dict():
             nickname = pp['nickname']
-            path = _url('/player/' + nickname)
+            path = _url('/player/details/' + nickname)
             result = requests.get(path)
             result = result.json()
             self.assertEqual(result['status'], "ok")
@@ -411,7 +411,54 @@ class test_Setserver(unittest.TestCase):
             self.assertEqual(result['playerID'], pp['playerID'])
             self.assertEqual(result['passwordHash'], pp['passwordHash'])
             vprint("    > " + nickname + ": " + result['status'])
-        
+
+    def test_getGameID(self):
+        """
+        Test Setserver.getGameID
+        """
+        vbar()
+        print("Test setserver.getGameID")
+        vbar()
+        # Here we register all reference players and then we will retrieve 
+        # their details one by one.
+        self.setup_reset()
+        self.setup_registerRefPlayers()
+        playersColl = getPlayersColl()
+        vprint("We have registered all reference test players.")
+        # retrieve the details from an invalid playerID
+        vprint("    > try getting the gameID of an invalid playerID:")
+        playerid_str = "invalidplayerid"
+        path = _url('/player/gameid/' + playerid_str)
+        vprint("        path = '" + path + "'")
+        result = requests.get(path)
+        result = result.json()
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "invalid playerID")
+        vprint("        compliant: " + result['reason'])
+        # retrieve the details of an unknown player
+        vprint("    > try getting the gameID of an unknown playerID:")
+        playerid_str = str(ObjectId())
+        path = _url('/player/gameid/' + playerid_str)
+        vprint("        path = '" + path + "'")
+        result = requests.get(path)
+        result = result.json()
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "unknown playerID")
+        vprint("        compliant: " + result['reason'])
+        # retrieve the details of the reference test players
+        vprint("We now get the gameID of all reference test players:")
+        for pp in refPlayers_Dict():
+            playerid_str = pp['playerID']
+            nickname = pp['nickname']
+            path = _url('/player/gameid/' + playerid_str)
+            result = requests.get(path)
+            result = result.json()
+            pp_db = playersColl.find_one({'_id': ObjectId(playerid_str)})
+            gameID_db = pp_db['gameID']
+            self.assertEqual(result['status'], "ok")
+            self.assertEqual(result['gameID'], str(gameID_db))
+            vprint("    > " + nickname + ": " + result['status'])
+
     def test_enlistPlayer(self):
         """
         Test Setserver.enlistPlayer

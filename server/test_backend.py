@@ -385,6 +385,52 @@ class test_Backend(unittest.TestCase):
             self.assertEqual(result['status'], "ko")
             vprint("    > " + pp['nickname'] + ": was de-registered")
     
+    def test_getGameID(self):
+        """
+        Test backend.getGameID
+        """
+        vbar()
+        print("test backend.getGameID")
+        vbar()
+        # initiate a backend and register reference players
+        backend = self.setUp()
+        vprint("We register the reference test players:")
+        backend.ForTestOnly_RegisterRefPlayers()
+        pp_test = refPlayers(True)
+        playersColl = getPlayersColl()
+        # enlist a team of 6 players (in which 1 duplicate): it should succeed
+        vprint("We enlist 5 players.") 
+        list_pid = [{'playerID': pp_test[0]['playerID']}, 
+                    {'playerID': pp_test[1]['playerID']},
+                    {'playerID': pp_test[2]['playerID']},
+                    {'playerID': pp_test[3]['playerID']},
+                    {'playerID': pp_test[4]['playerID']}]
+        result = backend.enlistTeam(list_pid)
+        # check the gameID for all players
+        vprint("We now check that their gameID is compliant:")
+        for i in range(0,5):
+            playerID = pp_test[i]['playerID']
+            pp_db = playersColl.find_one({'_id': playerID})
+            gameID_db = pp_db['gameID']
+            result = backend.getGameID(playerID)
+            self.assertEqual(result['status'], "ok")
+            self.assertEqual(result['gameID'], gameID_db)
+            vprint("    > " + pp_test[i]['nickname'] + ": compliant")
+        result = backend.getGameID(pp_test[5]['playerID'])
+        self.assertEqual(result['status'], "ok")
+        self.assertEqual(result['gameID'], None)
+        vprint("    > Daisy: compliant")
+        # check the gameID for an unknown playerID
+        result = backend.getGameID(ObjectId())
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "unknown playerID")
+        vprint("    > unknown playerID: compliant")
+        # check the gameID for an invalid playerID
+        result = backend.getGameID("invalidplayerID")
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "invalid playerID")
+        vprint("    > invalid playerID: compliant")
+
     def test_getNicknames(self):
         """
         Test backend.getNicknames

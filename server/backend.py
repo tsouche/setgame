@@ -316,6 +316,23 @@ class Backend():
             result = answer
         return result
     
+    def getGameID(self, playerID):
+        """
+        This method returns the gameID if the player exist and is part of a 
+        game. 
+        
+        Possible answers are:
+            {'status': "ok", 'gameID': ObjectId }
+        or:
+            {'status': "ko", 'reason': "unknown playerID"}
+            {'status': "ko", 'reason': "invalid playerID"}
+        """
+        if oidIsValid(playerID):
+            result = self.players.getGameID(playerID)
+        else:
+            result = {'status': "ko", 'reason': "invalid playerID"}
+        return result
+            
     def getNicknames(self, playerID):
         """
         This function gives back the names of all the players which are part of
