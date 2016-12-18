@@ -25,7 +25,7 @@ def verifyPassword(password, passwordHash):
     return context.verify(password, passwordHash)
     
  
-class LocalPlayers():
+class LocalPlayer():
     """
     This class manages the players profiles as seen from the client, enabling
     to create a player profile (once connected to the server), to log on the 
@@ -48,14 +48,18 @@ class LocalPlayers():
     def __init__(self):
         """
         The local profiles are retrieved from the local backup file and stored
-        in memory (in 'self.playersList'), so that the client keeps a history of 
+        in memory (in 'self.history'), so that the client keeps a history of 
         all players who logged in successfully on the client.
         
         The player currently logged into the client is indicated by 
         'currentPlayer' (int).
         """
-        self.playersList = []
-        self.currentPlayer = None
+        # store the data related to the player currently logged into the client
+        self.playerID = None
+        self.nickname = None
+        self.passwordHash = None
+        # store the history of all players who logged into this client
+        self.history = []
         # read the existing players from the backup file
         self.readAll()
 
@@ -70,14 +74,14 @@ class LocalPlayers():
         The in-memory data are:
             {'playerID': ObjectID, 'nickname': str, 'passwordHash': str }
         """
-        del(self.playersList)
-        self.playersList = []
+        del(self.history)
+        self.history = []
         with open(client_data_backup_file, "r") as file:
             fieldNames = ['playerID', 'nickname', 'passwordHash']
             backup_data = DictReader(file, fieldnames = fieldNames)
             for row in backup_data:
                 if oidIsValid(row['playerID']):
-                    self.playersList.append({
+                    self.history.append({
                         'playerID': ObjectId(row['playerID']),
                         'nickname': row['nickname'], 
                         'passwordHash': row['passwordHash']
@@ -91,7 +95,7 @@ class LocalPlayers():
         with open(client_data_backup_file, "w") as file:
             fieldNames = ['playerID', 'nickname', 'passwordHash']
             writer = DictWriter(file, fieldnames = fieldNames)
-            for pp in self.playersList:
+            for pp in self.history:
                 writer.writerow(pp)
     
     def checkNicknameIsAvailable(self, nickname):
@@ -142,24 +146,38 @@ class LocalPlayers():
             """
             context = CryptContext(schemes=[encryption_algorithm])
             return context.encrypt(password)
-        # proceed with the registering
-        if self.currentPlayer == None:
+
+        # proceed with the registering if there is not player logged in yet
+        if self.playerID == None:
+            # check if the nickname is available
             avail = self.checkNicknameIsAvailable(nickname)
             if avail['status'] == "ok":
-                # check if the nickname appears in the local players list
-                # (if so, this means that the local list need to be synchronized
-                # between this client and the server - which is the reference)
-                
-                
-                pass
+                # register the nickname on the server
+                passwordHash = encryptPassword(password)
+                path = _url('/register/nickname/' + nickname)
+                answer = requests.get(path, params={'passwordHash': passwordHash})
+                answer = answer.json()
+                # check if the registration was ok on the server
+                if answer['status'] == "ok":
+                    # store the player's details in memory
+                    self.playerID = ObjectId(answer['playerID'])
+                    self.nickname = nickname
+                    self.passwordHash = passwordHash
+                    # store the player details in local history
+                    self.history.append({
+                        'playerID': self.playerID,
+                        'nickname': self.nickname,
+                        'passwordHash': self.passwordHash
+                        })
+                    self.saveAll()
+                    result = {'status': "ok"}
+                else:
+                    result = answer
             else:
                 # retrieve details of the player from the server
-                
-                # store locally and request that the player authenticate
-                
-                pass
+                result = {'status': "ko", 'reason': "invalid nickname"}
         else:
-            result = {'status': "ko", 'reason': "player already logged in"}
+            result = {'status': "ko", 'reason': "a player is currently logged in"}
         return result
 
     def getPlayerLoginDetails(self, nickname):
@@ -190,7 +208,7 @@ class LocalPlayers():
         """
         # look for the player in the players list
         found = False
-        for pp in self.playersList:
+        for pp in self.history:
             if pp['nickname'] == nickname:
                 found = True
                 break
@@ -212,7 +230,9 @@ class LocalPlayers():
         This method enable to log out a current player (whether a player was 
         logged in or not).
         """
-        self.currentPlayer = None
+        self.playerID = None
+        self.nickname = None
+        self.passwordHash = None
         
     def getCurrentPlayer(self):
         """
@@ -228,16 +248,19 @@ class LocalPlayers():
             if no player is logged in:
                 {'status': "ko"}        
         """
-        if self.currentPlayer == None:
+        if self.playerID == None:
             result = {'status': "ko"}
         else:
-            result = self.currentPlayer
-            result['status'] = "ok"
+            result = {
+                'status': "ok",
+                'playerID': self.playerID,
+                'nickname': self.nickname
+                }
         return result
             
     def removePlayer(self, nickname):
         """
-        This method enable to remove an existing player from teh local client.
+        This method enable to remove an existing player from the history.
         
         BEWARE: this does NOT remove the player from the server database, it 
         only removes it from the local backup, and from the list of players 
@@ -245,14 +268,14 @@ class LocalPlayers():
         """
         found = False
         i = 0
-        while i < len(self.playersList):
-            if self.playersList[i]['nickname'] == nickname:
+        while i < len(self.history):
+            if self.history[i]['nickname'] == nickname:
                 found = True
                 break
             else:
                 i += 1
         if found:
-            del(self.playersList[i])
+            del(self.history[i])
             result = {'status': "ok"}
         else:
             result = {'status': "ko", 'reason': "unknown nickname"}

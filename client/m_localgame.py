@@ -7,8 +7,10 @@ We follow a MCV (Model-Control-View) pattern for the client.
 This class belongs to the Model, hence its name starts with 'm_'.
 '''
 
+from bson.objectid import ObjectId
 import requests
 from constants import oidIsValid, _url
+from m_localplayer import LocalPlayer
 from server.cardset import CardSet
 from server.step import Step
  
@@ -28,16 +30,20 @@ class LocalGame():
         Initialize the cards data structures, and read the most recent status 
         from he server if relevant.
         """
+        # data related to the player logged into the client
+        self.player = LocalPlayer()
         # data related to the on-going game: to be retrieved from the server
         self.gameID = None
+        self.gameStarted = False
+        self.gameFinished = False
         self.turnCounter = 0
-        self.gameFinished = True
-        self.cards = CardSet()
-        self.step = Step()
+        self.team = None
+        self.cards = None
+        self.step = None
         # flag indicating to the GUI if data were refreshed, so that it can 
         # update the display and status of various buttons/command.
-        self.pullFromServer = False
-        self.pushToServer = False
+        self.needToRefreshUI = False
+        self.needToRefreshData = False
 
     def getGameStartNotification(self):
         """
@@ -45,32 +51,51 @@ class LocalGame():
         player is part of. This polling is non intrusive: the client can poll
         endlessly without harming the game or the server.
         """
-        playerid_str = str(mickey['playerID'])
-        path = _url('/enlist/' + playerid_str)
-        vprint("    path = '" + path + "'")
-        result = requests.get(path)
-        status = result.json()['status']
-        vprint("    enlist again Mickey : " + playerid_str + " - " 
-               + status + " (" + gameid_str + ")")
-        self.assertEqual(status, "ok")
-        self.assertEqual(result.json()['gameID'], gameid_str)
+        if self.player.palyerID != None:
+            playerid_str = str(self.player.playerID)
+            path = _url('/enlist/' + playerid_str)
+            result = requests.get(path)
+            result = result.json()
+            status = result['status']
+            if status == "ok":
+                self.gameStarted = True
+                self.gameID = ObjectId(result['gameID'])
+                self.retrieveDetails(self.gameID)
         
-        
-    def retrieveDetails(self, gameID):
+    def retrieveDetails(self):
         """
         Retrieve from the server the generic informations about the game:
             - game generic details: gameID, boolean about the game status, turn
             - details about the players
             - cardset information.
+        IMPORTANT: we assume that the gameID was already populated.
         """
-        path = _url('/game/' + str(gameID) + '/details')
-        result = requests.get(path)
-        result_dict = result.json()
-        if result_dict['status'] == "ok":
-            self.turnCounter = int(result_dict['turnCounter'])
-            self.gameFinished = (result_dict['gameFinished'] == "True")
-            self.cards.deserialize(result_dict['cardset'])
-        players_str = result_dict['players']
+        if self.gameID == None:
+            self.gameStarted = False
+            self.gameFinished = False
+            self.turnCounter = 0
+            self.team = None
+            self.cards = None
+            self.step = None
+        else:
+            self.gameStarted = True
+            path = _url('/game/' + str(self.gameID) + '/details')
+            result = requests.get(path)
+            result_dict = result.json()
+            if result_dict['status'] == "ok":
+                self.turnCounter = int(result_dict['turnCounter'])
+                self.gameFinished = (result_dict['gameFinished'] == "True")
+                self.cards = CardSet()
+                self.cards.deserialize(result_dict['cardset'])
+                self.team = []
+                for pp in result_dict['players']:
+                    if 
+                    self.team.append( {
+                        'playerID': ObjectId(pp['playerID']),
+                        'nickname': pp['nickname'], 
+                        'points': int(pp['points'])
+                        })
+                
 
             
     def loadStep(self):

@@ -10,7 +10,7 @@ from csv import DictReader, DictWriter
 from bson.objectid import ObjectId
 import requests
 
-from m_localplayers import LocalPlayers, verifyPassword
+from m_localplayer import LocalPlayer, verifyPassword
 from constants import oidIsValid, _url
 from client_constants import client_data_backup_file
 from test_utilities import refPlayers_Dict, refPlayers, vbar, vprint
@@ -89,7 +89,7 @@ class Test_m_localplayers(unittest.TestCase):
         # create a players list with only one player; Donald.
         vprint("Initiate a players' list with only Donald:")
         writeOnePlayerBackupTestFile(client_data_backup_file)
-        lp = LocalPlayers()
+        lp = LocalPlayer()
         pp = lp.playersList[0]
         pp_ref = refPlayers_Dict()[0]
         self.assertEqual(len(lp.playersList), 1)
@@ -103,7 +103,7 @@ class Test_m_localplayers(unittest.TestCase):
         vprint("Initiate a players' list with all reference test players:")
         writeAllPlayersBackupTestFile(client_data_backup_file)
         playersRef = refPlayers_Dict()
-        lp = LocalPlayers()
+        lp = LocalPlayer()
         vprint("    > # of players:" + str(len(lp.playersList)))
         self.assertEqual(len(lp.playersList), len(playersRef))
         for pp in lp.playersList:
@@ -125,7 +125,7 @@ class Test_m_localplayers(unittest.TestCase):
         # create a backup file
         vprint("Initiate a 'LocalPlayer' with all reference test players:")
         writeAllPlayersBackupTestFile(client_data_backup_file)
-        lp = LocalPlayers()
+        lp = LocalPlayer()
         # overwrite the backup file with a new and different backup file.
         writeOnePlayerBackupTestFile(client_data_backup_file)
         # rewrite the backup file with the players stored in memory
@@ -164,7 +164,7 @@ class Test_m_localplayers(unittest.TestCase):
         vbar()
         # create a LocalPlayers
         self.setUp()
-        lp = LocalPlayers()
+        lp = LocalPlayer()
         # resets the server
         self.resetSetserver()
         # test nickname availability for all reference test server
@@ -190,7 +190,7 @@ class Test_m_localplayers(unittest.TestCase):
         vbar()
         # create a LocalPlayers
         self.setUp()
-        lp = LocalPlayers()
+        lp = LocalPlayer()
         # resets the server so that we can create new players
         self.resetSetserver()
         # register and de-register the reference players
@@ -214,7 +214,7 @@ class Test_m_localplayers(unittest.TestCase):
         # create a 'LocalPlayers' (loading all reference test players from the 
         # local backup file)
         self.setUp()
-        lp = LocalPlayers()
+        lp = LocalPlayer()
         # try to log a loaded player
         vprint("We log in and then out all reference test players into the client:")
         for pp in refPlayers_Dict():
