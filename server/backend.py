@@ -133,11 +133,8 @@ class Backend():
         #     - if the answer is False, it returns 'Failed'.
         answer = self.players.register(nickname, passwordHash)
         if answer['status'] == "ok":
-            playerID = self.players.getPlayerID(nickname)['playerID']
-            result = {'status': "ok", 'playerID': str(playerID)}
-        else:
-            result = {'status': "ko", 'reason': answer['reason']}
-        return result
+            answer['playerID'] = str(answer['playerID'])
+        return answer
 
     def deRegisterPlayer(self, playerID):
         """

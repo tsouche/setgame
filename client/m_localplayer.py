@@ -17,14 +17,6 @@ from constants import encryption_algorithm, oidIsValid, _url
 from client_constants import client_data_backup_file
 from pymongo import results
 
-def verifyPassword(password, passwordHash):
-    """
-    This function verify that the hash corresponds to the password.
-    """
-    context = CryptContext(schemes=[encryption_algorithm])
-    return context.verify(password, passwordHash)
-    
- 
 class LocalPlayer():
     """
     This class manages the players profiles as seen from the client, enabling
@@ -97,7 +89,34 @@ class LocalPlayer():
             writer = DictWriter(file, fieldnames = fieldNames)
             for pp in self.history:
                 writer.writerow(pp)
-    
+            
+    def encryptPassword(self, password):
+        """
+        This function encrypts a password and returns a hash.
+        """
+        """
+        IF REQUIRED, THIS IS THE PLACE WHERE WE MAY ENFORCE A PASSWORD STRENGTH 
+        POLICY.
+        """
+        context = CryptContext(schemes=[encryption_algorithm])
+        return context.encrypt(password)
+
+    def verifyPassword(self, password, passwordHash=None):
+        """
+        This function verify that the hash corresponds to the password.
+        """
+        error = False
+        if passwordHash == None:
+            if self.playerID != None:
+                passwordHash = self.passwordHash
+            else:
+                error = True
+        if error:
+            return False
+        else:
+            context = CryptContext(schemes=[encryption_algorithm])
+            return context.verify(password, passwordHash)
+
     def checkNicknameIsAvailable(self, nickname):
         """
         This method checks if a nickname is available (i.e. it does not exists
@@ -118,42 +137,27 @@ class LocalPlayer():
     def registerPlayer(self, nickname, password):
         """
         This method add a new player in the client:
-            - if the player already exist in the local players list, it will 
-                only check that the password matches the passwordHash, and will
-                register the player.
-            - if the player does not exist in the local players list, it will
-                request the database to register the player:
-                - if the nickname was already registered in the server database,
-                    it will retrieve the playerID and password hash, so that we
-                    can go back to the previous case: check the password and 
-                    log in the player if it matches the password hash.
-                - if the nickname does not exist in the server database, it will
-                    be remotely registered, and a hash will be stored both in 
-                    the server database, in the local memory and in the local 
-                    backup file.
+            - the client connects to the server and checks if the nickname is 
+                still available, and if so it registers the nickname.
+            - if registered, then it will then save the newly completed history.
 
         The method returns;
-            if successful: {'status': "ok", 'playerID': ObjectID}
-            if failed:     {'status': "ko", 'reason': "invalid password" }
+            if successful: {'status': "ok"}
+            if failed:     {'status': "ko", 'reason': msg }
+                where msg is:   "invalid nickname"
+                                "a player is currently logged in"
 
         NB: for the moment, we don't handle here a connection problem between 
             the client and the server. We assume that the connection is well
             established.             
         """
-        def encryptPassword(password):
-            """
-            This function encrypts a password and returns a hash.
-            """
-            context = CryptContext(schemes=[encryption_algorithm])
-            return context.encrypt(password)
-
-        # proceed with the registering if there is not player logged in yet
+        # proceed with the registering only if no player is logged in yet
         if self.playerID == None:
             # check if the nickname is available
             avail = self.checkNicknameIsAvailable(nickname)
             if avail['status'] == "ok":
                 # register the nickname on the server
-                passwordHash = encryptPassword(password)
+                passwordHash = self.encryptPassword(password)
                 path = _url('/register/nickname/' + nickname)
                 answer = requests.get(path, params={'passwordHash': passwordHash})
                 answer = answer.json()
@@ -192,9 +196,12 @@ class LocalPlayer():
         or
             { 'status': "ko", 'reason': "unknown nickname" }
         """
-        path = _url('/player/' + nickname)
+        path = _url('/player/details/' + nickname)
         result = requests.get(path)
-        return result.json()
+        result = result.json()
+        if result['status'] == "ok":
+            result['playerID'] = ObjectId(result['playerID'])
+        return result
         
     def login(self, nickname, password):
         """
@@ -213,11 +220,10 @@ class LocalPlayer():
                 found = True
                 break
         if found:
-            if verifyPassword(password, pp['passwordHash']):
-                self.currentPlayer = {
-                    'playerID': pp['playerID'],
-                    'nickname': pp['nickname'],
-                    }
+            if self.verifyPassword(password, pp['passwordHash']):
+                self.playerID = pp['playerID']
+                self.nickname = pp['nickname']
+                self.passwordHash = pp['passwordHash']
                 result = {'status': "ok"}
             else:
                 result = {'status': "ko", 'reason': "invalid password"}
@@ -258,9 +264,10 @@ class LocalPlayer():
                 }
         return result
             
-    def removePlayer(self, nickname):
+    def removePlayerFromHistory(self, nickname):
         """
-        This method enable to remove an existing player from the history.
+        This method enable to remove an existing player from the history (both
+        in memory and in the local backup file).
         
         BEWARE: this does NOT remove the player from the server database, it 
         only removes it from the local backup, and from the list of players 
@@ -279,6 +286,7 @@ class LocalPlayer():
             result = {'status': "ok"}
         else:
             result = {'status': "ko", 'reason': "unknown nickname"}
+        self.saveAll()
         return result
 
 

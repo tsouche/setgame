@@ -46,14 +46,14 @@ if __name__ == "__main__":
     # new player to the Set game server
     @webserver.route(url('/register/available/<nickname>'))
     def isNicknameAvailable(nickname):
-        passwordHash = request.query.get('passwordHash')
-        return backend.registerPlayer(nickname, passwordHash)
+        return backend.isNicknameAvailable(nickname)
 
     # this route enable to register players to the Set game server
     @webserver.route(url('/register/nickname/<nickname>'))
     def registerPlayer(nickname):
         passwordHash = request.query.get('passwordHash')
         return backend.registerPlayer(nickname, passwordHash)
+        
 
     # this route enable to de-register isolated players to a yet-to-start game
     @webserver.route(url('/deregister/<playerid_str>'))
@@ -113,7 +113,7 @@ if __name__ == "__main__":
         return result2
 
     # this route enable to collect the nicknames of the team-mates
-    @webserver.route(url('/game/<playerid_str>/nicknames'))
+    @webserver.route(url('/game/nicknames/<playerid_str>'))
     def getNicknames(playerid_str):
         # check that the string passed is a valid ObjectId, and if so
         # call the backend.
@@ -125,7 +125,7 @@ if __name__ == "__main__":
         return result
 
     # this route enable to soft-stop a game
-    @webserver.route(url('/game/<gameid_str>/stop'))
+    @webserver.route(url('/game/stop/<gameid_str>'))
     def stopGame(gameid_str):
         # it needs (amongst other things) to read the 'hard' flag.
         if oidIsValid(gameid_str):
@@ -136,7 +136,7 @@ if __name__ == "__main__":
         return result
     
     # this route enable to hard-stop a game
-    @webserver.route(url('/game/<gameid_str>/hardstop'))
+    @webserver.route(url('/game/hardstop/<gameid_str>'))
     def stopGame(gameid_str):
         # it needs (amongst other things) to read the 'hard' flag.
         if oidIsValid(gameid_str):
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         return result
     
     # this route enable to collect the generic details of a game 
-    @webserver.route(url('/game/<gameid_str>/details'))
+    @webserver.route(url('/game/details/<gameid_str>'))
     def details(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.details(ObjectId(gameid_str))
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         return result
     
     # this route enable to collect the current step
-    @webserver.route(url('/game/<gameid_str>/step'))
+    @webserver.route(url('/game/step/<gameid_str>'))
     def step(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.step(ObjectId(gameid_str))
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         return result
 
     # this route enable to collect the full history of the game
-    @webserver.route(url('/game/<gameid_str>/history'))
+    @webserver.route(url('/game/history/<gameid_str>'))
     def history(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.history(ObjectId(gameid_str))
@@ -175,7 +175,7 @@ if __name__ == "__main__":
         return result
 
     # this route enable a client to propose a set of 3 cards to the server
-    @webserver.route(url('/game/<playerid_str>/set'))
+    @webserver.route(url('/game/set/<playerid_str>'))
     def proposeSet(playerid_str):
         if oidIsValid(playerid_str):
             playerID = ObjectId(playerid_str)

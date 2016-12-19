@@ -24,10 +24,4 @@ playersMin = 4
 playersMax = 6
 pointsPerStep = 3
 
-# address and mode (test/production) of the DB server
-production = False
-mongoserver_prod_address = 'localhost'
-mongoserver_prod_port = 27017
-mongoserver_test_address = 'localhost'
-mongoserver_test_port = 27017
 

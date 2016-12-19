@@ -49,3 +49,10 @@ def _url(path):
     msg = "http://" + setserver_address + ":" + str(setserver_port) + '/' 
     msg += server_version + path
     return msg
+
+# address and mode (test/production) of the DB server
+production = False
+mongoserver_prod_address = 'localhost'
+mongoserver_prod_port = 27017
+mongoserver_test_address = 'localhost'
+mongoserver_test_port = 27017
