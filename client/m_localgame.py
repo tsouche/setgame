@@ -12,7 +12,6 @@ import requests
 from constants import oidIsValid, _url
 from m_localplayer import LocalPlayer
 from server.cardset import CardSet
-from server.step import Step
  
 class LocalGame():
     """
@@ -24,11 +23,10 @@ class LocalGame():
     from the server.
     """
 
-
     def __init__(self):
         """
-        Initialize the cards data structures, and read the most recent status 
-        from he server if relevant.
+        Initialize the local player and cards data structures, and read the most 
+        recent status from he server if relevant.
         """
         # data related to the player logged into the client
         self.player = LocalPlayer()
@@ -45,41 +43,81 @@ class LocalGame():
         self.needToRefreshUI = False
         self.needToRefreshData = False
 
-    def getGameStartNotification(self):
+    def getGameID(self):
         """
         This method polls the server to get the gameID of the game which the 
         player is part of. This polling is non intrusive: the client can poll
         endlessly without harming the game or the server.
+        
+        The method returns True if the game has started, and False if the game
+        has not started.
+        If the game has started, the various generic game data are updated.
         """
-        if self.player.palyerID != None:
+        answer = False
+        if self.player.playerID != None:
             playerid_str = str(self.player.playerID)
-            path = _url('/enlist/' + playerid_str)
+            path = _url('/player/gameid/' + playerid_str)
             result = requests.get(path)
             result = result.json()
-            status = result['status']
-            if status == "ok":
+            if result['status'] == "ok":
                 self.gameStarted = True
                 self.gameID = ObjectId(result['gameID'])
-                self.retrieveDetails(self.gameID)
+                # self.retrieveGenericDetails()
+                answer = True
+        return answer
+
+    def getTurnCounter(self):
+        """
+        This method retrieves the current turn count from  the server. This can 
+        be useful to check whether the local data are still up to date vs the 
+        server data, without downloading the whole data set.
         
-    def retrieveDetails(self):
+        The method returns True if the turn count was updated properly, and 
+        False if it is not the case.
+        """
+        answer = False
+        if self.gameID != None:
+            path = _url('/game/turncounter/' + str(self.gameID))
+            result = requests.get(path)
+            result = result.json()
+            if result['status'] == "ok":
+                self.turnCounter = int(result['turnCounter'])
+                answer = True
+        return answer
+
+    def getGameFinished(self, gameID):
+        """
+        This method retrieves the current gameFinished flag from  the server. 
+        This can be useful to check if the current game is finished.
+
+        The method returns True if the gameFinished flag was properly updated 
+        from the server.
+        """
+        answer = False
+        if self.gameID != None:
+            path = _url('/game/gamefinished/' + str(self.gameID))
+            result = requests.get(path)
+            result = result.json()
+            if result['status'] == "ok":
+                self.gameFinished = (result['gameFinished'] == "True")
+                answer = True
+        return answer
+            
+    def retrieveGenericDetails(self):
         """
         Retrieve from the server the generic informations about the game:
             - game generic details: gameID, boolean about the game status, turn
             - details about the players
             - cardset information.
         IMPORTANT: we assume that the gameID was already populated.
+        
+        The method returns True if the gameID and the data are correctly 
+        populated, and False in other case.
         """
-        if self.gameID == None:
-            self.gameStarted = False
-            self.gameFinished = False
-            self.turnCounter = 0
-            self.team = None
-            self.cards = None
-            self.step = None
-        else:
+        answer = False
+        if self.gameID() != None:
             self.gameStarted = True
-            path = _url('/game/' + str(self.gameID) + '/details')
+            path = _url('/game/details/' + str(self.gameID))
             result = requests.get(path)
             result_dict = result.json()
             if result_dict['status'] == "ok":
@@ -89,22 +127,40 @@ class LocalGame():
                 self.cards.deserialize(result_dict['cardset'])
                 self.team = []
                 for pp in result_dict['players']:
-                    if 
                     self.team.append( {
                         'playerID': ObjectId(pp['playerID']),
                         'nickname': pp['nickname'], 
                         'points': int(pp['points'])
                         })
+                answer = True
+        else:
+            self.gameStarted = False
+            self.gameFinished = False
+            self.turnCounter = 0
+            self.team = None
+            self.cards = None
+            self.step = None
+        return answer
                 
-
-            
-    def loadStep(self):
+    def retrieveCurrentStep(self):
         """
-        Retrieve the game information from the server and get ready to play. 
+        Retrieve the current Step information from the server.
+        
+        The method returns True if the 
         """
-        # read the gameID from the Server
         # retrieve all informations from the Server
-        pass
+        answer = False
+        if self.gameID != None:
+            path = _url('/game/step/' + str(self.gameID))
+            result = requests.get(path)
+            result = result.json()
+            if result['status'] == "ok":
+                self.step = result['step']
+                self.turnCounter = self.step['turnCounter']
+                answer = True
+        else:
+            self.step = None
+        return answer
     
     def pullFromServer(self):
         """

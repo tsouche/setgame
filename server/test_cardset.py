@@ -6,7 +6,7 @@ Created on August 2nd 2016
 import unittest
 
 from cardset import CardSet
-from server_constants import cardsMax
+from constants import cardsMax
 from test_utilities import vprint, vbar
 from server_test_utilities import cardsList
 from server_test_utilities import refGames_Dict, refCardsets

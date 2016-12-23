@@ -101,7 +101,7 @@ class LocalPlayer():
         context = CryptContext(schemes=[encryption_algorithm])
         return context.encrypt(password)
 
-    def verifyPassword(self, password, passwordHash=None):
+    def verifyPassword(self, password, passwordHash = None):
         """
         This function verify that the hash corresponds to the password.
         """

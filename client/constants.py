@@ -38,6 +38,13 @@ encryption_algorithm = "sha512_crypt"
 
 # public web server information and address
 
+# parameters indicating the number of cards for the game
+cardsMax = 81
+tableMax = 12
+playersMin = 4
+playersMax = 6
+pointsPerStep = 3
+
 # version
 server_version = 'v100'
 

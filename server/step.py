@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 from operator import itemgetter
 
 from cardset import CardSet
-from server_constants import cardsMax, tableMax
+from constants import cardsMax, tableMax
 
 class Step:
     """

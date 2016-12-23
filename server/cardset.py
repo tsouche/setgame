@@ -5,7 +5,7 @@ Created on August 2nd 2016
 
 from random import randint
 
-from server_constants import cardsMax
+from constants import cardsMax
 
 class CardSet:
     """

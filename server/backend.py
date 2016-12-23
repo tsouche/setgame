@@ -6,8 +6,7 @@ Created on Sep 2, 2016
 from bson.objectid import ObjectId
 
 from connmongo import getPlayersColl, getGamesColl
-from server_constants import playersMin, playersMax, pointsPerStep
-from constants import oidIsValid
+from constants import playersMin, playersMax, pointsPerStep, oidIsValid
 from game import Game
 from players import Players
 from test_utilities import refPlayers

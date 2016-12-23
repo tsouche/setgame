@@ -7,7 +7,7 @@ from bson.objectid import ObjectId
 
 from cardset import CardSet
 from connmongo import getGamesColl
-from server_constants import pointsPerStep
+from constants import pointsPerStep
 from players import Players
 from step import Step
 
