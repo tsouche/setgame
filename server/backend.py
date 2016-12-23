@@ -299,11 +299,6 @@ class Backend():
         # retrieve the player's detail
         answer = self.players.getPlayer(playerID)
         if answer['status'] == "ok":
-            pp = {
-                'playerID': answer['playerID'],
-                'nickname': answer['nickname'],
-                'passwordHash': answer['passwordHash']
-                }
             # remove the player from all possible games
             for game in self.games:
                 game.delistPlayer(playerID)
@@ -384,7 +379,7 @@ class Backend():
         # end of the 'stop' method
         return result
             
-    def details(self,gameID):
+    def getDetails(self,gameID):
         """
         The server will answer the clients when they ask about the generic 
         details of the game: cardset, turncounter...
@@ -425,7 +420,32 @@ class Backend():
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
 
-    def step(self,gameID):
+    def getTurnCounter(self,gameID):
+        """
+        The server will return the turncounter of the game if it exist.
+
+        It will answer with the data description (JSON):
+            { 'status': "ok", 'turnCounter': str(turncounter) }
+        If the request is not ok, it will return the dictionary:
+            { 'status': "ko", 'reason': msg }
+        """
+        if oidIsValid(gameID):
+            good_game = None
+            for gg in self.games:
+                if gg.gameID == gameID:
+                    good_game = gg
+                    break
+            if good_game != None:
+                result = {'status': "ok",
+                    'turnCounter': str(good_game.turnCounter),
+                    }
+            else:
+                result = {'status': "ko", 'reason': "unknown gameID"}
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
+        return result
+    
+    def getStep(self,gameID):
         """
         The server will answer the clients when they ask about the status of the 
         game:
@@ -454,7 +474,7 @@ class Backend():
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
     
-    def history(self,gameID):
+    def getHistory(self,gameID):
         """
         The server will answer the clients when they ask about the full history
         of a game (active or finished): it will answer with the full description 

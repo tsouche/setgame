@@ -325,7 +325,6 @@ class test_Backend(unittest.TestCase):
                + " (" + str(result['gameID']) + ")")
         # delist all players one after the other
         playersColl = getPlayersColl()
-        gamesColl = getGamesColl()
         vprint("Now, we delist the players one after the other:")
         for pp in pp_test:
             backend.delistPlayer(pp['playerID'])
@@ -351,7 +350,6 @@ class test_Backend(unittest.TestCase):
         backend.ForTestOnly_RegisterRefPlayers()
         pp_test = refPlayers(True)
         playersColl = getPlayersColl()
-        gamesColl = getGamesColl()
         # enlist a team of 5 players: it should succeed
         list_pid = [{'playerID': pp_test[0]['playerID']}, 
                     {'playerID': pp_test[1]['playerID']},
@@ -571,12 +569,12 @@ class test_Backend(unittest.TestCase):
         self.assertEqual(result['status'], "ko")
         self.assertEqual(result['reason'], "invalid GameID")
         
-    def test_details(self):
+    def test_getDetails(self):
         """
-        tests backend.details 
+        tests backend.getDetails 
         """
         vbar()
-        print("Test backend.details")
+        print("Test backend.getDetails")
         vbar()
         # initialize test data, launch a game with 5 players
         backend = self.setUp()
@@ -615,7 +613,7 @@ class test_Backend(unittest.TestCase):
         vprint("Enlist a team of 5 player: " + str(enlisted['status']) 
                + " (" + str(gID) + ")")
         # request the details of the game
-        result = backend.details(gID)
+        result = backend.getDetails(gID)
         # check that the result is compliant
         valid = True
         valid1 = (target['gameID'] == result['gameID'])
@@ -635,12 +633,45 @@ class test_Backend(unittest.TestCase):
         vprint("    -> the result is compliant: " + str(valid))
         self.assertTrue(valid)
 
-    def test_step(self):
+    def test_getTurnCounter(self):
         """
-        Test backend.step
+        tests backend.getTurnCounter 
         """
         vbar()
-        print("Test backend.step")
+        print("Test backend.getTurnCounter")
+        vbar()
+        # initialize test data, launch a game with 5 players
+        for test_data_index in (0,1):
+            backend = self.setUp()
+            vprint("We register load reference test players:")
+            backend.ForTestOnly_LoadRefGame(test_data_index)
+            # check the value of the turnCounter
+            gameID = backend.games[0].gameID
+            tc_test = int(backend.getTurnCounter(gameID)['turnCounter'])
+            tc_ref = backend.games[0].turnCounter
+            vprint("    > game " + str(test_data_index) + ": turnCounter = " + str(tc_test))
+            self.assertEqual(tc_test, tc_ref)
+        # check the answer for an unknown gameID
+        vprint("Unknown gameID:")
+        result = backend.getTurnCounter(ObjectId())
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "unknown gameID")
+        vprint("     > status = " + result['status'])
+        vprint("     > reason = " + result['reason'])
+        # check the answer for an unknown gameID
+        vprint("Invalid gameID:")
+        result = backend.getTurnCounter("invalidgameid")
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "invalid gameID")
+        vprint("     > status = " + result['status'])
+        vprint("     > reason = " + result['reason'])
+        
+    def test_getStep(self):
+        """
+        Test backend.getStep
+        """
+        vbar()
+        print("Test backend.getStep")
         vbar()
         # initialize reference test data, launch a game with 5 players
         backend = self.setUp()
@@ -673,7 +704,7 @@ class test_Backend(unittest.TestCase):
         target['set'] = []
         # the game is now ready for the test case
         vprint("We ask for the Step 9:")
-        result = backend.step(ObjectId('57b9bec5124e9b2d2503b72b'))
+        result = backend.getStep(ObjectId('57b9bec5124e9b2d2503b72b'))
         status = result['status']
         step_dict = result['step']
         vprint("    - status: " + status)
@@ -683,7 +714,7 @@ class test_Backend(unittest.TestCase):
         self.assertTrue(valid)
         # We check that invalid gameID are discarded
         vprint("We ask for the Step 9 of an invalid gameID:")
-        result = backend.step('tzagb9b2d2503b72b')
+        result = backend.getStep('tzagb9b2d2503b72b')
         valid = (result['status'] == "ko")
         vprint("    - status: " + result['status'])
         vprint("    - reason: " + result['reason'])
@@ -691,7 +722,7 @@ class test_Backend(unittest.TestCase):
         vprint("    Result compliant: " + str(valid))
         self.assertTrue(valid)
         vprint("We ask for the Step 9 of an unkown gameID:")
-        result = backend.step(ObjectId())
+        result = backend.getStep(ObjectId())
         valid = (result['status'] == "ko")
         vprint("    - status: " + result['status'])
         vprint("    - reason: " + result['reason'])
@@ -699,12 +730,12 @@ class test_Backend(unittest.TestCase):
         vprint("    Result compliant: " + str(valid))
         self.assertTrue(valid)
 
-    def test_history(self):
+    def test_getHistory(self):
         """
-        Test backend.history
+        Test backend.getHistory
         """
         vbar()
-        print("Test backend.history")
+        print("Test backend.getHistory")
         vbar()
         # initialize test data, launch a game with 5 players
         backend = self.setUp()
@@ -728,7 +759,7 @@ class test_Backend(unittest.TestCase):
         backend.games[i].deserialize(refGames_Dict()[0])
         # First we collect the history of the full game
         vprint("We ask for the full history:")
-        result = backend.history(ObjectId('57b9bec5124e9b2d2503b72b'))
+        result = backend.getHistory(ObjectId('57b9bec5124e9b2d2503b72b'))
         status = result['status']
         vprint("    - status: " + status)
         valid = gameRef_compliant(backend.games[i], 0, "       ")

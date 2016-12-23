@@ -112,6 +112,19 @@ if __name__ == "__main__":
             result2 = {'status': "ok", 'gameID': gameid_str}
         return result2
 
+    # this route enable to collect the turnCounter
+    @webserver.route(url('/game/turncounter/<gameid_str>'))
+    def getTurnCounter(gameid_str):
+        # check that the string passed is a valid ObjectId, and if so
+        # call the backend.
+        if oidIsValid(gameid_str):
+            gameID = ObjectId(gameid_str)
+            tc = backend.getTurnCounter(gameID)['turnCounter']
+            result = {'status': "ok", 'turnCounter': str(tc)}
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
+        return result
+
     # this route enable to collect the nicknames of the team-mates
     @webserver.route(url('/game/nicknames/<playerid_str>'))
     def getNicknames(playerid_str):
@@ -147,9 +160,9 @@ if __name__ == "__main__":
     
     # this route enable to collect the generic details of a game 
     @webserver.route(url('/game/details/<gameid_str>'))
-    def details(gameid_str):
+    def getDetails(gameid_str):
         if oidIsValid(gameid_str):
-            result = backend.details(ObjectId(gameid_str))
+            result = backend.getDetails(ObjectId(gameid_str))
             print("Bogus 17: ", result)
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
@@ -157,18 +170,18 @@ if __name__ == "__main__":
     
     # this route enable to collect the current step
     @webserver.route(url('/game/step/<gameid_str>'))
-    def step(gameid_str):
+    def getStep(gameid_str):
         if oidIsValid(gameid_str):
-            result = backend.step(ObjectId(gameid_str))
+            result = backend.getStep(ObjectId(gameid_str))
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
 
     # this route enable to collect the full history of the game
     @webserver.route(url('/game/history/<gameid_str>'))
-    def history(gameid_str):
+    def getHistory(gameid_str):
         if oidIsValid(gameid_str):
-            result = backend.history(ObjectId(gameid_str))
+            result = backend.getHistory(ObjectId(gameid_str))
             print("Bogus 11: ", result)
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}

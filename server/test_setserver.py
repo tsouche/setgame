@@ -54,7 +54,7 @@ class test_Setserver(unittest.TestCase):
                 shell=True, check=True)
         """
         # reset the server data
-        vprint("     We reset the test server.")
+        vprint("We reset the test server.")
         result = requests.get(_url('/reset'))
         self.assertEqual(result.json()['status'], "reset")
 
@@ -64,7 +64,7 @@ class test_Setserver(unittest.TestCase):
         and make them available for the tests.
         """
         # register the reference players vai the test routine of the server
-        vprint("     We register the reference test players")
+        vprint("We register the reference test players")
         path = _url('/test/register_ref_players')
         requests.get(path)
         # connect to the MongoDB and connect 'self.players' to this DB
@@ -77,7 +77,7 @@ class test_Setserver(unittest.TestCase):
         This method enlists the 6 reference players on a game and returns the 
         gameID
         """
-        vprint("     We enlist the reference test players.")
+        vprint("We enlist the reference test players.")
         path = _url('/enlist_team')
         # delist all players
         playersColl = getPlayersColl()
@@ -86,7 +86,6 @@ class test_Setserver(unittest.TestCase):
         list_ref = []
         for pp in refPlayers():
             list_ref.append(str(pp['playerID']))
-        print("Bogus 99: ", list_ref)
         result = requests.get(path, params={'playerIDlist': list_ref})
         gameid_str = result.json()['gameID']
         vprint("We enlist the reference test players: gameID = " + gameid_str)
@@ -142,7 +141,6 @@ class test_Setserver(unittest.TestCase):
         self.setup_registerRefPlayers()
         # enlist the players
         gameid_str = self.setup_enlistRefPlayers()
-        print("Bogus 10:", gameid_str)
         # check whether the players are enlisted
         playersColl = getPlayersColl()
         for pp in self.refPlayers:
@@ -345,7 +343,6 @@ class test_Setserver(unittest.TestCase):
         # build test data and context
         self.setup_reset()
         self.setup_registerRefPlayers()
-        playersColl = getPlayersColl()
         vprint("We have registered all reference test players.")
         # de-registering an invalid playerID
         vprint("    > try de-registering an invalid playerID:")
@@ -387,7 +384,6 @@ class test_Setserver(unittest.TestCase):
         # their details one by one.
         self.setup_reset()
         self.setup_registerRefPlayers()
-        playersColl = getPlayersColl()
         vprint("We have registered all reference test players.")
         # retrieve the details of an unknown player
         vprint("    > try getting the details of an unknown player:")
@@ -459,6 +455,36 @@ class test_Setserver(unittest.TestCase):
             self.assertEqual(result['gameID'], str(gameID_db))
             vprint("    > " + nickname + ": " + result['status'])
 
+    def test_getTurnCounter(self):
+        """
+        Test Setserver.getTurnCounter
+        """
+        vbar()
+        print("Test setserver.getTurnCounter")
+        vbar()
+        # Here we register all reference players and then we will retrieve 
+        # their details one by one.
+        self.setup_reset()
+        Donald = refPlayers()[0]
+        playerid_str = str(Donald['playerID'])
+        vprint("We have registered all reference test players.")
+        # retrieve the turnCounters from two reference games
+        for test_data_index in range(0,2):
+            vprint("     > we load the reference game " + str(test_data_index) + ":")
+            tc_ref = str(refGames_Dict()[test_data_index]['turnCounter'])
+            self.setup_loadRefGame(test_data_index)
+            # retrieve the gameID
+            path = _url('/player/gameid/' + playerid_str)
+            result = requests.get(path)
+            gameid_str = result.json()['gameID']
+            # retrieve the turnCounter
+            path = _url('/game/turncounter/' + gameid_str)
+            result = requests.get(path)
+            result = result.json()
+            self.assertEqual(result['status'], "ok")
+            self.assertEqual(result['turnCounter'], tc_ref)
+            vprint("      turnCounter = " + tc_ref + " : compliant")
+            
     def test_enlistPlayer(self):
         """
         Test Setserver.enlistPlayer
@@ -529,9 +555,6 @@ class test_Setserver(unittest.TestCase):
         path = _url('/enlist/' + playerid_str)
         vprint("    path = '" + path + "'")
         result = requests.get(path)
-        #printRefPlayer()
-        #print("Bogus 01: ", result)
-        #print("Bogus 02: ", result.json())
         status = result.json()['status']
         riri_db = self.players.getPlayer(ObjectId(riri['playerID']))
         gameid_str = str(riri_db['gameID'])
@@ -809,7 +832,6 @@ class test_Setserver(unittest.TestCase):
         # initializes the reference game
         vprint("  Game 0: we propose incorrect set proposal and check answers")
         self.setup_loadRefGame(0)
-        gameid_str = refGames_Dict()[0]['gameID']
         turn_max = int(refGames_Dict()[0]['turnCounter'])
         self.getBackToTurn(0, 0)
         # propose an invalid playerID
@@ -870,12 +892,12 @@ class test_Setserver(unittest.TestCase):
         # removes residual test data
         self.teardown()
 
-    def test_step(self):
+    def test_getStep(self):
         """ 
-        Test setserver.step
+        Test setserver.getStep
         """
         vbar()
-        print("Test setserver.step")
+        print("Test setserver.getStep")
         vbar()
         # build test data and context
         self.setup_reset()
@@ -930,12 +952,12 @@ class test_Setserver(unittest.TestCase):
         # removes residual test data
         self.teardown()
 
-    def test_history(self):
+    def test_getHistory(self):
         """
-        Test setserver.history        
+        Test setserver.getHistory        
         """
         vbar()
-        print("Test setserver.history")
+        print("Test setserver.getHistory")
         vbar()
         # build test data and context
         self.setup_reset()
