@@ -17,11 +17,6 @@ from server_test_utilities import cardsetDict_equality, stepDict_equality
 from server_test_utilities import gameRef_compliant, refGames_Dict
 
 
-def printRefPlayer():
-    playersColl = getPlayersColl()
-    for pp in playersColl.find({}):
-        print("BOGUS 99:", pp)
-
 class test_Setserver(unittest.TestCase):
     """
     This class unit-test the setgame server API:
@@ -484,6 +479,74 @@ class test_Setserver(unittest.TestCase):
             self.assertEqual(result['status'], "ok")
             self.assertEqual(result['turnCounter'], tc_ref)
             vprint("      turnCounter = " + tc_ref + " : compliant")
+        # retrieve the turnCounters from an unknown gameID
+        playerid_str = str(ObjectId())
+        path = _url('/game/turncounter/' + playerid_str)
+        result = requests.get(path)
+        print("Bogus 10:", result)
+        result = result.json()
+        print("Bogus 11:", result)
+        self.assertEqual(result['status'], "ko")
+        reason = result['reason']
+        self.assertEqual(reason, "unknown gameID")
+        vprint("     > we try an unknown gameID: answer is '" + reason + "'")
+        # retrieve the turnCounters from an invalid gameID
+        playerid_str = "invalidgameid"
+        path = _url('/game/turncounter/' + playerid_str)
+        result = requests.get(path)
+        result = result.json()
+        self.assertEqual(result['status'], "ko")
+        reason = result['reason']
+        self.assertEqual(reason, "invalid gameID")
+        vprint("     > we try an invalid gameID: answer is '" + reason + "'")
+        
+    def test_getGameFinished(self):
+        """
+        Test Setserver.getGameFinished
+        """
+        vbar()
+        print("Test setserver.getGameFinished")
+        vbar()
+        # Here we register all reference players and then we will retrieve 
+        # their details one by one.
+        self.setup_reset()
+        Donald = refPlayers()[0]
+        playerid_str = str(Donald['playerID'])
+        vprint("We have registered all reference test players.")
+        # retrieve the turnCounters from two reference games
+        for test_data_index in range(0,2):
+            #vprint("     we load the reference game " + str(test_data_index) + ":")
+            gf_ref = str(refGames_Dict()[test_data_index]['gameFinished'])
+            self.setup_loadRefGame(test_data_index)
+            # retrieve the gameID
+            path = _url('/player/gameid/' + playerid_str)
+            result = requests.get(path)
+            gameid_str = result.json()['gameID']
+            # retrieve the turnCounter
+            path = _url('/game/gamefinished/' + gameid_str)
+            result = requests.get(path)
+            result = result.json()
+            self.assertEqual(result['status'], "ok")
+            self.assertEqual(result['gameFinished'], gf_ref)
+            vprint("       > gameFinished = " + gf_ref + " : compliant")
+        # retrieve the turnCounters from an unknown gameID
+        playerid_str = str(ObjectId())
+        path = _url('/game/gamefinished/' + playerid_str)
+        result = requests.get(path)
+        result = result.json()
+        self.assertEqual(result['status'], "ko")
+        reason = result['reason']
+        self.assertEqual(reason, "unknown gameID")
+        vprint("     we try an unknown gameID: answer is '" + reason + "'")
+        # retrieve the turnCounters from an invalid gameID
+        playerid_str = "invalidgameid"
+        path = _url('/game/gamefinished/' + playerid_str)
+        result = requests.get(path)
+        result = result.json()
+        self.assertEqual(result['status'], "ko")
+        reason = result['reason']
+        self.assertEqual(reason, "invalid gameID")
+        vprint("     we try an invalid gameID: answer is '" + reason + "'")
             
     def test_enlistPlayer(self):
         """
@@ -547,7 +610,6 @@ class test_Setserver(unittest.TestCase):
                + " - " + str(nbp))
         self.assertEqual(status, "wait")
         self.assertEqual(nbp, 3)
-        #printRefPlayer()
         # enlist Riri and test the 'enlist' answer == gameID
         # i.e. this fourth player enlisting should start a new game
         riri   = self.refPlayers[2]

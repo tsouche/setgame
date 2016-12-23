@@ -119,8 +119,33 @@ if __name__ == "__main__":
         # call the backend.
         if oidIsValid(gameid_str):
             gameID = ObjectId(gameid_str)
-            tc = backend.getTurnCounter(gameID)['turnCounter']
-            result = {'status': "ok", 'turnCounter': str(tc)}
+            answer = backend.getTurnCounter(gameID)
+            if answer['status'] == "ok":
+                result = {
+                    'status': "ok", 
+                    'turnCounter': str(answer['turnCounter'])
+                    }
+            else:
+                result = answer
+        else:
+            result = {'status': "ko", 'reason': "invalid gameID"}
+        return result
+
+    # this route enable to collect the turnCounter
+    @webserver.route(url('/game/gamefinished/<gameid_str>'))
+    def getGameFinished(gameid_str):
+        # check that the string passed is a valid ObjectId, and if so
+        # call the backend.
+        if oidIsValid(gameid_str):
+            gameID = ObjectId(gameid_str)
+            answer = backend.getGameFinished(gameID)
+            if answer['status'] == "ok":
+                result = {
+                    'status': "ok", 
+                    'gameFinished': str(answer['gameFinished'])
+                    }
+            else:
+                result = answer
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result

@@ -415,7 +415,7 @@ class Backend():
                         'passwordHash': pp['passwordHash'],
                         'points': str(pp['points'])})
             else:
-                result = {'status': "ko", 'reason': "Unknown gameID"}
+                result = {'status': "ko", 'reason': "unknown gameID"}
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
@@ -429,22 +429,35 @@ class Backend():
         If the request is not ok, it will return the dictionary:
             { 'status': "ko", 'reason': msg }
         """
-        if oidIsValid(gameID):
-            good_game = None
-            for gg in self.games:
-                if gg.gameID == gameID:
-                    good_game = gg
-                    break
-            if good_game != None:
-                result = {'status': "ok",
-                    'turnCounter': str(good_game.turnCounter),
-                    }
-            else:
-                result = {'status': "ko", 'reason': "unknown gameID"}
+        answer = self.getDetails(gameID)
+        if answer['status'] == "ok":
+            result = {
+                      'status': "ok",
+                      'turnCounter': answer['turnCounter']
+                      }
         else:
-            result = {'status': "ko", 'reason': "invalid gameID"}
+            result = answer
         return result
     
+    def getGameFinished(self, gameID):
+        """
+        The server will return the gameFinished flag of the game if it exist.
+
+        It will answer with the data description (JSON):
+            { 'status': "ok", 'turnCounter': str(gameFinished) }
+        If the request is not ok, it will return the dictionary:
+            { 'status': "ko", 'reason': msg }
+        """
+        answer = self.getDetails(gameID)
+        if answer['status'] == "ok":
+            result = {
+                      'status': "ok",
+                      'gameFinished': answer['gameFinished']
+                      }
+        else:
+            result = answer
+        return result
+        
     def getStep(self,gameID):
         """
         The server will answer the clients when they ask about the status of the 

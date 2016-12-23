@@ -16,11 +16,6 @@ from server_test_utilities import cardsetDict_equality, stepDict_equality, step_
 from server_test_utilities import gameRef_compliant, game_compliant
 
 
-def printRefPlayer():
-    playersColl = getPlayersColl()
-    for pp in playersColl.find({}):
-        print("BOGUS 99:", pp)
-
 class test_Backend(unittest.TestCase):
 
     def setUp(self):
@@ -206,13 +201,10 @@ class test_Backend(unittest.TestCase):
         # i.e. this fourth player enlisting should start a new game
         riri   = pp_test[2]
         pID = riri['playerID']
-        #printRefPlayer()
         result = backend.enlistPlayer(pID)
         status = result['status']
         #print("BOGUS 21: status =", status)
         gameID = result['gameID']
-        #print("BOGUS 22: gameID =", gameID)
-        #printRefPlayer()
         riri_db = backend.players.getPlayer(pID)
         gameID_db = riri_db['gameID']
         vprint("    enlist Riri   : " + str(pID) + " - " + status 
@@ -661,6 +653,39 @@ class test_Backend(unittest.TestCase):
         # check the answer for an unknown gameID
         vprint("Invalid gameID:")
         result = backend.getTurnCounter("invalidgameid")
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "invalid gameID")
+        vprint("     > status = " + result['status'])
+        vprint("     > reason = " + result['reason'])
+        
+    def test_getGameFinished(self):
+        """
+        tests backend.getGameFinished 
+        """
+        vbar()
+        print("Test backend.getGameFinished")
+        vbar()
+        # initialize test data, launch a game with 5 players
+        for test_data_index in (0,1):
+            backend = self.setUp()
+            vprint("We register load reference test players:")
+            backend.ForTestOnly_LoadRefGame(test_data_index)
+            # check the value of the gameFinished
+            gameID = backend.games[0].gameID
+            gf_test = (backend.getGameFinished(gameID)['gameFinished'] == 'True')
+            gf_ref = backend.games[0].gameFinished
+            vprint("    > game " + str(test_data_index) + ": gameFinished = " + str(gf_test))
+            self.assertEqual(gf_test, gf_ref)
+        # check the answer for an unknown gameID
+        vprint("Unknown gameID:")
+        result = backend.getGameFinished(ObjectId())
+        self.assertEqual(result['status'], "ko")
+        self.assertEqual(result['reason'], "unknown gameID")
+        vprint("     > status = " + result['status'])
+        vprint("     > reason = " + result['reason'])
+        # check the answer for an unknown gameID
+        vprint("Invalid gameID:")
+        result = backend.getGameFinished("invalidgameid")
         self.assertEqual(result['status'], "ko")
         self.assertEqual(result['reason'], "invalid gameID")
         vprint("     > status = " + result['status'])
