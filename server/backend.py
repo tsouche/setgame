@@ -5,13 +5,12 @@ Created on Sep 2, 2016
 
 from bson.objectid import ObjectId
 
-from connmongo import getPlayersColl, getGamesColl
-from constants import playersMin, playersMax, pointsPerStep, oidIsValid
-from game import Game
-from players import Players
-from test_utilities import refPlayers
-from server_test_utilities import refGames_Dict
-from multiprocessing.connection import answer_challenge
+from common.constants import playersMin, playersMax, pointsPerStep, oidIsValid
+from common.constants import getPlayersColl, getGamesColl, isPlayerIDValid
+from common.reference_test_data import refPlayers, refGames_Dict
+
+from server.game import Game
+from server.players import Players
 
 
 class Backend():
@@ -181,7 +180,7 @@ class Backend():
         # We assume here that the client will push a value named 'playerID' 
         # which is a valid player's ID, or will go through the form 'enlist_tpl'
         # check if the playerID is valid
-        if self.players.isPlayerIDValid(playerID):
+        if isPlayerIDValid(playerID):
             # check if the player is available to take part into a new game
             if self.players.isPlayerAvailableToPlay(playerID)['status'] == "ok":
                 # check if the playerID  is in the waiting list
@@ -254,7 +253,7 @@ class Backend():
         j = len(list_playerID)-1
         while j >= 0:
             pID = list_playerID[j]['playerID']
-            if self.players.isPlayerIDValid(pID):
+            if isPlayerIDValid(pID):
                 if self.players.isPlayerAvailableToPlay(pID)['status'] == "ko":
                     del(list_playerID[j])
             else:
@@ -335,7 +334,7 @@ class Backend():
         # I should find a way to catch errors in case the playerID/gameID are 
         # not valid ObjectId.
         list_names = []
-        if self.players.isPlayerIDValid(playerID):
+        if isPlayerIDValid(playerID):
             gameID = self.players.getGameID(playerID)['gameID']
             if gameID != None:
                 list_pID = self.players.inGame(gameID)['list']
@@ -554,7 +553,7 @@ class Backend():
             
         if oidIsValid(playerID):
             #check if playerID exist 
-            if self.players.isPlayerIDValid(playerID):
+            if isPlayerIDValid(playerID):
                 # check if the set syntax is valid (3 integers between 0 and 11)
                 if setSyntax(setlist):
                     # find the game

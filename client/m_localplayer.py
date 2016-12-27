@@ -13,9 +13,8 @@ from bson.objectid import ObjectId
 import requests
 
 
-from constants import encryption_algorithm, oidIsValid, _url
-from client_constants import client_data_backup_file
-from pymongo import results
+from common.constants import encryption_algorithm, oidIsValid, setserver_routes
+from client.constants import client_data_backup_file
 
 class LocalPlayer():
     """
@@ -129,7 +128,7 @@ class LocalPlayer():
             if not:
                 {'status': "ko", 'reason': msg (str) }
         """
-        path = _url('/register/available/' + nickname)
+        path = setserver_routes['nickname_available']['full'] + nickname
         result = requests.get(path)
         result = result.json()
         return result
@@ -158,7 +157,7 @@ class LocalPlayer():
             if avail['status'] == "ok":
                 # register the nickname on the server
                 passwordHash = self.encryptPassword(password)
-                path = _url('/register/nickname/' + nickname)
+                path = setserver_routes['register_player']['full'] + nickname
                 answer = requests.get(path, params={'passwordHash': passwordHash})
                 answer = answer.json()
                 # check if the registration was ok on the server
@@ -196,7 +195,7 @@ class LocalPlayer():
         or
             { 'status': "ko", 'reason': "unknown nickname" }
         """
-        path = _url('/player/details/' + nickname)
+        path = setserver_routes['get_player_details']['full'] + nickname
         result = requests.get(path)
         result = result.json()
         if result['status'] == "ok":

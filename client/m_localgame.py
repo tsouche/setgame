@@ -9,10 +9,13 @@ This class belongs to the Model, hence its name starts with 'm_'.
 
 from bson.objectid import ObjectId
 import requests
-from constants import oidIsValid, _url
-from m_localplayer import LocalPlayer
-from server.cardset import CardSet
- 
+
+from common.constants import setserver_routes
+from common.cardset import CardSet
+
+from client.m_localplayer import LocalPlayer
+
+
 class LocalGame():
     """
     This class stores and make available to local client resources all the data
@@ -56,9 +59,8 @@ class LocalGame():
         answer = False
         if self.player.playerID != None:
             playerid_str = str(self.player.playerID)
-            path = _url('/player/gameid/' + playerid_str)
-            result = requests.get(path)
-            result = result.json()
+            path = setserver_routes['get_gameid']['full'] + playerid_str
+            result = requests.get(path).json()
             if result['status'] == "ok":
                 self.gameStarted = True
                 self.gameID = ObjectId(result['gameID'])
@@ -77,15 +79,15 @@ class LocalGame():
         """
         answer = False
         if self.gameID != None:
-            path = _url('/game/turncounter/' + str(self.gameID))
-            result = requests.get(path)
-            result = result.json()
+            gameid_str = str(self.gameID)
+            path = setserver_routes['get_turn']['full'] + gameid_str
+            result = requests.get(path).json()
             if result['status'] == "ok":
                 self.turnCounter = int(result['turnCounter'])
                 answer = True
         return answer
 
-    def getGameFinished(self, gameID):
+    def getGameFinished(self):
         """
         This method retrieves the current gameFinished flag from  the server. 
         This can be useful to check if the current game is finished.
@@ -95,15 +97,16 @@ class LocalGame():
         """
         answer = False
         if self.gameID != None:
-            path = _url('/game/gamefinished/' + str(self.gameID))
+            gameid_str = str(self.gameID)
+            path = setserver_routes['get_game_finished']['full'] + gameid_str
             result = requests.get(path)
             result = result.json()
             if result['status'] == "ok":
                 self.gameFinished = (result['gameFinished'] == "True")
                 answer = True
         return answer
-            
-    def retrieveGenericDetails(self):
+
+    def getGenericDetails(self):
         """
         Retrieve from the server the generic informations about the game:
             - game generic details: gameID, boolean about the game status, turn
@@ -113,20 +116,28 @@ class LocalGame():
         
         The method returns True if the gameID and the data are correctly 
         populated, and False in other case.
-        """
+        """        
         answer = False
-        if self.gameID() != None:
+        if self.getGameID() == True:
             self.gameStarted = True
-            path = _url('/game/details/' + str(self.gameID))
+            gameid_str = str(self.gameID)
+            path = setserver_routes['get_game_details']['full'] + gameid_str
             result = requests.get(path)
-            result_dict = result.json()
-            if result_dict['status'] == "ok":
-                self.turnCounter = int(result_dict['turnCounter'])
-                self.gameFinished = (result_dict['gameFinished'] == "True")
+            result = result.json()
+            print("Bogus 10: result")
+            print("Bogus 11: turnCounter = ", result['turnCounter'])
+            print("Bogus 12: gameFinished = ", result['gameFinished'])
+            print("Bogus 13: cardset = ", result['cardset'])
+            print("Bogus 14: players:")
+            for pp in result['players']:
+                print("Bogus 15: ", pp)
+            if result['status'] == "ok":
+                self.turnCounter = int(result['turnCounter'])
+                self.gameFinished = (result['gameFinished'] == "True")
                 self.cards = CardSet()
-                self.cards.deserialize(result_dict['cardset'])
+                self.cards.deserialize(result['cardset'])
                 self.team = []
-                for pp in result_dict['players']:
+                for pp in result['players']:
                     self.team.append( {
                         'playerID': ObjectId(pp['playerID']),
                         'nickname': pp['nickname'], 
@@ -141,7 +152,7 @@ class LocalGame():
             self.cards = None
             self.step = None
         return answer
-                
+
     def retrieveCurrentStep(self):
         """
         Retrieve the current Step information from the server.
@@ -151,7 +162,8 @@ class LocalGame():
         # retrieve all informations from the Server
         answer = False
         if self.gameID != None:
-            path = _url('/game/step/' + str(self.gameID))
+            gameid_str = str(self.gameID)
+            path = setserver_routes['get_step']['full'] + gameid_str
             result = requests.get(path)
             result = result.json()
             if result['status'] == "ok":
@@ -161,20 +173,6 @@ class LocalGame():
         else:
             self.step = None
         return answer
-    
-    def pullFromServer(self):
-        """
-        Check whether the data are updated, and reads an update if relevant.
-        Also raise a flag for the GUI to react that the data were refreshed.
-        """
-        # read new data from the server, for instance checking that the local
-        # turnCounter is equal to the server turnCounter.
+
+    def proposeSet(self, card_list):
         pass
-    
-    def pushToServer(self):
-        """
-        Push a set proposal to the server, and checks the result.
-        Raise flags according to the serve answer.
-        """
-        pass
-    

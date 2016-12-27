@@ -5,11 +5,9 @@ Created on August 8th 2016
 
 from bson.objectid import ObjectId
 
-from cardset import CardSet
-from connmongo import getGamesColl
-from constants import pointsPerStep
-from players import Players
-from step import Step
+from common.constants import pointsPerStep, getGamesColl, isPlayerIDValid
+from common.cardset import CardSet
+from common.step import Step
 
 
 class invalidPlayerID(Exception):
@@ -44,6 +42,10 @@ class Game:
             of information with the players 
         - initialize a card set (randomized)
         - initialize the first step of a list.
+        
+        NB: we assume here that the 'players' dictionary is well structured and 
+        formed with valid playerIDs. If it is not the case, it will raise a
+        specific exception named "invalidPlayerID".
         """
         # connects to the DB
         self.gamesColl = getGamesColl()
@@ -55,10 +57,8 @@ class Game:
         #     level.
         self.players = []
         valid = True
-        temp_players = Players()
         for pp in players:
-            valid = valid and temp_players.isPlayerIDValid(pp['playerID'])
-        del(temp_players)
+            valid = valid and isPlayerIDValid(pp['playerID'])
         if valid:
             for pp in players:
                 self.players.append({

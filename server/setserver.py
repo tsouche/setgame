@@ -6,9 +6,11 @@ Created on August 11th 2016
 from bottle import Bottle, route, request, run
 from bson.objectid import ObjectId
 
-from backend import Backend
-from constants import setserver_address, setserver_port
-from constants import server_version, oidIsValid
+from common.constants import oidIsValid
+from common.constants import setserver_address, setserver_port
+from common.constants import setserver_routes
+
+from server.backend import Backend
 
 """
 This script must be run in order to start the server. 
@@ -21,9 +23,6 @@ will have been started with the command line:
 
 if __name__ == "__main__":
 
-    def url(path):
-        return '/' + server_version + path
-
     # initiate the server class
     backend = Backend()
     # starts the web server and listens to the 8080 port
@@ -32,31 +31,30 @@ if __name__ == "__main__":
 
     # declare the routes
     
-    # this route is for test purpose
-    @webserver.route(url('/hello'))
+    # this route is used for checking that the server is up
+    @webserver.route(setserver_routes['hello']['short'])
     def hello():
         return "<p>Coucou les gens !!!</p>"
 
     # this route is for test purpose
-    @webserver.route(url('/reset'))
+    @webserver.route(setserver_routes['reset']['short'])
     def reset():
         return backend.reset()
 
     # this route enable to check if a nickname is still available to register a 
     # new player to the Set game server
-    @webserver.route(url('/register/available/<nickname>'))
+    @webserver.route(setserver_routes['nickname_available']['short'] + "<nickname>")
     def isNicknameAvailable(nickname):
         return backend.isNicknameAvailable(nickname)
 
     # this route enable to register players to the Set game server
-    @webserver.route(url('/register/nickname/<nickname>'))
+    @webserver.route(setserver_routes['register_player']['short'] + "<nickname>")
     def registerPlayer(nickname):
         passwordHash = request.query.get('passwordHash')
         return backend.registerPlayer(nickname, passwordHash)
-        
 
     # this route enable to de-register isolated players to a yet-to-start game
-    @webserver.route(url('/deregister/<playerid_str>'))
+    @webserver.route(setserver_routes['deregister_player']['short'] + "<playerid_str>")
     def deRegisterPlayer(playerid_str):
         if oidIsValid(playerid_str):
             result = backend.deRegisterPlayer(ObjectId(playerid_str))
@@ -65,25 +63,23 @@ if __name__ == "__main__":
         return result
 
     # this route enable to return the login details of a player from its nickname
-    @webserver.route(url('/player/details/<nickname>'))
+    @webserver.route(setserver_routes['get_player_details']['short'] + "<nickname>")
     def getPlayerLoginDetails(nickname):
         return backend.getPlayerLoginDetails(nickname)
     
     # this route enable to return the gameID of a player from its playerID
-    @webserver.route(url('/player/gameid/<playerid_str>'))
-    def getPlayerLoginDetails(playerid_str):
+    @webserver.route(setserver_routes['get_gameid']['short'] + "<playerid_str>")
+    def getGameID(playerid_str):
         if oidIsValid(playerid_str):
-            print("Bogus 10: playerID is valid")
             result = backend.getGameID(ObjectId(playerid_str))
             if result['status'] == "ok":
                 result['gameID'] = str(result['gameID'])
         else:
-            print("Bogus 10: playerID is invalid")
             result = {'status': "ko", 'reason': "invalid playerID"}
         return result
     
     # this route enable enlist isolated players to a yet-to-start game
-    @webserver.route(url('/enlist/<playerid_str>'))
+    @webserver.route(setserver_routes['enlist_player']['short'] + "<playerid_str>")
     def enlistPlayer(playerid_str):
         # check that the string passed is a valid ObjectId, and if so
         # call the backend.
@@ -97,7 +93,7 @@ if __name__ == "__main__":
         return result
 
     # this route enable to register constituted teams and start a game
-    @webserver.route(url('/enlist_team'))
+    @webserver.route(setserver_routes['enlist_team']['short'])
     def enlistTeam():
         pid_list = []
         result = request.query.getall('playerIDlist')
@@ -113,7 +109,7 @@ if __name__ == "__main__":
         return result2
 
     # this route enable to collect the turnCounter
-    @webserver.route(url('/game/turncounter/<gameid_str>'))
+    @webserver.route(setserver_routes['get_turn']['short'] + "<gameid_str>")
     def getTurnCounter(gameid_str):
         # check that the string passed is a valid ObjectId, and if so
         # call the backend.
@@ -132,7 +128,7 @@ if __name__ == "__main__":
         return result
 
     # this route enable to collect the turnCounter
-    @webserver.route(url('/game/gamefinished/<gameid_str>'))
+    @webserver.route(setserver_routes['get_game_finished']['short'] + "<gameid_str>")
     def getGameFinished(gameid_str):
         # check that the string passed is a valid ObjectId, and if so
         # call the backend.
@@ -151,7 +147,7 @@ if __name__ == "__main__":
         return result
 
     # this route enable to collect the nicknames of the team-mates
-    @webserver.route(url('/game/nicknames/<playerid_str>'))
+    @webserver.route(setserver_routes['get_nicknames']['short'] + "<playerid_str>")
     def getNicknames(playerid_str):
         # check that the string passed is a valid ObjectId, and if so
         # call the backend.
@@ -163,7 +159,7 @@ if __name__ == "__main__":
         return result
 
     # this route enable to soft-stop a game
-    @webserver.route(url('/game/stop/<gameid_str>'))
+    @webserver.route(setserver_routes['soft_stop']['short'] + "<gameid_str>")
     def stopGame(gameid_str):
         # it needs (amongst other things) to read the 'hard' flag.
         if oidIsValid(gameid_str):
@@ -174,7 +170,7 @@ if __name__ == "__main__":
         return result
     
     # this route enable to hard-stop a game
-    @webserver.route(url('/game/hardstop/<gameid_str>'))
+    @webserver.route(setserver_routes['hard_stop']['short'] + "<gameid_str>")
     def stopGame(gameid_str):
         # it needs (amongst other things) to read the 'hard' flag.
         if oidIsValid(gameid_str):
@@ -184,17 +180,16 @@ if __name__ == "__main__":
         return result
     
     # this route enable to collect the generic details of a game 
-    @webserver.route(url('/game/details/<gameid_str>'))
-    def getDetails(gameid_str):
+    @webserver.route(setserver_routes['get_game_details']['short'] + "<gameid_str>")
+    def getGameDetails(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.getDetails(ObjectId(gameid_str))
-            print("Bogus 17: ", result)
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
     
     # this route enable to collect the current step
-    @webserver.route(url('/game/step/<gameid_str>'))
+    @webserver.route(setserver_routes['get_step']['short'] + "<gameid_str>")
     def getStep(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.getStep(ObjectId(gameid_str))
@@ -203,17 +198,16 @@ if __name__ == "__main__":
         return result
 
     # this route enable to collect the full history of the game
-    @webserver.route(url('/game/history/<gameid_str>'))
+    @webserver.route(setserver_routes['get_history']['short'] + "<gameid_str>")
     def getHistory(gameid_str):
         if oidIsValid(gameid_str):
             result = backend.getHistory(ObjectId(gameid_str))
-            print("Bogus 11: ", result)
         else:
             result = {'status': "ko", 'reason': "invalid gameID"}
         return result
 
     # this route enable a client to propose a set of 3 cards to the server
-    @webserver.route(url('/game/set/<playerid_str>'))
+    @webserver.route(setserver_routes['propose_set']['short'] + "<playerid_str>")
     def proposeSet(playerid_str):
         if oidIsValid(playerid_str):
             playerID = ObjectId(playerid_str)
@@ -230,28 +224,30 @@ if __name__ == "__main__":
         return result
     
     # this route enable test cases (register reference test players)
-    @webserver.route(url('/test/register_ref_players'))
+    @webserver.route(setserver_routes['test_reg_ref_players']['short'])
     def ForTestOnly_RegisterRefPlayers():
         # registers the 6 reference test players.
         result = backend.ForTestOnly_RegisterRefPlayers()
         return result
     
     # this route enable test cases (enlist reference test players)
-    @webserver.route(url('/test/enlist_ref_players'))
+    @webserver.route(setserver_routes['test_enlist_ref_players']['short'])
     def ForTestOnly_EnlistRefPlayers():
         # registers the 6 reference test players.
         result = backend.ForTestOnly_EnlistRefPlayers()
+        if result['status'] == "ok":
+            result['gameID'] = str(result['gameID'])
         return result
 
     # this route enable test cases (delist all players)
-    @webserver.route(url('/test/delist_all_players'))
+    @webserver.route(setserver_routes['test_delist_players']['short'])
     def ForTestOnly_DelistAllPlayers():
         # registers the 6 reference test players.
         result = backend.ForTestOnly_DelistAllPlayers()
         return {'status': "ok", 'number_delisted': result}
         
     # this route enable to load and play to its end a reference test game
-    @webserver.route(url('/test/load_ref_game'))
+    @webserver.route(setserver_routes['test_load_ref_game']['short'])
     def ForTestOnly_LoadRefGame():
         # load the reference test game indicated by 'test_data_index'
         index = request.query.get('test_data_index')
@@ -269,7 +265,7 @@ if __name__ == "__main__":
         return result
     
     # this route enable to roll back a reference test game
-    @webserver.route(url('/test/back_to_turn/<index>/<turn>'))
+    @webserver.route(setserver_routes['test_back_to_turn']['short'] + "<index>/<turn>")
     def ForTestOnly_BackToTurn(index, turn):
         # assuming a reference game was properly loaded, it enable to roll back 
         # the finished game and get back to a given turn.

@@ -5,15 +5,13 @@ Created on August 8th 2016
 
 from bson.objectid import ObjectId
 from pymongo import ReturnDocument
-from passlib.context import CryptContext
 
-from connmongo import getPlayersColl
-from constants import oidIsValid, encryption_algorithm
+from common.constants import oidIsValid, getPlayersColl, isPlayerIDValid
 
 """
 BEWARE: securing the pairing of the client with the server is not implemented
 at this stage, so we assume that all client request are VALID (i.e. the client
-is entitled to push such a request to the server).
+is entitled to push requests to the server).
 """
 
 class Players:
@@ -160,18 +158,6 @@ class Players:
             result = {'status': "ko", 'reason': "invalid playerID"}
         return result
         
-    def isPlayerIDValid(self, playerID):
-        """
-        This method checks that the playerID is valid (ie. it is a valid 
-        ObjectId and the corresponding player exists in the DB).
-        It return 'True' in this case, or 'False' in any other case.
-        """
-        result = False
-        if oidIsValid(playerID):
-            pp = self.playersColl.find_one({'_id': playerID})
-            result = (pp != None)
-        return result
-
     def isPlayerAvailableToPlay(self, playerID):
         """
         This method checks that the playerID is valid (ie. it is a valid 
@@ -333,7 +319,7 @@ class Players:
         Return True if the increment operation was successful.
         """
         result = False
-        if self.isPlayerIDValid(playerID):
+        if isPlayerIDValid(playerID):
             modified = self.playersColl.update_one({'_id': playerID}, 
                 {'$inc': {'totalScore': points}})
             result = (modified.modified_count == 1)
