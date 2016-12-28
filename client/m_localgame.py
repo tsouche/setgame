@@ -10,8 +10,7 @@ This class belongs to the Model, hence its name starts with 'm_'.
 from bson.objectid import ObjectId
 import requests
 
-from common.constants import setserver_routes
-from common.cardset import CardSet
+from common.constants import setserver_routes, tableMax
 
 from client.m_localplayer import LocalPlayer
 
@@ -59,7 +58,7 @@ class LocalGame():
         answer = False
         if self.player.playerID != None:
             playerid_str = str(self.player.playerID)
-            path = setserver_routes['get_gameid']['full'] + playerid_str
+            path = setserver_routes('get_gameid') + playerid_str
             result = requests.get(path).json()
             if result['status'] == "ok":
                 self.gameStarted = True
@@ -80,7 +79,7 @@ class LocalGame():
         answer = False
         if self.gameID != None:
             gameid_str = str(self.gameID)
-            path = setserver_routes['get_turn']['full'] + gameid_str
+            path = setserver_routes('get_turn') + gameid_str
             result = requests.get(path).json()
             if result['status'] == "ok":
                 self.turnCounter = int(result['turnCounter'])
@@ -98,7 +97,7 @@ class LocalGame():
         answer = False
         if self.gameID != None:
             gameid_str = str(self.gameID)
-            path = setserver_routes['get_game_finished']['full'] + gameid_str
+            path = setserver_routes('get_game_finished') + gameid_str
             result = requests.get(path)
             result = result.json()
             if result['status'] == "ok":
@@ -117,11 +116,13 @@ class LocalGame():
         The method returns True if the gameID and the data are correctly 
         populated, and False in other case.
         """        
+        from common.cardset import CardSet
+
         answer = False
         if self.getGameID() == True:
             self.gameStarted = True
             gameid_str = str(self.gameID)
-            path = setserver_routes['get_game_details']['full'] + gameid_str
+            path = setserver_routes('get_game_details') + gameid_str
             result = requests.get(path)
             result = result.json()
             print("Bogus 10: result")
@@ -153,21 +154,24 @@ class LocalGame():
             self.step = None
         return answer
 
-    def retrieveCurrentStep(self):
+    def getCurrentStep(self):
         """
         Retrieve the current Step information from the server.
         
         The method returns True if the 
         """
+        # import the Step class
+        from common.step import Step
         # retrieve all informations from the Server
         answer = False
         if self.gameID != None:
             gameid_str = str(self.gameID)
-            path = setserver_routes['get_step']['full'] + gameid_str
+            path = setserver_routes('get_step') + gameid_str
             result = requests.get(path)
             result = result.json()
             if result['status'] == "ok":
-                self.step = result['step']
+                self.step = Step()
+                self.step.desialize(result['step'])
                 self.turnCounter = self.step['turnCounter']
                 answer = True
         else:
@@ -175,4 +179,57 @@ class LocalGame():
         return answer
 
     def proposeSet(self, card_list):
-        pass
+        """
+        Push a card list (list of 3 cards on the table) as a tentative 'valid 
+        set of 3 cards' and get the server answer (whether the set is valid or 
+        not).
+        
+        The expected format of the card-list is: [ int, int, int ]
+        with integer values between 0 and 11 (included) which point at the 
+        position of the card on the table.
+        
+        This method must translate these integers into 'zero-filled strings' and
+        transmit it to the web server.
+        
+        The answer collected from the server is returned:
+            - { 'status': "ok" } if the set is valid and is taken into account 
+                by the server (which means that the server will move the three 
+                cards to the 'used' pile, will increment the turn and refill the 
+                'table' with three cards taken from the top of the 'pick' pile.
+                The clients are not notified: they need to poll in order to 
+                detect that the turn counter was incremented, and as a 
+                consequence they will poll the new step.
+                
+            - { 'status': "ko", 'reasons': msg } if the set was not taken into 
+                account (for any reason).
+                Possible messages include:
+                    "wrong values in the card list"
+                    "card list length is not 3"
+                    "wrong set"
+                    "player not in game"
+                    "invalid set"
+                    "unknown playerID"
+                    "invalid playerID"
+        """
+        if len(card_list) == 3:
+            if (card_list[0] >= 0) and (card_list[0] < tableMax) and \
+               (card_list[1] >= 0) and (card_list[1] < tableMax) and \
+               (card_list[2] >= 0) and (card_list[2] < tableMax) and \
+               (card_list[0] != card_list[1]) and \
+               (card_list[1] != card_list[2]) and \
+               (card_list[2] != card_list[0]):
+                # at this point, the card list syntax is confirmed ok
+                set_str = []
+                for value in card_list:
+                    value_str = str(value).zfill(2)
+                    set_str.append(value_str)
+                playerid_str = str(self.player.playerID)
+                path = setserver_routes('propose_set') + playerid_str
+                result = requests.get(path, params={'set': set_str})
+                result = result.json()
+            else:
+                result = {'status': "ko", 'reason': "wrong values in the card list"}
+        else:
+            result = {'status': "ko", 'reason': "card list length is not 3"}
+        return result
+

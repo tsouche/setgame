@@ -119,49 +119,43 @@ The format of the list is a dictionary of dictionaries:
   }
 """
 
+setserver_routes_list = {
+        'hello':                    '/hello',
+        'reset':                    '/reset',
+        'nickname_available':       '/player/register/available/',
+        'register_player':          '/player/register/nickname/',
+        'deregister_player':        '/player/deregister/',
+        'get_player_details':      '/player/details/',
+        'get_gameid':               '/player/gameid/',
+        'enlist_player':            '/player/enlist/',
+        'enlist_team':              '/player/enlist_team',
+        'get_turn':                 '/game/turncounter/',
+        'get_game_finished':        '/game/gamefinished/',
+        'get_nicknames':            '/game/nicknames/',
+        'soft_stop':                '/game/stop/',
+        'hard_stop':                '/game/hardstop/',
+        'get_game_details':         '/game/details/',
+        'get_step':                 '/game/step/',
+        'get_history':              '/game/history/',
+        'propose_set':              '/game/set/',
 
-def short_url(path):
-        return '/' + server_version + path
-
-def full_url(path):
-    msg = "http://" + setserver_address + ":" + str(setserver_port)
-    msg += short_url(path)
-    return msg
-
-route_list = [
-    {'id': 'hello',                   'path': '/hello'},
-    {'id': 'reset',                   'path': '/reset'},
-    {'id': 'nickname_available',      'path': '/player/register/available/'},
-    {'id': 'register_player',         'path': '/player/register/nickname/'},
-    {'id': 'deregister_player',       'path': '/player/deregister/'},
-    {'id': 'get_player_details',      'path': '/player/details/'},
-    {'id': 'get_gameid',              'path': '/player/gameid/'},
-    {'id': 'enlist_player',           'path': '/player/enlist/'},
-    {'id': 'enlist_team',             'path': '/player/enlist_team'},
-    {'id': 'get_turn',                'path': '/game/turncounter/'},
-    {'id': 'get_game_finished',       'path': '/game/gamefinished/'},
-    {'id': 'get_nicknames',           'path': '/game/nicknames/'},
-    {'id': 'soft_stop',               'path': '/game/stop/'},
-    {'id': 'hard_stop',               'path': '/game/hardstop/'},
-    {'id': 'get_game_details',        'path': '/game/details/'},
-    {'id': 'get_step',                'path': '/game/step/'},
-    {'id': 'get_history',             'path': '/game/history/'},
-    {'id': 'propose_set',             'path': '/game/set/'},
-
-    {'id': 'test_reg_ref_players',    'path': '/test/register_ref_players'},
-    {'id': 'test_enlist_ref_players', 'path': '/test/enlist_ref_players'},
-    {'id': 'test_delist_players',     'path': '/test/delist_all_players'},
-    {'id': 'test_load_ref_game',      'path': '/test/load_ref_game'},
-    {'id': 'test_back_to_turn',       'path': '/test/back_to_turn/'}
-    ]
-
-setserver_routes = {}
-for rr in route_list:
-    setserver_routes[rr['id']] = {
-        'short': short_url(rr['path']),
-        'full': full_url(rr['path'])
+        'test_reg_ref_players':     '/test/register_ref_players',
+        'test_enlist_ref_players':  '/test/enlist_ref_players',
+        'test_delist_players':      '/test/delist_all_players',
+        'test_load_ref_game':       '/test/load_ref_game',
+        'test_back_to_turn':        '/test/back_to_turn/'
         }
-        
+
+def setserver_routes(verb, full=True):
+    """
+    This function returns the path 
+    """
+    if full:
+        prefix = "http://" + setserver_address + ":" + str(setserver_port)
+    else:
+        prefix = ""
+    result = prefix + '/' + server_version + setserver_routes_list[verb]
+    return result
 
 """
 Database server related data (MongoDB)

@@ -28,11 +28,11 @@ class Test_m_localgame(unittest.TestCase):
         """
         # reset the server
         vprint(tab + "reset the test server.")
-        path = setserver_routes['reset']['full']
+        path = setserver_routes('reset')
         requests.get(path)
         # register the reference test players
         vprint(tab + "register the reference test players")
-        path = setserver_routes['test_reg_ref_players']['full']
+        path = setserver_routes('test_reg_ref_players')
         requests.get(path)
         # initiate a local data structure
         writeAllPlayersBackupTestFile("./backup.bkp")
@@ -45,7 +45,7 @@ class Test_m_localgame(unittest.TestCase):
         """
         # register the reference players via the test routine of the server
         vprint(tab + "We register the reference test players")
-        path = setserver_routes['test_reg_ref_players']['full']
+        path = setserver_routes('test_reg_ref_players')
         requests.get(path)
 
     def setup_loadRefGame(self, test_data_index, tab = ""):
@@ -54,12 +54,12 @@ class Test_m_localgame(unittest.TestCase):
         We assume that 'test_data_index' is either 0 or 1 (integer value).
         """
         vprint(tab + "We load the reference game " + str(test_data_index))
-        path = setserver_routes['test_load_ref_game']['full']
+        path = setserver_routes('test_load_ref_game')
         return requests.get(path, params={'test_data_index': str(test_data_index)})
         
     def teardown(self, tab = ""):
         vprint(tab + "We reset the test server.")
-        path = setserver_routes['reset']['full']
+        path = setserver_routes('reset')
         return requests.get(path)
         
     def test_getGameID(self):
@@ -111,20 +111,20 @@ class Test_m_localgame(unittest.TestCase):
             gameid_str = str(self.localgame.gameID)
             self.assertTrue(self.localgame.getTurnCounter())
             # retrieve the turnCounter directly from the server
-            path = setserver_routes['get_turn']['full'] + gameid_str
+            path = setserver_routes('get_turn') + gameid_str
             result = requests.get(path).json()
             turnCounter_server = int(result['turnCounter'])
             # compare
             self.assertEqual(self.localgame.turnCounter, turnCounter_server)
             vprint("    > turnCounter retrieved from server: " + str(self.localgame.turnCounter) + " - compliant")
             # do the same on turn 9
-            path = setserver_routes['test_back_to_turn']['full']
+            path = setserver_routes('test_back_to_turn')
             path += str(test_data_index) + '/9'
             result = requests.get(path)
             # check again the turnCounter
             self.assertTrue(self.localgame.getTurnCounter())
             # retrieve the turnCounter directly from the server
-            path = setserver_routes['get_turn']['full'] + gameid_str
+            path = setserver_routes('get_turn') + gameid_str
             result = requests.get(path).json()
             turnCounter_server = int(result['turnCounter'])
             # compare
@@ -157,20 +157,20 @@ class Test_m_localgame(unittest.TestCase):
             gameid_str = str(self.localgame.gameID)
             self.assertTrue(self.localgame.getGameFinished())
             # retrieve the turnCounter directly from the server
-            path = setserver_routes['get_game_finished']['full'] + gameid_str
+            path = setserver_routes('get_game_finished') + gameid_str
             result = requests.get(path).json()
             gameFinished_server = (result['gameFinished'] == "True")
             # compare
             self.assertEqual(self.localgame.gameFinished, gameFinished_server)
             vprint("    > turnCounter retrieved from server: " + str(self.localgame.gameFinished) + " - compliant")
             # do the same on turn 9
-            path = setserver_routes['test_back_to_turn']['full']
+            path = setserver_routes('test_back_to_turn')
             path += str(test_data_index) + '/9'
             result = requests.get(path)
             # check again the turnCounter
             self.assertTrue(self.localgame.getGameFinished())
             # retrieve the turnCounter directly from the server
-            path = setserver_routes['get_game_finished']['full'] + gameid_str
+            path = setserver_routes('get_game_finished') + gameid_str
             result = requests.get(path).json()
             gameFinished_server = (result['gameFinished'] == "True")
             # compare
@@ -201,7 +201,7 @@ class Test_m_localgame(unittest.TestCase):
             self.localgame.getGenericDetails()
             # retrieve the details directly from the server
             gameid_str = str(self.localgame.gameID)
-            path = setserver_routes['get_game_details']['full'] + gameid_str
+            path = setserver_routes('get_game_details') + gameid_str
             result = requests.get(path).json()
             details = {
                 'turnCounter': int(result['turnCounter']),
@@ -217,4 +217,8 @@ class Test_m_localgame(unittest.TestCase):
         # teardown test data
         self.teardown()
     
+    def test_getCurrentStep(self):
+        pass
     
+    def test_proposeSet(self):
+        pass

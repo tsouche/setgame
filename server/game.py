@@ -159,6 +159,11 @@ class Game:
         positions on the Table at this moment of the game, and check whether it 
         is a valid Set.
         If so, the next Step is generated.
+        
+        The value returned is:
+            True if the set was valid and taken into account
+            False if not (for any reason)
+        
         NB: playerID is assumed to be a valid ObjectId identifier. We choose to 
         identify the player from his ID because such a 'set proposal' should 
         come from a distant front (an app, a web portal...) which should 

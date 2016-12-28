@@ -128,7 +128,7 @@ class LocalPlayer():
             if not:
                 {'status': "ko", 'reason': msg (str) }
         """
-        path = setserver_routes['nickname_available']['full'] + nickname
+        path = setserver_routes('nickname_available') + nickname
         result = requests.get(path)
         result = result.json()
         return result
@@ -157,7 +157,7 @@ class LocalPlayer():
             if avail['status'] == "ok":
                 # register the nickname on the server
                 passwordHash = self.encryptPassword(password)
-                path = setserver_routes['register_player']['full'] + nickname
+                path = setserver_routes('register_player') + nickname
                 answer = requests.get(path, params={'passwordHash': passwordHash})
                 answer = answer.json()
                 # check if the registration was ok on the server
@@ -195,7 +195,7 @@ class LocalPlayer():
         or
             { 'status': "ko", 'reason': "unknown nickname" }
         """
-        path = setserver_routes['get_player_details']['full'] + nickname
+        path = setserver_routes('get_player_details') + nickname
         result = requests.get(path)
         result = result.json()
         if result['status'] == "ok":

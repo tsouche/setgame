@@ -6,6 +6,8 @@ Created on Dec 27, 2016
 
 import unittest
 
+from common.constants import setserver_address, setserver_port, server_version
+from common.constants import setserver_routes_list, setserver_routes
 from common.reference_test_data import refPlayers, refPlayers_Dict, refGames_Dict
 from test_common.test_utilities import vbar, vprint
 
@@ -98,7 +100,6 @@ class test_constants(unittest.TestCase):
                     self.assertFalse(checkPassword(pp['password'], yy['passwordHash']))
                     vprint("    > " + pp['nickname']+ "'s password and " + yy['nickname'] + "'s hash do not correspond")
 
-
     def test_isPlayerIDValid(self):
         """
         Test constants.isPlayerIDValid
@@ -131,4 +132,21 @@ class test_constants(unittest.TestCase):
         # end of the test
         self.teardown(players)
         
-    
+    def test_setserver_routes(self):
+        """
+        Test constants.isPlayerIDValid
+        """
+        # compare few routes against the expected results
+        vbar()
+        print("Test constants.setserver_routes")
+        vbar()
+        prefix_long  = "http://" + setserver_address + ":" + str(setserver_port)
+        prefix_short = '/' + server_version
+        vprint("We check all expected full and short paths against reference:")
+        for verb in setserver_routes_list:
+            path = setserver_routes_list[verb]
+            self.assertEqual(prefix_short + path, setserver_routes(verb, False))
+            self.assertEqual(prefix_long + prefix_short + path, setserver_routes(verb, True))
+            self.assertEqual(prefix_long + prefix_short + path, setserver_routes(verb))
+            vprint("    > check '" + verb.rjust(25) + "' <=> '" + path.ljust(30) + "': it is compliant")
+        

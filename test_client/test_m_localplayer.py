@@ -43,7 +43,7 @@ class Test_m_localplayer(unittest.TestCase):
         This method resets the setserver, which is needed in order to execute 
         some tests with a clean starting point on the server side.
         """
-        path = setserver_routes['reset']['full']
+        path = setserver_routes('reset')
         requests.get(path)
 
     def setup_registerRefPlayers(self):
@@ -53,14 +53,14 @@ class Test_m_localplayer(unittest.TestCase):
         the server side.
         Ideally, the server has been reset just before.
         """
-        path = setserver_routes['test_reg_ref_players']['full']
+        path = setserver_routes('test_reg_ref_players')
         requests.get(path)
     
     def setup_delistAllPlayers(self):
         """
         This method delists all players on the setserver from any on-going game.
         """
-        path = setserver_routes['test_delist_players']['full']
+        path = setserver_routes('test_delist_players')
         requests.get(path)
     
     def setup_enlistRefPlayers(self):
@@ -71,7 +71,7 @@ class Test_m_localplayer(unittest.TestCase):
         Ideally, the server has been reset just before, the reference test 
         players registered, and all players were delisted.
         """
-        path = setserver_routes['enlist_team']['full']
+        path = setserver_routes('enlist_team')
         list_ref = []
         for pp in refPlayers():
             list_ref.append(str(pp['playerID']))

@@ -49,7 +49,7 @@ class test_Setserver(unittest.TestCase):
         """
         # reset the server data
         vprint("We reset the test server.")
-        result = requests.get(setserver_routes['reset']['full'])
+        result = requests.get(setserver_routes('reset'))
         self.assertEqual(result.json()['status'], "reset")
 
     def setup_registerRefPlayers(self):
@@ -59,7 +59,7 @@ class test_Setserver(unittest.TestCase):
         """
         # register the reference players vai the test routine of the server
         vprint("We register the reference test players")
-        requests.get(setserver_routes['test_reg_ref_players']['full'])
+        requests.get(setserver_routes('test_reg_ref_players'))
         # connect to the MongoDB and connect 'self.players' to this DB
         self.players = Players()
         # populate the reference players in memory
@@ -75,7 +75,7 @@ class test_Setserver(unittest.TestCase):
         playersColl = getPlayersColl()
         playersColl.update_many({}, {'$set': {'gameID': None }} )
         # enlist reference players
-        path = setserver_routes['test_enlist_ref_players']['full']
+        path = setserver_routes('test_enlist_ref_players')
         result = requests.get(path)
         gameid_str = result.json()['gameID']
         vprint("We enlist the reference test players: gameID = " + gameid_str)
@@ -97,7 +97,7 @@ class test_Setserver(unittest.TestCase):
         # register reference test players
         self.setup_registerRefPlayers()
         # create the game and load reference data
-        path = setserver_routes['test_load_ref_game']['full']
+        path = setserver_routes('test_load_ref_game')
         result = requests.get(path, params={'test_data_index': str(test_data_index)})
         return result.json()
 
@@ -183,7 +183,7 @@ class test_Setserver(unittest.TestCase):
         This method must be used together with 'setup_loadRefGame': it assumes that
         a reference test game was properly loaded.
         """
-        path = setserver_routes['test_back_to_turn']['full']
+        path = setserver_routes('test_back_to_turn')
         path += str(index) + '/' + str(turn)
         result = requests.get(path)
         return result.json()
@@ -230,7 +230,7 @@ class test_Setserver(unittest.TestCase):
         vprint("BEWARE: if this test does not pass, it probably means that the setserver")
         vprint("        did not start.")
         vprint()
-        path = setserver_routes['hello']['full']
+        path = setserver_routes('hello')
         vprint("We poll " + path)
         result = requests.get(path)
         vprint("We push a get request to '/hello' and the answer is:")
@@ -255,17 +255,17 @@ class test_Setserver(unittest.TestCase):
             passwordHash = pp['passwordHash']
             # check availability before the player is registered
             vprint("We check availability of '" + nickname + "':")
-            path = setserver_routes['nickname_available']['full'] + nickname
+            path = setserver_routes('nickname_available') + nickname
             result = requests.get(path)
             result = result.json()
             self.assertEqual(result['status'], "ok")
             vprint("    > nickname is available: " + path)
             # we register the player
-            path = setserver_routes['register_player']['full'] + nickname
+            path = setserver_routes('register_player') + nickname
             result = requests.get(path, params={'passwordHash': passwordHash})
             vprint("    > we register " + nickname + ": " + path)
             # we check again and the nickname should not be available
-            path = setserver_routes['nickname_available']['full'] + nickname
+            path = setserver_routes('nickname_available') + nickname
             result = requests.get(path)
             result = result.json()
             self.assertEqual(result['status'], "ko")
@@ -290,7 +290,7 @@ class test_Setserver(unittest.TestCase):
         for pp in self.refPlayers:
             nickname = pp['nickname']
             passwordHash = pp['passwordHash']
-            path = setserver_routes['register_player']['full'] + nickname
+            path = setserver_routes('register_player') + nickname
             vprint("We poll " + path)
             result = requests.get(path, params={'passwordHash': passwordHash})
             status = result.json()['status']
@@ -309,7 +309,7 @@ class test_Setserver(unittest.TestCase):
         for pp in refPlayers_Dict():
             nickname = pp['nickname']
             passwordHash = pp['passwordHash']
-            path = setserver_routes['register_player']['full'] + nickname
+            path = setserver_routes('register_player') + nickname
             vprint("We poll again " + path)
             result = requests.get(path, params={'passwordHash': passwordHash})
             status = result.json()['status']
@@ -339,7 +339,7 @@ class test_Setserver(unittest.TestCase):
         # de-registering an invalid playerID
         vprint("    > try de-registering an invalid playerID:")
         playerid_str = "thisisnotavalidobjectid"
-        path = setserver_routes['deregister_player']['full'] + playerid_str
+        path = setserver_routes('deregister_player') + playerid_str
         vprint("        path = '" + path + "'")
         result = requests.get(path)
         result = result.json()
@@ -349,7 +349,7 @@ class test_Setserver(unittest.TestCase):
         # de-registering an unknown playerID
         vprint("    > try de-registering an unknown player:")
         playerid_str = str(ObjectId())
-        path = setserver_routes['deregister_player']['full'] + playerid_str
+        path = setserver_routes('deregister_player') + playerid_str
         vprint("        path = '" + path + "'")
         result = requests.get(path)
         result = result.json()
@@ -359,7 +359,7 @@ class test_Setserver(unittest.TestCase):
         # start de-registering players and check answers
         for pp in refPlayers_Dict():
             playerid_str = pp['playerID']
-            path = setserver_routes['deregister_player']['full'] + playerid_str
+            path = setserver_routes('deregister_player') + playerid_str
             result = requests.get(path)
             result = result.json()
             self.assertEqual(result['status'], "ok")
@@ -380,7 +380,7 @@ class test_Setserver(unittest.TestCase):
         # retrieve the details of an unknown player
         vprint("    > try getting the details of an unknown player:")
         nickname = "peterpan"
-        path = setserver_routes['get_player_details']['full'] + nickname
+        path = setserver_routes('get_player_details') + nickname
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         result = result.json()
@@ -391,7 +391,7 @@ class test_Setserver(unittest.TestCase):
         vprint("We now get the details of all reference test players:")
         for pp in refPlayers_Dict():
             nickname = pp['nickname']
-            path = setserver_routes['get_player_details']['full'] + nickname
+            path = setserver_routes('get_player_details') + nickname
             result = requests.get(path)
             result = result.json()
             self.assertEqual(result['status'], "ok")
@@ -416,7 +416,7 @@ class test_Setserver(unittest.TestCase):
         # retrieve the details from an invalid playerID
         vprint("    > try getting the gameID of an invalid playerID:")
         playerid_str = "invalidplayerid"
-        path = setserver_routes['get_gameid']['full'] + playerid_str
+        path = setserver_routes('get_gameid') + playerid_str
         vprint("        path = '" + path + "'")
         result = requests.get(path)
         result = result.json()
@@ -426,7 +426,7 @@ class test_Setserver(unittest.TestCase):
         # retrieve the details of an unknown player
         vprint("    > try getting the gameID of an unknown playerID:")
         playerid_str = str(ObjectId())
-        path = setserver_routes['get_gameid']['full'] + playerid_str
+        path = setserver_routes('get_gameid') + playerid_str
         vprint("        path = '" + path + "'")
         result = requests.get(path)
         result = result.json()
@@ -438,7 +438,7 @@ class test_Setserver(unittest.TestCase):
         for pp in refPlayers_Dict():
             playerid_str = pp['playerID']
             nickname = pp['nickname']
-            path = setserver_routes['get_gameid']['full'] + playerid_str
+            path = setserver_routes('get_gameid') + playerid_str
             result = requests.get(path)
             result = result.json()
             pp_db = playersColl.find_one({'_id': ObjectId(playerid_str)})
@@ -466,11 +466,11 @@ class test_Setserver(unittest.TestCase):
             tc_ref = str(refGames_Dict()[test_data_index]['turnCounter'])
             self.setup_loadRefGame(test_data_index)
             # retrieve the gameID
-            path = setserver_routes['get_gameid']['full'] + playerid_str
+            path = setserver_routes('get_gameid') + playerid_str
             result = requests.get(path)
             gameid_str = result.json()['gameID']
             # retrieve the turnCounter
-            path = setserver_routes['get_turn']['full'] + gameid_str
+            path = setserver_routes('get_turn') + gameid_str
             result = requests.get(path)
             result = result.json()
             self.assertEqual(result['status'], "ok")
@@ -478,7 +478,7 @@ class test_Setserver(unittest.TestCase):
             vprint("      turnCounter = " + tc_ref + " : compliant")
         # retrieve the turnCounters from an unknown gameID
         gameid_str = str(ObjectId())
-        path = setserver_routes['get_turn']['full'] + gameid_str
+        path = setserver_routes('get_turn') + gameid_str
         result = requests.get(path)
         result = result.json()
         self.assertEqual(result['status'], "ko")
@@ -487,7 +487,7 @@ class test_Setserver(unittest.TestCase):
         vprint("     > we try an unknown gameID: answer is '" + reason + "'")
         # retrieve the turnCounters from an invalid gameID
         gameid_str = "invalidgameid"
-        path = setserver_routes['get_turn']['full'] + gameid_str
+        path = setserver_routes('get_turn') + gameid_str
         result = requests.get(path)
         result = result.json()
         self.assertEqual(result['status'], "ko")
@@ -514,11 +514,11 @@ class test_Setserver(unittest.TestCase):
             gf_ref = str(refGames_Dict()[test_data_index]['gameFinished'])
             self.setup_loadRefGame(test_data_index)
             # retrieve the gameID
-            path = setserver_routes['get_gameid']['full'] + playerid_str
+            path = setserver_routes('get_gameid') + playerid_str
             result = requests.get(path)
             gameid_str = result.json()['gameID']
             # retrieve the turnCounter
-            path = setserver_routes['get_game_finished']['full'] + gameid_str
+            path = setserver_routes('get_game_finished') + gameid_str
             result = requests.get(path)
             result = result.json()
             self.assertEqual(result['status'], "ok")
@@ -526,7 +526,7 @@ class test_Setserver(unittest.TestCase):
             vprint("       > gameFinished = " + gf_ref + " : compliant")
         # retrieve the turnCounters from an unknown gameID
         gameid_str = str(ObjectId())
-        path = setserver_routes['get_game_finished']['full'] + gameid_str
+        path = setserver_routes('get_game_finished') + gameid_str
         result = requests.get(path)
         result = result.json()
         self.assertEqual(result['status'], "ko")
@@ -535,7 +535,7 @@ class test_Setserver(unittest.TestCase):
         vprint("     we try an unknown gameID: answer is '" + reason + "'")
         # retrieve the turnCounters from an invalid gameID
         gameid_str = "invalidgameid"
-        path = setserver_routes['get_game_finished']['full'] + gameid_str
+        path = setserver_routes('get_game_finished') + gameid_str
         result = requests.get(path)
         result = result.json()
         self.assertEqual(result['status'], "ko")
@@ -561,7 +561,7 @@ class test_Setserver(unittest.TestCase):
         # enlist Donald and test the 'enlist' answer "wait"
         donald = self.refPlayers[0]
         playerid_str = str(donald['playerID'])
-        path = setserver_routes['enlist_player']['full'] + playerid_str
+        path = setserver_routes('enlist_player') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -573,7 +573,7 @@ class test_Setserver(unittest.TestCase):
         # enlist Mickey and test the 'enlist' answer "wait"
         mickey = self.refPlayers[1]
         playerid_str = str(mickey['playerID'])
-        path = setserver_routes['enlist_player']['full'] + playerid_str
+        path = setserver_routes('enlist_player') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -585,7 +585,7 @@ class test_Setserver(unittest.TestCase):
         # enlist Daisy and test the 'enlist' answer == "wait"
         daisy  = self.refPlayers[5]
         playerid_str = str(daisy['playerID'])
-        path = setserver_routes['enlist_player']['full'] + playerid_str
+        path = setserver_routes('enlist_player') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -596,7 +596,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(nbp, 3)
         # enlist AGAIN Donald and test the 'enlist' answer "wait"
         playerid_str = str(donald['playerID'])
-        path = setserver_routes['enlist_player']['full'] + playerid_str
+        path = setserver_routes('enlist_player') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -609,7 +609,7 @@ class test_Setserver(unittest.TestCase):
         # i.e. this fourth player enlisting should start a new game
         riri   = self.refPlayers[2]
         playerid_str = str(riri['playerID'])
-        path = setserver_routes['enlist_player']['full'] + playerid_str
+        path = setserver_routes('enlist_player') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -622,7 +622,7 @@ class test_Setserver(unittest.TestCase):
         # enlist Fifi and test the 'enlist' answer == "wait"
         fifi   = self.refPlayers[3]
         playerid_str = str(fifi['playerID'])
-        path = setserver_routes['enlist_player']['full'] + playerid_str
+        path = setserver_routes('enlist_player') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -630,7 +630,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(status, "wait")
         # enlist AGAIN Mickey and test the 'enlist' answer gameID
         playerid_str = str(mickey['playerID'])
-        path = setserver_routes['enlist_player']['full'] + playerid_str
+        path = setserver_routes('enlist_player') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -640,7 +640,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(result.json()['gameID'], gameid_str)
         # enlist an unknown plauerID and test the 'enlist' answer 'invalid'
         playerid_str = str(ObjectId())
-        path = setserver_routes['enlist_player']['full'] + playerid_str
+        path = setserver_routes('enlist_player') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -665,7 +665,7 @@ class test_Setserver(unittest.TestCase):
         playersColl = getPlayersColl()
         # enlist various players and check answers
         vprint("We will enlist several teams and capture the server's answers:")
-        path = setserver_routes['enlist_team']['full']
+        path = setserver_routes('enlist_team')
         vprint("    path = '" + path + "'")
         # We enlist a team of 3 players: it should fail.
         vprint("    We enlist a team of 3 players: it should fail.")
@@ -806,7 +806,7 @@ class test_Setserver(unittest.TestCase):
         vprint("    We ask for Donald's team-mates nicknames:")
         donald = self.refPlayers[0]
         playerid_str = str(donald['playerID'])
-        path = setserver_routes['get_nicknames']['full'] + playerid_str
+        path = setserver_routes('get_nicknames') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -828,7 +828,7 @@ class test_Setserver(unittest.TestCase):
         vprint("    We ask for Daisy's team-mates nicknames:")
         daisy = self.refPlayers[5]
         playerid_str = str(daisy['playerID'])
-        path = setserver_routes['get_nicknames']['full'] + playerid_str
+        path = setserver_routes('get_nicknames') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -840,7 +840,7 @@ class test_Setserver(unittest.TestCase):
         # collects the team-mates nicknames for an unknown player
         vprint("    We ask for X's (unknow ID) team-mates nicknames:")
         playerid_str = str(ObjectId())
-        path = setserver_routes['get_nicknames']['full'] + playerid_str
+        path = setserver_routes('get_nicknames') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         list_nicknames = result.json()['nicknames']
@@ -851,7 +851,7 @@ class test_Setserver(unittest.TestCase):
         # collects the team-mates nicknames for an invalid string
         vprint("    We ask for X's (invalid string) team-mates nicknames:")
         playerid_str = "invalidplayerid"
-        path = setserver_routes['get_nicknames']['full'] + playerid_str
+        path = setserver_routes('get_nicknames') + playerid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -880,7 +880,7 @@ class test_Setserver(unittest.TestCase):
                 playerid_str = refGames_Dict()[index]['steps'][turn]['playerID']
                 nickname = refGames_Dict()[index]['steps'][turn]['nickname']
                 set_dict = refGames_Dict()[index]['steps'][turn]['set']
-                path = setserver_routes['propose_set']['full'] + playerid_str
+                path = setserver_routes('propose_set') + playerid_str
                 result = requests.get(path, params={'set': set_dict})
                 status = result.json()['status']
                 vprint("     - turn = "+str(turn) + " : " + status + 
@@ -893,7 +893,7 @@ class test_Setserver(unittest.TestCase):
         self.getBackToTurn(0, 0)
         # propose an invalid playerID
         playerid_str = "invalidplayerid"
-        path = setserver_routes['propose_set']['full'] + playerid_str
+        path = setserver_routes('propose_set') + playerid_str
         result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
@@ -903,7 +903,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(reason, "invalid playerID")
         # propose an unknown playerID
         playerid_str = str(ObjectId())
-        path = setserver_routes['propose_set']['full'] + playerid_str
+        path = setserver_routes('propose_set') + playerid_str
         result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
@@ -915,7 +915,7 @@ class test_Setserver(unittest.TestCase):
         playersColl = getPlayersColl()
         donald = playersColl.find_one({'nickname': "Donald"})
         playerid_str = str(donald['_id'])
-        path = setserver_routes['propose_set']['full'] + playerid_str
+        path = setserver_routes('propose_set') + playerid_str
         result = requests.get(path, params={'set': ['01', 'AE', '10']})
         status = result.json()['status']
         reason = result.json()['reason']
@@ -972,9 +972,9 @@ class test_Setserver(unittest.TestCase):
                 # read the set from reference test data
                 playerid_str = refGames_Dict()[index]['steps'][turn]['playerID']
                 set_dict = refGames_Dict()[index]['steps'][turn]['set']
-                path = setserver_routes['propose_set']['full'] + playerid_str
+                path = setserver_routes('propose_set') + playerid_str
                 result = requests.get(path, params={'set': set_dict})
-                path = setserver_routes['get_step']['full'] + gameid_str
+                path = setserver_routes('get_step') + gameid_str
                 result = requests.get(path)
                 status = result.json()['status']
                 step = result.json()['step']
@@ -992,7 +992,7 @@ class test_Setserver(unittest.TestCase):
         # invalid gameID
         vprint("  We push an invalid gameID argument:")
         gameid_str = "invalidgameid"
-        path = setserver_routes['get_step']['full'] + gameid_str
+        path = setserver_routes('get_step') + gameid_str
         result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
@@ -1002,7 +1002,7 @@ class test_Setserver(unittest.TestCase):
         # unknown gameID
         vprint("  We push an unknown gameID argument:")
         gameid_str = str(ObjectId())
-        path = setserver_routes['get_step']['full'] + gameid_str
+        path = setserver_routes('get_step') + gameid_str
         result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
@@ -1027,7 +1027,7 @@ class test_Setserver(unittest.TestCase):
             self.setup_loadRefGame(index)
             gameid_str = refGames_Dict()[index]['gameID']
             # compare the history retrieved via the API with reference test data
-            path = setserver_routes['get_history']['full'] + gameid_str
+            path = setserver_routes('get_history') + gameid_str
             result = requests.get(path)
             status = result.json()['status']
             game_dict = result.json()['game']
@@ -1047,7 +1047,7 @@ class test_Setserver(unittest.TestCase):
         # invalid gameID
         vprint("We push an invalid gameID argument:")
         gameid_str = "invalidgameid"
-        path = setserver_routes['get_history']['full'] + gameid_str
+        path = setserver_routes('get_history') + gameid_str
         result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
@@ -1057,7 +1057,7 @@ class test_Setserver(unittest.TestCase):
         # unknown gameID
         vprint("We push an unknown gameID argument:")
         gameid_str = str(ObjectId())
-        path = setserver_routes['get_history']['full'] + gameid_str
+        path = setserver_routes('get_history') + gameid_str
         result = requests.get(path)
         status = result.json()['status']
         reason = result.json()['reason']
@@ -1080,7 +1080,7 @@ class test_Setserver(unittest.TestCase):
         # try soft-stopping a unfinished game
         vprint()
         vprint("We try to soft-stop the game: it should fail")
-        path = setserver_routes['soft_stop']['full'] + gameid_str
+        path = setserver_routes('soft_stop') + gameid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -1091,7 +1091,7 @@ class test_Setserver(unittest.TestCase):
         self.assertEqual(reason, "game not finished")
         # try hard-stopping a unfinished game
         vprint("We try to hard-stop the game: it should succeed")
-        path = setserver_routes['hard_stop']['full'] + gameid_str
+        path = setserver_routes('hard_stop') + gameid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -1100,7 +1100,7 @@ class test_Setserver(unittest.TestCase):
         # try stopping an unknown game
         vprint("We try to soft-stop an unknow game: it should fail")
         gameid_str = str(ObjectId())
-        path = setserver_routes['soft_stop']['full'] + gameid_str
+        path = setserver_routes('soft_stop') + gameid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -1112,7 +1112,7 @@ class test_Setserver(unittest.TestCase):
         # try soft-stopping an invalid gameID
         vprint("We try to soft-stop the game with invalid gameID: it should fail")
         gameid_str ="invalidgameid"
-        path = setserver_routes['soft_stop']['full'] + gameid_str
+        path = setserver_routes('soft_stop') + gameid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -1124,7 +1124,7 @@ class test_Setserver(unittest.TestCase):
         # try hard-stopping an invalid gameID
         vprint("We try to hard-stop the game with invalid gameID: it should fail")
         gameid_str ="invalidgameid"
-        path = setserver_routes['hard_stop']['full'] + gameid_str
+        path = setserver_routes('hard_stop') + gameid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -1137,7 +1137,7 @@ class test_Setserver(unittest.TestCase):
         vprint("We try to soft-stop a finished game: it should succeed")
         result = self.setup_loadRefGame(0)
         gameid_str = result['gameID']
-        path = setserver_routes['soft_stop']['full'] + gameid_str
+        path = setserver_routes('soft_stop') + gameid_str
         vprint("    path = '" + path + "'")
         result = requests.get(path)
         status = result.json()['status']
@@ -1158,7 +1158,7 @@ class test_Setserver(unittest.TestCase):
         self.setup_loadRefGame(0)
         # start a game and retrieve the game details
         gameid_str_ref = refGames_Dict()[0]['gameID']
-        path = setserver_routes['get_game_details']['full'] + gameid_str_ref
+        path = setserver_routes('get_game_details') + gameid_str_ref
         vprint("    path = '" + path + "'")
         vprint("    We retrieve the details of the game: it should succeed")
         result = requests.get(path)

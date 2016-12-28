@@ -5,8 +5,9 @@ Created on Sep 2, 2016
 
 from bson.objectid import ObjectId
 
-from common.constants import playersMin, playersMax, pointsPerStep, oidIsValid
-from common.constants import getPlayersColl, getGamesColl, isPlayerIDValid
+from common.constants import playersMin, playersMax, tableMax, pointsPerStep
+from common.constants import oidIsValid, isPlayerIDValid
+from common.constants import getPlayersColl, getGamesColl
 from common.reference_test_data import refPlayers, refGames_Dict
 
 from server.game import Game
@@ -547,7 +548,7 @@ class Backend():
                     valid = valid and (type(setlist[i]) == int)
                 if valid:
                     for i in range(0,3):
-                        valid = valid and (setlist[i] >= 0) and (setlist[i] < 12)
+                        valid = valid and (setlist[i] >= 0) and (setlist[i] < tableMax)
                         valid = valid and (setlist[i] != setlist[(i+1)%3])
             return valid
             
