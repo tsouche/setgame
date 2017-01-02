@@ -672,8 +672,7 @@ class Backend():
         # we know - since the backend was reseted, that the new game is 
         # backend.game[0] => we set the games index i at 0 
         i = 0
-        if self.games[i].gameFinished:
-            nb_turn_max = self.games[i].turnCounter
+        nb_turn_max = self.games[i].turnCounter
         target_turn = min(target_turn, nb_turn_max)
         target_turn = max(0, target_turn)
         original_turn = self.games[i].turnCounter

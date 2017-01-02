@@ -38,7 +38,7 @@ class LocalGame():
         self.gameFinished = False
         self.turnCounter = 0
         self.team = None
-        self.cards = None
+        self.cardset = None
         self.step = None
         # flag indicating to the GUI if data were refreshed, so that it can 
         # update the display and status of various buttons/command.
@@ -125,18 +125,11 @@ class LocalGame():
             path = setserver_routes('get_game_details') + gameid_str
             result = requests.get(path)
             result = result.json()
-            print("Bogus 10: result")
-            print("Bogus 11: turnCounter = ", result['turnCounter'])
-            print("Bogus 12: gameFinished = ", result['gameFinished'])
-            print("Bogus 13: cardset = ", result['cardset'])
-            print("Bogus 14: players:")
-            for pp in result['players']:
-                print("Bogus 15: ", pp)
             if result['status'] == "ok":
                 self.turnCounter = int(result['turnCounter'])
                 self.gameFinished = (result['gameFinished'] == "True")
-                self.cards = CardSet()
-                self.cards.deserialize(result['cardset'])
+                self.cardset = CardSet()
+                self.cardset.deserialize(result['cardset'])
                 self.team = []
                 for pp in result['players']:
                     self.team.append( {
@@ -171,8 +164,8 @@ class LocalGame():
             result = result.json()
             if result['status'] == "ok":
                 self.step = Step()
-                self.step.desialize(result['step'])
-                self.turnCounter = self.step['turnCounter']
+                self.step.deserialize(result['step'])
+                self.turnCounter = self.step.turnCounter
                 answer = True
         else:
             self.step = None

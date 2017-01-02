@@ -2,14 +2,12 @@
 Created on August 19th 2016
 @author: Thierry Souche
 
-This modules contains few constants which are useful to test the Set game.
+This modules contains few constants and functions which are useful for other 
+unit test modules.
 '''
 
 from bson.objectid import ObjectId
-
 from common.reference_test_data import refGames_Dict
-
-
 
 verbose = True
 """
