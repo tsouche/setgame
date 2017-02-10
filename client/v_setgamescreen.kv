@@ -1,0 +1,13 @@
+# File name: setgamescreen.kv 
+#:kivy 1.9.1
+
+<SetgameScreen>:
+    padding: self.unit
+    canvas.before:
+        Color:
+            rgba: self.backgroundColor
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+            

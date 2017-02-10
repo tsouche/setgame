@@ -22,12 +22,26 @@ client_data_all_players_backup_file = client_directory + "reference_all_players_
 
 
 """
-Control - state engine values
+Command Buttons descriptions
 """
 
-game_state = {
-    'welcome': {'next': 'login'}
+path_to_images = './images/'
+game_command_buttons = {
+    'menu':  path_to_images + 'button_menu.png',
+    'login': path_to_images + 'button_login.png'
     }
+
+
+
+"""
+Command Bars descriptions
+"""
+
+game_command_bars = {
+    'welcome': ['login']
+    }
+
+
 
 """
 GUI related constant values
@@ -40,8 +54,8 @@ client_graphics_nb_rows = 3
 client_graphics_unit_min = 10
 
 # describe the relative dimension of the icons on the command area
-client_graphics_button_height = 10
-client_graphics_button_width = 10
+client_graphics_button_height = 5
+client_graphics_button_width = 5
 # describe the relative dimensions of the table area
 client_graphics_card_height = 15
 client_graphics_card_width  = 10
@@ -77,8 +91,11 @@ client_graphics_value_two     = 1
 client_graphics_value_three   = 2
 
 client_graphics_color_text       = (0.10, 0.10, 0.00, 1.00)
-client_graphics_color_background = {'r': 1.00, 'g': 0.93, 'b':0.86, 'a': 1.00}
-client_graphics_color_cardshape  = {'r': 1.00, 'g': 0.68, 'b':0.36, 'a': 1.00}
+#client_graphics_color_background = {'r': 1.00, 'g': 0.93, 'b':0.86, 'a': 1.00}
+client_graphics_color_window_background = (1.00, 0.93, 0.86, 1.00)
+client_graphics_color_widget_background = (0.90, 0.83, 0.76, 1.00)
+#client_graphics_color_cardshape  = {'r': 1.00, 'g': 0.68, 'b':0.36, 'a': 1.00}
+client_graphics_color_cardshape  = (1.00, 0.68, 0.36, 1.00)
 client_graphics_color_highlight  = {'r': 1.0, 'g': 0.1, 'b':0.1, 'a': 1.0}
 client_graphics_color_card       = {'r': 1.0, 'g': 1.0, 'b':1.0, 'a': 1.0}
 client_graphics_color_card_back  = {'r': 0.0, 'g': 0.2, 'b':0.0, 'a': 1.0}
