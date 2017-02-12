@@ -24,14 +24,13 @@ from kivy.lang import Builder
 
 from client.constants import client_graphics_color_window_background
 from client.constants import client_graphics_color_widget_background
-from client.constants import client_graphics_color_cardshape
 from client.constants import client_graphics_button_width
 from client.constants import client_graphics_button_height
 from client.constants import client_graphics_bar_height
 from client.constants import client_graphics_padding
 
-from client.v_buttons import ButtonMenu, ButtonLogin
-
+from client.v_buttons import CommandButton, ButtonsList
+from client.v_indicators import Indicator, IndicatorsList
 
 # Change the configuration file to make this window fullscreen and non-resizable
 Config.set('graphics', 'fullscreen', 0)
@@ -50,14 +49,14 @@ Builder.load_string("""
 """)
 
 class BackgroundLayout(FloatLayout):
-    bgd = ListProperty(client_graphics_color_window_background)
+    bgd = ListProperty(client_graphics_color_widget_background)
     
     def __init__(self, **kwargs):
         super(FloatLayout, self).__init__(**kwargs)
         #self.bgd = client_graphics_color_window_background
         
 
-class TestCommandButtonApp(App):    
+class TestCommandButtonAndIndicatorsApp(App):    
     """
     This is the kivy app which runs a temporary UI for the test.
     """
@@ -93,42 +92,43 @@ class TestCommandButtonApp(App):
         print("Bogus 27: command bar size =", self.root_layout.size)
         
         # add several buttons
-        menu = MenuButton(
-            size_hint = (None, None),
-            size = (button_width, button_height),
-            pos_hint = (None, None),
-            pos = (self.unit, Window.height - bar_height)
-            )
-        print("Bogus 29: action_code = ", menu.action_code)
-        print("Bogus 29: icon_path = ", menu.icon_path)
-        print("Bogus 29: button pos = ", menu.pos)
-        print("Bogus 29: button_size = ", menu.size)
-        self.root_layout.add_widget(menu)
-        
-        login = LoginButton(
-            size_hint = (None, None),
-            size = (button_width, button_height),
-            pos_hint = (None, None),
-            pos = (self.unit*2 + button_width, Window.height - bar_height)
-            )
-        print("Bogus 29: action_code = ", login.action_code)
-        print("Bogus 29: icon_path = ", login.icon_path)
-        print("Bogus 29: button pos = ", login.pos)
-        print("Bogus 29: button_size = ", login.size)
-        self.root_layout.add_widget(login)
-
-        """
-        monster = LoginButton(
-            size_hint = (None, None),
-            size = (button_width * 2, button_height * 2),
-            pos_hint = (None, None),
-            pos = (self.unit*3 + button_width * 2, Window.height - bar_height * 2)
-            )
-        monster.setActionCode('menu')
-        self.root_layout.add_widget(monster)
-        """
-        
+        i = 0
+        for code in ButtonsList:
+            btn = CommandButton(
+                size_hint = (None, None),
+                size = (button_width, button_height),
+                pos_hint = (None, None),
+                pos = (self.unit + i * (self.unit + button_width), 
+                       Window.height - bar_height)
+                )
+            btn.setActionCode(code)
+            print("Bogus 29: action_code = ", btn.action_code)
+            print("Bogus 29: icon_path = ", btn.icon_path)
+            print("Bogus 29: button pos = ", btn.pos)
+            print("Bogus 29: button_size = ", btn.size)
+            self.root_layout.add_widget(btn)
+            i += 1    
         print("Bogus 30: # of children =", len(self.root_layout.children))
+
+        # add several indicators
+        i = 0
+        for code in IndicatorsList:
+            ind = Indicator(
+                size_hint = (None, None),
+                size = (button_width, button_height),
+                pos_hint = (None, None),
+                pos = (self.unit + i * (self.unit + button_width), 
+                       Window.height - 2 * bar_height)
+                )
+            ind.setStatusCode(code)
+            print("Bogus 29: action_code = ", ind.status_code)
+            print("Bogus 29: icon_path = ", ind.icon_path)
+            print("Bogus 29: button pos = ", ind.pos)
+            print("Bogus 29: button_size = ", ind.size)
+            self.root_layout.add_widget(ind)
+            i += 1    
+        print("Bogus 31: # of children =", len(self.root_layout.children))
+        
         ### end the 'build' process by returning the root widget
         return self.root_layout
 
@@ -154,5 +154,5 @@ class LoginScreen(GridLayout):
 
 if __name__ == '__main__':
 
-    TestCommandButtonApp().run()
+    TestCommandButtonAndIndicatorsApp().run()
     

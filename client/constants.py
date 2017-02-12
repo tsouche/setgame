@@ -26,12 +26,6 @@ Command Buttons descriptions
 """
 
 path_to_images = './images/'
-game_command_buttons = {
-    'menu':  path_to_images + 'button_menu.png',
-    'login': path_to_images + 'button_login.png'
-    }
-
-
 
 """
 Command Bars descriptions
@@ -93,7 +87,7 @@ client_graphics_value_three   = 2
 client_graphics_color_text       = (0.10, 0.10, 0.00, 1.00)
 #client_graphics_color_background = {'r': 1.00, 'g': 0.93, 'b':0.86, 'a': 1.00}
 client_graphics_color_window_background = (1.00, 0.93, 0.86, 1.00)
-client_graphics_color_widget_background = (0.90, 0.83, 0.76, 1.00)
+client_graphics_color_widget_background = (1.00, 0.93, 0.86, 1.00)
 #client_graphics_color_cardshape  = {'r': 1.00, 'g': 0.68, 'b':0.36, 'a': 1.00}
 client_graphics_color_cardshape  = (1.00, 0.68, 0.36, 1.00)
 client_graphics_color_highlight  = {'r': 1.0, 'g': 0.1, 'b':0.1, 'a': 1.0}

@@ -9,58 +9,59 @@ import code
 from docutils.parsers.rst.directives import path
 require('1.9.1')
 
-from kivy.uix.button import Button
-#from kivy.graphics import Rectangle, Color
+from kivy.uix.label import Label
 from kivy.properties import ListProperty, StringProperty
 from kivy.lang import Builder
+
 
 from client.constants import client_graphics_color_widget_background
 from client.constants import client_graphics_color_cardshape
 from client.constants import path_to_images
 
-ButtonsList = [
-    'config',
-    'connect',
-    'enlist_single', 
-    'enlist_team',
-    'login', 
-    'menu',
-    'propose_set',
-    'stop'
+IndicatorsList = [
+    'connected', 
+    'disconnected',
+    'enlisted_4', 
+    'enlisted_5', 
+    'enlisted_6',
+    'enlisted_not',
+    'enlisting_wait' 
     ]
 
-path_to_buttons_icons = {}
+path_to_indicators_icons = {}
 
-for code in ButtonsList:
-    path_to_buttons_icons[code] = path_to_images + 'button_' + code + '.png'
-    print("Bogus 40: game_command_button[" + code + '] = ' + path_to_buttons_icons[code])
+for code in IndicatorsList:
+    path_to_indicators_icons[code] = path_to_images + 'indicator_' + code + '.png'
+    print("Bogus 41: game_indicators[" + code + '] = ' + path_to_indicators_icons[code])
 
 
 Builder.load_string("""
-<CommandButton>:
-    id: root_button
+<Indicator>:
+    id: root_panel
     background_normal: ''
     background_color: self.bgd_normal
     Image:
         color: 1,1,1,1
-        source: root_button.icon_path
-        width: root_button.width * 0.9
-        height: root_button.height * 0.9
-        center: root_button.center
+        source: root_panel.icon_path
+        width: root_panel.width * 0.9
+        height: root_panel.height * 0.9
+        center: root_panel.center
 """)
 
-class CommandButton(Button):
+class Indicator(Label):
     """
-    This class instantiate a command button (which will be used in the command 
-    bar at the top of the screen.
+    This class instantiate a status indicator with an icon which can vary 
+    depending on the status.It will be used in the command/info bars to give
+    status information to the player (is the client connected to the server?
+    how many players connected?...)
 
-    A command button has two characteristics: 
-        - the 'action_code' which will be returned when the button is pressed
+    An indicator has two characteristics: 
+        - the 'status_code' which will be returned when the indicator is pressed
         - the 'icon_path' which indicates which icon files should be loaded to 
             be displayed on top of the button. 
     """
 
-    action_code = StringProperty('')
+    status_code = StringProperty('')
     icon_path = StringProperty('')
     bgd_normal = ListProperty(client_graphics_color_widget_background)
     bgd_down   = ListProperty(client_graphics_color_cardshape)
@@ -69,27 +70,29 @@ class CommandButton(Button):
         """
         Constructor
         """
-        super(CommandButton, self).__init__(**kwargs)
+        super(Indicator, self).__init__(**kwargs)
             
-    def setActionCode(self, code):
+    def setStatusCode(self, code):
         """
         This method enable to set the action code, triggering automaticaly the 
         'on_action_code' method (since the property value would be changed.
         NB: we assume here that the code is valid.
         """
-        self.action_code = code
-        self.icon_path = path_to_buttons_icons[code]
+        print("Bogus 54: status code is set at", code)        
+        self.status_code = code
+        self.icon_path = path_to_indicators_icons[code]
         self.children[0].reload()
 
-    def getActionCode(self):
+    def getStatusCode(self):
         """
         This method returns the action code: useful to bind with the 'on_press'
         event.
         """
-        print("Bogus 56: ", self.action_code)
-        return self.action_code
+        print("Bogus 57: ", self.status_code)
+        return self.status_code
 
     def on_touch_down(self, touch):
         if self.collide_point(touch.x, touch.y):
-            return self.getActionCode()
+            return self.getStatusCode()
         
+

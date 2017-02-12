@@ -10,12 +10,32 @@ require('1.9.1')
 from kivy.uix.boxlayout import BoxLayout
 from kivy.graphics import Rectangle, Color
 from kivy.properties import NumericProperty
+from kivy.lang import Builder
 
 from client.constants import client_graphics_color_cardshape
-from client.constants import game_buttons_codes
-from client.constants import client_graphics_button_height, client_graphics_button_width
+from client.constants import client_graphics_button_height
+from client.constants import client_graphics_button_width
 
-from client.v_commandbutton import CommandButton
+from client.v_buttons import CommandButton, ButtonsList
+from client.v_indicators import Indicator, IndicatorsList
+
+
+"""
+La barre est un BoxLayout horizontal, comprenant 3 components:
+    - Largeur de 1/10, sur la gauche = l'icone du jeu suivi du titre 'Set'
+    - largeur de 4/10, sur la droite, = un BoxLayout qui contient 2 indicateurs
+        et 2 bouttons de 'config' et de 'menu'
+    - Largeur 5/10 au mileu, qui prend la place disponible restante, pour
+        les boutons contextuels (jusqu'à 5 boutons)
+"""
+
+Builder.load_string("""
+<LeftBar>:
+    id: left_bar
+    orientation: horizontal
+""")
+
+
 
 class CommandBar(BoxLayout):
     """
