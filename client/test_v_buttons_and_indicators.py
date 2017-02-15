@@ -39,21 +39,21 @@ Config.write()
 
 
 Builder.load_string("""
+#: import bgd client.constants.client_graphics_color_widget_background
+
 <BackgroundLayout>
     canvas:
         Color:
-            rgba: self.bgd
+            rgba: bgd
         Rectangle:
             pos: self.pos
             size: self.size
 """)
 
 class BackgroundLayout(FloatLayout):
-    bgd = ListProperty(client_graphics_color_widget_background)
     
     def __init__(self, **kwargs):
         super(FloatLayout, self).__init__(**kwargs)
-        #self.bgd = client_graphics_color_window_background
         
 
 class TestCommandButtonAndIndicatorsApp(App):    
@@ -88,8 +88,8 @@ class TestCommandButtonAndIndicatorsApp(App):
 
         self.root_layout = BackgroundLayout()
         
-        print("Bogus 26: command bar pos =", self.root_layout.pos)
-        print("Bogus 27: command bar size =", self.root_layout.size)
+        print("Bogus 26: root layout pos =", self.root_layout.pos)
+        print("Bogus 27: root layout size =", self.root_layout.size)
         
         # add several buttons
         i = 0

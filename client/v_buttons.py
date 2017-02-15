@@ -14,8 +14,8 @@ from kivy.uix.button import Button
 from kivy.properties import ListProperty, StringProperty
 from kivy.lang import Builder
 
-from client.constants import client_graphics_color_widget_background
-from client.constants import client_graphics_color_cardshape
+#from client.constants import client_graphics_color_widget_background
+#from client.constants import client_graphics_color_cardshape
 from client.constants import path_to_images
 
 ButtonsList = [
@@ -37,10 +37,12 @@ for code in ButtonsList:
 
 
 Builder.load_string("""
+#: import bgd client.constants.client_graphics_color_widget_background
+
 <CommandButton>:
     id: root_button
     background_normal: ''
-    background_color: self.bgd_normal
+    background_color: bgd
     Image:
         color: 1,1,1,1
         source: root_button.icon_path
@@ -62,8 +64,8 @@ class CommandButton(Button):
 
     action_code = StringProperty('')
     icon_path = StringProperty('')
-    bgd_normal = ListProperty(client_graphics_color_widget_background)
-    bgd_down   = ListProperty(client_graphics_color_cardshape)
+    #bgd_normal = ListProperty(client_graphics_color_widget_background)
+    #bgd_down   = ListProperty(client_graphics_color_cardshape)
     
     def __init__(self, **kwargs):
         """

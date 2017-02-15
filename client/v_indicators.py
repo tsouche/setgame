@@ -14,11 +14,12 @@ from kivy.properties import ListProperty, StringProperty
 from kivy.lang import Builder
 
 
-from client.constants import client_graphics_color_widget_background
-from client.constants import client_graphics_color_cardshape
+#from client.constants import client_graphics_color_widget_background
+#from client.constants import client_graphics_color_cardshape
 from client.constants import path_to_images
 
 IndicatorsList = [
+    'game',
     'connected', 
     'disconnected',
     'enlisted_4', 
@@ -36,10 +37,12 @@ for code in IndicatorsList:
 
 
 Builder.load_string("""
+#: import bgd client.constants.client_graphics_color_widget_background
+
 <Indicator>:
     id: root_panel
     background_normal: ''
-    background_color: self.bgd_normal
+    background_color: bgd
     Image:
         color: 1,1,1,1
         source: root_panel.icon_path
@@ -63,8 +66,8 @@ class Indicator(Label):
 
     status_code = StringProperty('')
     icon_path = StringProperty('')
-    bgd_normal = ListProperty(client_graphics_color_widget_background)
-    bgd_down   = ListProperty(client_graphics_color_cardshape)
+    #bgd_normal = ListProperty(client_graphics_color_widget_background)
+    #bgd_down   = ListProperty(client_graphics_color_cardshape)
     
     def __init__(self, **kwargs):
         """
@@ -74,7 +77,7 @@ class Indicator(Label):
             
     def setStatusCode(self, code):
         """
-        This method enable to set the action code, triggering automaticaly the 
+        This method enable to set the action code, triggering automatically the 
         'on_action_code' method (since the property value would be changed.
         NB: we assume here that the code is valid.
         """
@@ -92,7 +95,9 @@ class Indicator(Label):
         return self.status_code
 
     def on_touch_down(self, touch):
+        pass
+        """
         if self.collide_point(touch.x, touch.y):
             return self.getStatusCode()
-        
+        """
 
